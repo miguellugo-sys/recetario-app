@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recetario Le Chique</title>
+    
+    <!-- Fuentes elegantes para un estilo "Fine Dining" -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS para los estilos -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- HTML2PDF para la generación de documentos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'serif'],
+                        sans: ['"Inter"', 'sans-serif'],
+                    },
+                    colors: {
+                        chique: {
+                            dark: '#1a1a1a',
+                            light: '#f9f9f9',
+                            accent: '#8c734b' // Tono dorado/bronce sutil
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Estilos base para asegurar que el PDF se vea impecable */
+        body {
+            background-color: #f3f4f6;
+        }
+        
+        /* Ocultar elementos de control durante la impresión nativa por si acaso */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                background-color: white;
+            }
+        }
+    </style>
+</head>
+<body class="text-chique-dark font-sans antialiased p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        
+        <header class="mb-10 text-center no-print">
+            <h1 class="text-5xl font-serif font-bold tracking-tight mb-2 uppercase">Calculadora de Recetas</h1>
+            <p class="text-sm tracking-widest text-gray-500 uppercase">Herramienta de Estandarización</p>
+        </header>
+
+        <div class="no-print bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 flex flex-col md:flex-row gap-6 items-end">
+            
+            <div class="w-full md:w-1/2">
+                <label for="recipe-select" class="block text-sm font-medium text-gray-700 mb-2">Seleccionar Receta</label>
+                <select id="recipe-select" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-chique-accent focus:border-chique-accent bg-gray-50 text-gray-900 transition-colors cursor-pointer">
+                    <!-- Las opciones se inyectan con JS -->
+                </select>
+            </div>
+
+            <div class="w-full md:w-1/4">
+                <label for="pax-input" class="block text-sm font-medium text-gray-700 mb-2">Cantidad de Pax (Porciones)</label>
+                <input type="number" id="pax-input" min="1" class="w-full border border-gray-300 rounded-lg px-4 py-2.5 focus:ring-chique-accent focus:border-chique-accent bg-gray-50 text-gray-900 transition-colors text-center font-bold">
+            </div>
+
+            <div class="w-full md:w-1/4">
+                <button onclick="downloadPDF()" id="download-btn" class="w-full bg-chique-dark text-white font-medium px-6 py-2.5 rounded-lg shadow hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Descargar PDF
+                </button>
+            </div>
+            
+        </div>
+
+        <div class="bg-white shadow-xl rounded-none md:rounded-xl overflow-hidden border border-gray-200">
+            <div id="printable-recipe" class="p-10 md:p-14 bg-white">
+                
+                <!-- Encabezado de la receta -->
+                <div class="border-b-2 border-chique-dark pb-6 mb-8">
+                    
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="flex items-center gap-6">
+                            <!-- LOGO LE CHIQUE -->
+                            <img src="./assets/logo_lechique.png" alt="Logo Le Chique" class="h-16 object-contain" onerror="this.src='https://placehold.co/150x60/1a1a1a/ffffff?text=Le+Chique+Logo'">
+                            
+                            <!-- LOGO MICHELIN -->
+                            <img src="./assets/logo_michelin.png" alt="Logo Michelin" class="h-14 object-contain" onerror="this.src='https://placehold.co/60x60/da291c/ffffff?text=Michelin'">
+                        </div>
+                        <div class="text-right">
+                            <div class="text-sm text-gray-500 uppercase tracking-widest mb-1">Rendimiento</div>
+                            <div id="display-recipe-pax" class="text-2xl font-serif font-bold text-chique-accent">0 Pax</div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h2 id="display-recipe-name" class="text-4xl font-serif font-bold text-chique-dark mb-2">Nombre de la Receta</h2>
+                        <p id="display-recipe-id" class="text-xs text-gray-400 uppercase tracking-wider font-mono">ID: ---</p>
+                    </div>
+                </div>
+
+                <div class="mb-10">
+                    <h3 class="text-xl font-serif font-bold uppercase tracking-widest border-b border-gray-200 pb-2 mb-4 text-gray-800">Ingredientes</h3>
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-sm text-gray-500 uppercase tracking-wider">
+                                <th class="py-3 border-b border-gray-200 font-medium w-1/2">Ingrediente</th>
+                                <th class="py-3 border-b border-gray-200 font-medium text-right w-1/4">Cantidad</th>
+                                <th class="py-3 border-b border-gray-200 font-medium pl-4 w-1/4">Unidad</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ingredients-table-body" class="text-gray-800">
+                            <!-- Los ingredientes se inyectan con JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div>
+                    <h3 class="text-xl font-serif font-bold uppercase tracking-widest border-b border-gray-200 pb-2 mb-6 text-gray-800">Procedimiento</h3>
+                    <ol id="procedure-list" class="list-decimal list-inside space-y-4 text-gray-700 leading-relaxed text-justify">
+                        <!-- Los pasos se inyectan con JS -->
+                    </ol>
+                </div>
+                
+                <div class="mt-16 pt-6 border-t border-gray-100 flex justify-between items-center text-xs text-gray-400 font-serif">
+                    <div class="italic">
+                        Documento generado para estandarización • <span id="current-date"></span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="uppercase tracking-widest">Calculadora desarrollada por</span>
+                        <!-- TU LOGO PERSONAL -->
+                        <img src="./assets/mi_logo.png" alt="Tu Logo Personal" class="h-8 object-contain" onerror="this.src='https://placehold.co/80x40/8c734b/ffffff?text=Mi+Logo'">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. BASE DE DATOS DE RECETAS ---
+        const recipesDatabase = [
+            {
+                id: "LC-001",
+                name: "Esférico de Aceituna Líquida",
+                base_pax: 4,
+                ingredients: [
+                    { name: "Jugo de aceituna verde (colado fino)", amount: 200, unit: "ml" },
+                    { name: "Alginato de sodio", amount: 1.5, unit: "g" },
+                    { name: "Cloruro de calcio", amount: 2.5, unit: "g" },
+                    { name: "Agua mineral", amount: 500, unit: "ml" },
+                    { name: "Aceite de oliva extra virgen", amount: 50, unit: "ml" }
+                ],
+                procedure: [
+                    "Triturar las aceitunas sin hueso y pasarlas por una superbag para extraer un jugo limpio y libre de impurezas.",
+                    "Separar una tercera parte del jugo de aceituna y triturar con el alginato de sodio usando un túrmix hasta que no queden grumos.",
+                    "Mezclar con el resto del jugo de aceituna y envasar al vacío para extraer todo el aire de la mezcla (o dejar reposar 12h).",
+                    "Preparar el baño de alginato disolviendo el cloruro de calcio en el agua mineral con ayuda de una varilla.",
+                    "Con una cuchara medidora, dejar caer suavemente porciones del jugo de aceituna en el baño de calcio para formar las esferas.",
+                    "Dejar 'cocer' en el baño durante 2 minutos. Retirar con cuchara perforada y lavar en un baño de agua limpia.",
+                    "Conservar las esferas sumergidas en aceite de oliva extra virgen hasta el momento del pase."
+                ]
+            },
+            {
+                id: "LC-002",
+                name: "Rocas de Foie Gras y Cacao",
+                base_pax: 10,
+                ingredients: [
+                    { name: "Hígado de pato (Foie Gras) limpio y desvenado", amount: 500, unit: "g" },
+                    { name: "Sal de mar fina", amount: 8, unit: "g" },
+                    { name: "Azúcar blanca", amount: 4, unit: "g" },
+                    { name: "Polvo de cacao amargo (Alta calidad)", amount: 50, unit: "g" },
+                    { name: "Armañac", amount: 15, unit: "ml" },
+                    { name: "Pimienta blanca recién molida", amount: 2, unit: "g" }
+                ],
+                procedure: [
+                    "Desvenar el foie gras cuidadosamente manteniéndolo a temperatura ambiente para no romper excesivamente los lóbulos.",
+                    "Mezclar la sal, el azúcar, la pimienta y espolvorear uniformemente sobre los lóbulos de foie. Rociar con el armañac.",
+                    "Marinar en refrigeración durante 12 horas en un recipiente hermético.",
+                    "Cocer en una bolsa al vacío a 58°C durante 25 minutos exactos en un baño termostático (Roner).",
+                    "Enfriar inmediatamente en un baño inverso (agua y hielo) para cortar la cocción y solidificar la grasa.",
+                    "Una vez frío, desmoldar y romper rústicamente simulando rocas. Congelar inmediatamente las piezas.",
+                    "Justo antes del servicio, rebozar las rocas congeladas en el polvo de cacao amargo sacudiendo el exceso."
+                ]
+            }
+        ];
+
+        let currentRecipe = recipesDatabase[0];
+        let currentPax = currentRecipe.base_pax;
+
+        // Referencias al DOM
+        const selectEl = document.getElementById('recipe-select');
+        const inputPaxEl = document.getElementById('pax-input');
+        
+        const displayRecipeName = document.getElementById('display-recipe-name');
+        const displayRecipeId = document.getElementById('display-recipe-id');
+        const displayRecipePax = document.getElementById('display-recipe-pax');
+        const tableBody = document.getElementById('ingredients-table-body');
+        const procedureList = document.getElementById('procedure-list');
+        const dateDisplay = document.getElementById('current-date');
+        const downloadBtn = document.getElementById('download-btn');
+
+        function initApp() {
+            // Llenar el selector
+            recipesDatabase.forEach((recipe, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = recipe.name;
+                selectEl.appendChild(option);
+            });
+
+            // Setear fecha actual
+            const today = new Date();
+            dateDisplay.textContent = today.toLocaleDateString('es-MX', { year: 'numeric', month: 'long', day: 'numeric' });
+
+            // Event Listeners
+            selectEl.addEventListener('change', (e) => {
+                currentRecipe = recipesDatabase[e.target.value];
+                currentPax = currentRecipe.base_pax; // Resetear al pax base
+                inputPaxEl.value = currentPax;
+                renderRecipe();
+            });
+
+            inputPaxEl.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                if (val > 0) {
+                    currentPax = val;
+                    renderRecipe();
+                }
+            });
+
+            // Estado inicial
+            inputPaxEl.value = currentPax;
+            renderRecipe();
+        }
+
+        function renderRecipe() {
+            // Actualizar encabezados
+            displayRecipeName.textContent = currentRecipe.name;
+            displayRecipeId.textContent = `ID: ${currentRecipe.id}`;
+            displayRecipePax.textContent = `${currentPax} Pax`;
+
+            // Factor de conversión
+            const factor = currentPax / currentRecipe.base_pax;
+
+            // Renderizar ingredientes recalculados
+            tableBody.innerHTML = '';
+            currentRecipe.ingredients.forEach(ing => {
+                const newAmount = ing.amount * factor;
+                // Dejar máximo 2 decimales si no es entero
+                const formattedAmount = Number.isInteger(newAmount) 
+                    ? newAmount 
+                    : parseFloat(newAmount.toFixed(2));
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors border-b border-gray-100 last:border-0";
+                
+                tr.innerHTML = `
+                    <td class="py-3 pr-4 text-gray-800">${ing.name}</td>
+                    <td class="py-3 text-right font-mono font-bold text-chique-accent">${formattedAmount}</td>
+                    <td class="py-3 pl-4 text-gray-500 text-sm">${ing.unit}</td>
+                `;
+                tableBody.appendChild(tr);
+            });
+
+            // Renderizar procedimiento
+            procedureList.innerHTML = '';
+            currentRecipe.procedure.forEach(step => {
+                const li = document.createElement('li');
+                li.className = "pl-2";
+                li.innerHTML = `<span class="text-gray-800">${step}</span>`;
+                procedureList.appendChild(li);
+            });
+        }
+
+        function downloadPDF() {
+            const element = document.getElementById('printable-recipe');
+            
+            // Opciones para asegurar la calidad
+            const opt = {
+                margin:       [15, 15, 15, 15], 
+                filename:     `Receta_${currentRecipe.id}_${currentPax}pax.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, letterRendering: true }, // useCORS permite cargar las imágenes locales en el PDF
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Efecto visual de carga
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Generando...`;
+            downloadBtn.disabled = true;
+
+            // Ejecutar html2pdf
+            html2pdf().set(opt).from(element).save().then(() => {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            });
+        }
+
+        // Arrancar
+        document.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>
