@@ -143,8 +143,8 @@
   </div>
 
   <script>
-    // === ENLACE A TU GOOGLE APPS SCRIPT (NUEVO Y ACTUALIZADO) ===
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhBR9Can0qdPrE_8i7QGKd9OoNiwk-PyqxrT9RLvRExD17wlAvwyUNYEkiuaUJlaboFg/exec";
+    // === TU NUEVO ENLACE A GOOGLE APPS SCRIPT ===
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoHYctD5slvmtk7p4Y5_EnZQL_Zaf8fLG5-liCsAcDBpaFpbktaRZk4-lRK4PJwAdoWQ/exec";
     
     let recetasDB = []; 
     let recetaActual = null;
@@ -216,7 +216,6 @@
       mostrarMensaje("Guardando en Google Sheets...", "text-blue-600");
 
       try {
-        // Hacemos el envío normal de texto (sin la "venda" del no-cors)
         await fetch(SCRIPT_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
