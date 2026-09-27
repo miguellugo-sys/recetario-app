@@ -6,94 +6,109 @@
   <title>Recetario Pro - Le Chique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <!-- Tipografías de Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400&display=swap" rel="stylesheet">
+  
   <style>
-    body { background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    .tab-active { border-bottom: 2px solid #ef4444; color: #ef4444; font-weight: bold; }
-    .tab-inactive { color: #6b7280; }
-    .loader { border: 4px solid #f3f3f3; border-top: 4px solid #ef4444; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: auto; }
+    body { background-color: #fafafa; font-family: 'Inter', sans-serif; color: #18181b; }
+    .font-serif { font-family: 'Playfair Display', serif; }
+    .tabular-nums { font-variant-numeric: tabular-nums; }
+    
+    .tab-active { border-bottom: 2px solid #881337; color: #881337; font-weight: 600; }
+    .tab-inactive { color: #71717a; }
+    .tab-inactive:hover { color: #18181b; }
+    
+    .loader { border: 3px solid #f4f4f5; border-top: 3px solid #881337; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; display: none; margin: auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin: 2px; }
+    
+    .pill { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #e4e4e7; background: #ffffff; color: #52525b; margin: 2px; }
+    .pill-alergeno { border-color: #fecdd3; background-color: #fff1f2; color: #881337; }
   </style>
 </head>
-<body class="p-2 md:p-6">
+<body class="p-2 md:p-6 text-zinc-800">
 
-  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+  <div class="max-w-5xl mx-auto bg-white rounded-sm shadow-xl border border-zinc-200 overflow-hidden">
     
     <!-- Navegación -->
-    <div class="flex border-b text-sm md:text-base">
-      <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition">📖 Visor y PDF</button>
-      <button id="tab-lista" onclick="cambiarPestaña('lista')" class="flex-1 py-4 text-center tab-inactive transition">📋 Mis Recetas</button>
-      <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition">✏️ Editor Avanzado</button>
+    <div class="flex border-b border-zinc-200 text-sm">
+      <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs">📖 Visor y PDF</button>
+      <button id="tab-lista" onclick="cambiarPestaña('lista')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs">📋 Mis Recetas</button>
+      <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs">✏️ Editor Avanzado</button>
     </div>
 
     <!-- ================= PESTAÑA VISOR ================= -->
     <div id="vista-visor" class="p-6">
-      <div id="controles-impresion" class="bg-gray-50 p-4 rounded-lg mb-6 flex flex-wrap gap-4 items-end border">
+      <div id="controles-impresion" class="bg-zinc-50 p-5 rounded-sm mb-8 flex flex-wrap gap-4 items-end border border-zinc-200">
         <div class="flex-1 min-w-[200px]">
-          <label class="block text-sm font-bold text-gray-700 mb-1">Seleccionar Receta</label>
-          <select id="selector-receta" onchange="cargarRecetaSeleccionada()" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-red-500 outline-none">
+          <label class="block text-xs font-bold tracking-wider text-zinc-500 uppercase mb-2">Seleccionar Receta</label>
+          <select id="selector-receta" onchange="cargarRecetaSeleccionada()" class="w-full p-2.5 border border-zinc-300 rounded-sm focus:ring-1 focus:ring-rose-900 outline-none text-sm font-medium bg-white">
             <option value="">Conectando a base de datos...</option>
           </select>
         </div>
-        <div class="w-32">
-          <label class="block text-sm font-bold text-gray-700 mb-1">Deseado</label>
-          <input type="number" id="input-pax" oninput="recalcularPax()" value="1" step="any" min="0.1" class="w-full p-2 border rounded-md outline-none">
+        <div class="w-28">
+          <label class="block text-xs font-bold tracking-wider text-zinc-500 uppercase mb-2">Deseado</label>
+          <input type="number" id="input-pax" oninput="recalcularPax()" value="1" step="any" min="0.1" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm text-center tabular-nums font-medium">
         </div>
         <div class="w-24">
-          <label class="block text-sm font-bold text-gray-700 mb-1">Unidad</label>
-          <input type="text" id="display-unidad-input" readonly class="w-full p-2 border bg-gray-100 rounded-md outline-none text-gray-500 text-center">
+          <label class="block text-xs font-bold tracking-wider text-zinc-500 uppercase mb-2">Unidad</label>
+          <input type="text" id="display-unidad-input" readonly class="w-full p-2.5 border border-zinc-200 bg-zinc-100 rounded-sm outline-none text-zinc-400 text-center text-sm uppercase">
         </div>
         <div>
-          <button onclick="descargarPDF()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow transition flex items-center gap-2">
+          <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-xs uppercase tracking-wider font-bold py-3 px-6 rounded-sm shadow transition flex items-center gap-2">
             📄 Generar PDF
           </button>
         </div>
       </div>
 
       <!-- PDF ZONE -->
-      <div id="zona-impresion" class="bg-white p-8 border border-gray-100 shadow-sm relative">
+      <div id="zona-impresion" class="bg-white p-10 border border-zinc-100 shadow-sm relative">
         <!-- HEADER -->
-        <div class="flex justify-between items-center border-b-2 border-black pb-4 mb-4">
-          <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-14 object-contain" onerror="this.src='https://placehold.co/150x50?text=Le+Chique'">
+        <div class="flex justify-between items-center border-b-[3px] border-zinc-900 pb-6 mb-6">
+          <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-16 object-contain" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
           <div class="text-center flex-1 px-4">
-            <h1 id="titulo-receta" class="text-2xl font-black text-black uppercase tracking-wider">SELECCIONA UNA RECETA</h1>
-            <p class="text-sm font-bold mt-1 text-gray-700">RENDIMIENTO: <span id="display-pax" class="text-red-600">0</span> <span id="display-unidad">Kg</span></p>
+            <h1 id="titulo-receta" class="font-serif text-3xl font-black text-zinc-900 uppercase tracking-widest leading-none">SELECCIONA UNA RECETA</h1>
+            <p class="text-[11px] font-bold mt-3 text-zinc-500 tracking-widest uppercase">
+              Rendimiento: <span id="display-pax" class="text-rose-900 text-sm">0</span> <span id="display-unidad" class="text-rose-900 text-sm">Kg</span>
+            </p>
           </div>
-          <img src="./assets/logo_michelin.png" alt="Michelin" class="h-14 object-contain" onerror="this.src='https://placehold.co/80x80?text=Michelin'">
+          <img src="./assets/logo_michelin.png" alt="Michelin" class="h-16 object-contain" onerror="this.src='https://placehold.co/80x80?text=Michelin'">
         </div>
 
         <div id="contenido-receta" class="hidden">
           <!-- METADATA GRID -->
-          <div class="grid grid-cols-4 gap-4 text-xs mb-6 border-b pb-4">
-            <div class="col-span-1 border-r pr-2">
-              <span class="block text-gray-400 font-bold uppercase mb-1">Partida</span>
-              <span id="visor-partida" class="font-bold text-gray-800 uppercase">---</span>
+          <div class="grid grid-cols-4 gap-6 text-xs mb-8 border-b border-zinc-200 pb-6">
+            <div class="col-span-1 border-r border-zinc-200 pr-2">
+              <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Partida</span>
+              <span id="visor-partida" class="font-bold text-zinc-800 uppercase tracking-wide">---</span>
             </div>
-            <div class="col-span-1 border-r px-2">
-              <span class="block text-gray-400 font-bold uppercase mb-1">Tipo</span>
-              <span id="visor-tipo" class="font-bold text-gray-800 uppercase">---</span>
+            <div class="col-span-1 border-r border-zinc-200 px-2">
+              <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Tipo</span>
+              <span id="visor-tipo" class="font-bold text-zinc-800 uppercase tracking-wide">---</span>
             </div>
-            <div class="col-span-1 border-r px-2">
-              <span class="block text-gray-400 font-bold uppercase mb-1">Alergias</span>
+            <div class="col-span-1 border-r border-zinc-200 px-2">
+              <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Alérgenos</span>
               <div id="visor-alergenos" class="flex flex-wrap gap-1"></div>
             </div>
             <div class="col-span-1 pl-2">
-              <span class="block text-gray-400 font-bold uppercase mb-1">Temporada</span>
-              <div id="visor-temporada" class="flex flex-wrap gap-1 text-gray-600 font-bold"></div>
+              <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Temporada</span>
+              <div id="visor-temporada" class="flex flex-wrap gap-1 text-zinc-600 font-semibold text-[10px]"></div>
             </div>
           </div>
 
-          <!-- BLOQUES DE SUB-RECETAS (Generados dinámicamente) -->
-          <div id="contenedor-bloques-visor" class="space-y-6">
+          <!-- BLOQUES DE SUB-RECETAS -->
+          <div id="contenedor-bloques-visor" class="space-y-8">
             <!-- Bloques se inyectan aquí -->
           </div>
         </div>
         
-        <div class="mt-8 pt-4 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400">
-          <p>Documento técnico confidencial.</p>
+        <div class="mt-12 pt-6 border-t border-zinc-200 flex justify-between items-center text-[9px] text-zinc-400 uppercase tracking-widest font-semibold">
+          <p>Documento técnico confidencial</p>
           <div class="flex items-center gap-2">
             <span>Tech by:</span>
-            <img src="./assets/mi_logo.png" alt="Mi Logo" class="h-6 object-contain" onerror="this.src='https://placehold.co/40x40?text=Mi+Logo'">
+            <img src="./assets/mi_logo.png" alt="Mi Logo" class="h-6 object-contain grayscale opacity-70" onerror="this.src='https://placehold.co/40x40?text=Logo'">
           </div>
         </div>
       </div>
@@ -101,93 +116,97 @@
 
     <!-- ================= PESTAÑA LISTA ================= -->
     <div id="vista-lista" class="p-6 hidden">
-      <div class="bg-gray-50 p-6 rounded-lg border">
-        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Base de Datos de Recetas</h2>
+      <div class="bg-white p-6 rounded-sm border border-zinc-200">
+        <h2 class="font-serif text-2xl font-black text-zinc-900 mb-6 border-b border-zinc-200 pb-3">Base de Datos de Recetas</h2>
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse bg-white rounded-md shadow-sm">
-            <thead class="bg-gray-100 text-gray-600 border-b text-sm">
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-zinc-50 text-zinc-500 border-b border-zinc-200 text-xs uppercase tracking-wider">
               <tr>
-                <th class="p-3 font-semibold">Platillo</th>
-                <th class="p-3 font-semibold">Partida</th>
-                <th class="p-3 font-semibold text-center">Rendimiento Base</th>
-                <th class="p-3 font-semibold text-center">Acciones</th>
+                <th class="p-4 font-semibold">Platillo</th>
+                <th class="p-4 font-semibold">Partida</th>
+                <th class="p-4 font-semibold text-center">Rendimiento</th>
+                <th class="p-4 font-semibold text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody id="tabla-todas-recetas" class="text-gray-700 text-sm"></tbody>
+            <tbody id="tabla-todas-recetas" class="text-zinc-700 text-sm"></tbody>
           </table>
         </div>
       </div>
     </div>
 
     <!-- ================= PESTAÑA EDITOR ================= -->
-    <div id="vista-editor" class="p-6 hidden bg-gray-50">
-      <div class="flex justify-between items-center mb-6 border-b pb-2">
-        <h2 class="text-2xl font-black text-gray-800 uppercase tracking-tight">Editor de Recetas</h2>
-        <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border rounded font-bold outline-none bg-white">
-          <option value="">+ CREAR NUEVA RECETA</option>
+    <div id="vista-editor" class="p-6 hidden bg-zinc-50/50">
+      <div class="flex justify-between items-end mb-8 border-b border-zinc-200 pb-4">
+        <div>
+          <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight">Editor Avanzado</h2>
+          <p class="text-xs text-zinc-500 uppercase tracking-widest mt-1">Gestor de Mise en Place</p>
+        </div>
+        <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border border-zinc-300 rounded-sm font-bold outline-none bg-white text-xs uppercase tracking-wide">
+          <option value="">+ Crear Nueva Receta</option>
         </select>
       </div>
 
       <!-- SECCIÓN 1: DATOS GENERALES -->
-      <div class="bg-white p-4 rounded shadow-sm border mb-6">
-        <h3 class="text-sm font-bold text-red-600 uppercase mb-3 border-b pb-1">1. Información Principal</h3>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-white p-6 rounded-sm shadow-sm border border-zinc-200 mb-6 relative">
+        <div class="absolute top-0 left-0 w-1 h-full bg-rose-900 rounded-l-sm"></div>
+        <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">1. Información Principal</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
           <div class="md:col-span-2">
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Oficial</label>
-            <input type="text" id="edit-nombre" placeholder="Ej: Beurre Blanc de Tosazu" class="w-full p-2 border rounded outline-none font-bold">
+            <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Nombre Oficial</label>
+            <input type="text" id="edit-nombre" placeholder="Ej: Beurre Blanc de Tosazu" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none font-bold text-zinc-800">
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Rend. Total</label>
-            <input type="number" id="edit-pax-base" value="1" step="any" class="w-full p-2 border rounded outline-none">
+            <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Rend. Total</label>
+            <input type="number" id="edit-pax-base" value="1" step="any" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none tabular-nums">
           </div>
           <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Unidad Rend.</label>
-            <input type="text" id="edit-unidad-base" placeholder="Ej: Kg, L, Pax" value="Kg" class="w-full p-2 border rounded outline-none">
+            <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Unidad Rend.</label>
+            <input type="text" id="edit-unidad-base" placeholder="Ej: Kg, L, Pax" value="Kg" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none">
           </div>
           <div class="md:col-span-2">
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Partida</label>
-            <input type="text" id="edit-partida" placeholder="Ej: Cuarto Caliente" class="w-full p-2 border rounded outline-none">
+            <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Partida</label>
+            <input type="text" id="edit-partida" placeholder="Ej: Cuarto Caliente" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm">
           </div>
           <div class="md:col-span-2">
-            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo</label>
-            <input type="text" id="edit-tipo" placeholder="Ej: Salsas y Vinagretas" class="w-full p-2 border rounded outline-none">
+            <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Tipo</label>
+            <input type="text" id="edit-tipo" placeholder="Ej: Salsas y Vinagretas" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm">
           </div>
         </div>
       </div>
 
       <!-- SECCIÓN 2: ALÉRGENOS Y TEMPORADA -->
-      <div class="bg-white p-4 rounded shadow-sm border mb-6">
-        <h3 class="text-sm font-bold text-red-600 uppercase mb-3 border-b pb-1">2. Clasificación y Alérgenos</h3>
-        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Alérgenos (Selecciona los presentes)</label>
-        <div id="contenedor-alergenos" class="flex flex-wrap gap-2 mb-4">
-          <!-- Checkboxes generados por JS -->
-        </div>
-        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Temporada Óptima</label>
-        <div id="contenedor-temporada" class="flex flex-wrap gap-2">
-          <!-- Checkboxes generados por JS -->
-        </div>
+      <div class="bg-white p-6 rounded-sm shadow-sm border border-zinc-200 mb-6 relative">
+        <div class="absolute top-0 left-0 w-1 h-full bg-rose-900 rounded-l-sm"></div>
+        <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">2. Clasificación y Alérgenos</h3>
+        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Alérgenos Presentes</label>
+        <div id="contenedor-alergenos" class="flex flex-wrap gap-2 mb-6"></div>
+        
+        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Temporada Óptima</label>
+        <div id="contenedor-temporada" class="flex flex-wrap gap-2"></div>
       </div>
 
-      <!-- SECCIÓN 3: SUB-RECETAS (Mise en Place) -->
-      <div class="mb-6">
-        <div class="flex justify-between items-center mb-3">
-          <h3 class="text-sm font-bold text-red-600 uppercase">3. Sub-Recetas (Mise en Place)</h3>
-          <button onclick="agregarBloqueSubreceta()" class="bg-gray-800 hover:bg-black text-white text-xs font-bold py-1 px-3 rounded shadow">+ AÑADIR SUB-RECETA</button>
+      <!-- SECCIÓN 3: SUB-RECETAS -->
+      <div class="mb-8">
+        <div class="flex justify-between items-center mb-4 pl-1">
+          <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">3. Sub-Recetas (Mise en Place)</h3>
+          <button onclick="agregarBloqueSubreceta()" class="bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-700 text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition">
+            + Añadir Sub-Receta
+          </button>
         </div>
-        <div id="contenedor-bloques-editor" class="space-y-4">
+        <div id="contenedor-bloques-editor" class="space-y-5">
           <!-- Bloques se añaden aquí -->
         </div>
       </div>
 
       <!-- BOTONES DE GUARDADO -->
-      <div class="flex items-center justify-end gap-4 border-t border-gray-300 pt-4 mt-6">
+      <div class="flex items-center justify-end gap-4 border-t border-zinc-300 pt-6 mt-8">
         <span id="mensaje-estado" class="text-sm font-bold"></span>
         <div id="loader-guardar" class="loader"></div>
-        <button onclick="limpiarEditor()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded shadow transition">
-          Cancelar / Limpiar
+        <button onclick="limpiarEditor()" class="bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-600 text-xs tracking-wider uppercase font-bold py-2.5 px-6 rounded-sm transition">
+          Limpiar Editor
         </button>
-        <button onclick="guardarReceta()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded shadow transition">
-          💾 Guardar Receta Completa
+        <button onclick="guardarReceta()" class="bg-rose-900 hover:bg-rose-800 text-white text-xs tracking-wider uppercase font-bold py-2.5 px-8 rounded-sm shadow-md transition">
+          💾 Guardar Receta
         </button>
       </div>
     </div>
@@ -211,7 +230,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Variables Globales
     window.recetasDB = []; 
     window.recetaActual = null;
     let blockCounter = 0;
@@ -219,7 +237,6 @@
     const ALERGENOS_LISTA = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"];
     const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
-    // ================== INIT ==================
     window.onload = () => {
       generarCheckboxes('contenedor-alergenos', ALERGENOS_LISTA, 'alergeno');
       generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes');
@@ -230,14 +247,13 @@
     function generarCheckboxes(containerId, items, namePrefix) {
       const container = document.getElementById(containerId);
       container.innerHTML = items.map(item => `
-        <label class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded border cursor-pointer hover:bg-gray-200">
-          <input type="checkbox" value="${item}" class="chk-${namePrefix} w-3 h-3 text-red-600">
-          <span class="text-xs font-semibold text-gray-700">${item}</span>
+        <label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition">
+          <input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900">
+          <span class="text-[11px] uppercase tracking-wide font-semibold text-zinc-600">${item}</span>
         </label>
       `).join('');
     }
 
-    // ================== FIREBASE ==================
     window.obtenerRecetasDeFirebase = async () => {
       const selectVisor = document.getElementById('selector-receta');
       const selectEditor = document.getElementById('selector-editor');
@@ -259,7 +275,6 @@
         });
         window.renderizarListaRecetas();
       } catch (error) {
-        console.error(error);
         selectVisor.innerHTML = '<option value="">❌ Error de conexión</option>';
       }
     };
@@ -270,13 +285,12 @@
       const unidad_base = document.getElementById('edit-unidad-base').value.trim();
       
       if (!nombre || !rendimiento_base || isNaN(rendimiento_base)) {
-        return window.mostrarMensaje("Falta Nombre o Rendimiento Base.", "text-red-600");
+        return window.mostrarMensaje("Falta Nombre o Rendimiento.", "text-rose-900");
       }
 
       const alergenos = Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value);
       const temporada = Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value);
       
-      // Recolectar Bloques
       const bloques = [];
       const domBloques = document.querySelectorAll('.bloque-receta');
       domBloques.forEach(b => {
@@ -316,12 +330,11 @@
         await window.obtenerRecetasDeFirebase();
         if(!document.getElementById('selector-editor').value) window.limpiarEditor();
       } catch (error) {
-        window.mostrarMensaje("❌ Error al guardar.", "text-red-600");
+        window.mostrarMensaje("❌ Error al guardar.", "text-rose-900");
         document.getElementById('loader-guardar').style.display = 'none';
       }
     };
 
-    // ================== VISOR Y PDF ==================
     window.cargarRecetaSeleccionada = () => {
       const id = document.getElementById('selector-receta').value;
       window.recetaActual = window.recetasDB.find(r => r.id === id);
@@ -330,17 +343,16 @@
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
         
-        // Metadatos
         document.getElementById('input-pax').value = window.recetaActual.rendimiento_base;
         document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base;
         document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base;
         document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
         
-        document.getElementById('visor-partida').innerText = window.recetaActual.partida || "N/A";
-        document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "N/A";
+        document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---";
+        document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
         
-        document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill bg-red-100 text-red-800 border border-red-200">${a}</span>`).join('') || "-";
-        document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).join(', ') || "TODO EL AÑO";
+        document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-";
+        document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
         
         window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
       } else {
@@ -367,27 +379,26 @@
 
         let tablaIng = bloque.ingredientes.map(ing => {
           const cantCalculada = ing.cantidad * factorGlobal;
-          const cantDisp = cantCalculada % 1 === 0 ? cantCalculada : cantCalculada.toFixed(2);
+          const cantDisp = cantCalculada % 1 === 0 ? cantCalculada : cantCalculada.toFixed(3);
           return `
-            <tr class="border-b border-gray-200">
-              <td class="py-1 text-gray-800 font-medium">${cantDisp} <span class="text-xs text-gray-500">${ing.unidad}</span></td>
-              <td class="py-1 text-gray-800 uppercase text-sm">${ing.nombre}</td>
+            <tr class="border-b border-zinc-100">
+              <td class="py-1.5 text-zinc-900 tabular-nums font-medium text-sm w-24">${cantDisp} <span class="text-[10px] text-zinc-400 ml-1 uppercase">${ing.unidad}</span></td>
+              <td class="py-1.5 text-zinc-700 uppercase tracking-wide text-[11px] font-semibold">${ing.nombre}</td>
             </tr>`;
         }).join('');
 
         contenedor.innerHTML += `
-          <div class="mb-4 break-inside-avoid">
-            <h3 class="bg-black text-white text-xs font-bold py-1 px-2 uppercase tracking-wide flex justify-between">
+          <div class="mb-6 break-inside-avoid">
+            <h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1.5 uppercase tracking-widest flex justify-between items-end mb-3">
               <span>Para ${rendDisplay} ${bloque.unidad} de ${bloque.nombre}</span>
-              <span class="text-gray-300">- ${window.recetaActual.partida || ''}</span>
             </h3>
-            <div class="flex flex-col md:flex-row gap-4 mt-2">
-              <div class="md:w-1/2">
-                <table class="w-full text-left text-sm">
+            <div class="flex flex-col md:flex-row gap-6 mt-2">
+              <div class="md:w-[45%]">
+                <table class="w-full text-left">
                   <tbody>${tablaIng}</tbody>
                 </table>
               </div>
-              <div class="md:w-1/2 bg-gray-50 p-3 rounded border text-sm text-gray-700 whitespace-pre-wrap leading-tight">
+              <div class="md:w-[55%] bg-zinc-50 p-4 rounded-sm border border-zinc-100 text-xs text-zinc-700 whitespace-pre-wrap leading-relaxed">
                 ${bloque.procedimiento}
               </div>
             </div>
@@ -399,35 +410,34 @@
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const elemento = document.getElementById('zona-impresion');
-      const filename = `${window.recetaActual.nombre}_${document.getElementById('display-pax').innerText}${window.recetaActual.unidad_base}.pdf`;
+      const filename = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('display-pax').innerText}${window.recetaActual.unidad_base}.pdf`;
       const opt = { margin: 0.4, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
       html2pdf().set(opt).from(elemento).save();
     };
 
-    // ================== GESTOR DE BLOQUES EDITOR ==================
     window.agregarBloqueSubreceta = (nombre = '', rend = '', uni = '', proc = '', ingredientes = []) => {
       const bId = `bloque-${blockCounter++}`;
       const div = document.createElement('div');
-      div.className = 'bloque-receta bg-white border border-gray-300 rounded p-4 relative shadow-sm';
+      div.className = 'bloque-receta bg-white border border-zinc-200 rounded-sm p-5 relative shadow-sm';
       div.id = bId;
       div.innerHTML = `
-        <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-500 hover:bg-red-100 p-1 rounded font-bold text-xs">❌ Borrar Bloque</button>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 pr-10">
-          <div><label class="text-[10px] uppercase font-bold text-gray-400 block">Nombre Sub-receta</label><input type="text" value="${nombre}" placeholder="Ej: Vinagre Tosazu" class="b-nombre w-full border-b p-1 outline-none text-sm font-bold"></div>
-          <div><label class="text-[10px] uppercase font-bold text-gray-400 block">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b p-1 outline-none text-sm"></div>
-          <div><label class="text-[10px] uppercase font-bold text-gray-400 block">Unidad (Kg, L)</label><input type="text" value="${uni}" class="b-uni w-full border-b p-1 outline-none text-sm"></div>
+        <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16">
+          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" placeholder="Ej: Vinagre Tosazu" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div>
+          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div>
+          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad (Kg, L)</label><input type="text" value="${uni}" class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm uppercase"></div>
         </div>
-        <div class="flex flex-col md:flex-row gap-4">
-          <div class="md:w-1/2 border-r pr-4">
-            <div class="flex justify-between items-center mb-2">
-              <label class="text-xs font-bold text-gray-600 uppercase">Ingredientes</label>
-              <button onclick="agregarIngrediente('${bId}')" class="text-[10px] bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded">+ Ingrediente</button>
+        <div class="flex flex-col md:flex-row gap-6">
+          <div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6">
+            <div class="flex justify-between items-center mb-3">
+              <label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label>
+              <button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button>
             </div>
-            <div class="c-ingredientes space-y-1"></div>
+            <div class="c-ingredientes space-y-2"></div>
           </div>
           <div class="md:w-1/2">
-            <label class="text-xs font-bold text-gray-600 uppercase block mb-2">Procedimiento Numerado</label>
-            <textarea class="b-proc w-full border rounded p-2 text-sm outline-none bg-gray-50 h-24" placeholder="1. Calentar...\n2. Reducir...">${proc}</textarea>
+            <label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-3">Procedimiento Técnico</label>
+            <textarea class="b-proc w-full border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition h-28 leading-relaxed" placeholder="1. Calentar...\n2. Reducir...">${proc}</textarea>
           </div>
         </div>
       `;
@@ -440,38 +450,37 @@
     window.agregarIngrediente = (bloqueId, nombre = '', cant = '', unidad = '') => {
       const b = document.getElementById(bloqueId).querySelector('.c-ingredientes');
       const div = document.createElement('div');
-      div.className = 'fila-ingrediente flex gap-1';
+      div.className = 'fila-ingrediente flex gap-2 items-center';
       div.innerHTML = `
-        <input type="text" placeholder="Nombre" value="${nombre}" class="ing-nombre flex-1 border p-1 text-xs outline-none rounded">
-        <input type="number" placeholder="Cant." value="${cant}" step="any" class="ing-cant w-16 border p-1 text-xs outline-none rounded">
-        <input type="text" placeholder="Unid" value="${unidad}" class="ing-unidad w-12 border p-1 text-xs outline-none rounded">
-        <button onclick="this.parentElement.remove()" class="text-red-500 font-bold px-1 hover:bg-red-50 text-xs">X</button>
+        <input type="text" placeholder="Ingrediente" value="${nombre}" class="ing-nombre flex-1 border border-zinc-200 p-2 text-xs outline-none rounded-sm">
+        <input type="number" placeholder="0.00" value="${cant}" step="any" class="ing-cant w-20 border border-zinc-200 p-2 text-xs outline-none rounded-sm tabular-nums text-center">
+        <input type="text" placeholder="Unid" value="${unidad}" class="ing-unidad w-14 border border-zinc-200 p-2 text-xs outline-none rounded-sm text-center uppercase">
+        <button onclick="this.parentElement.remove()" class="text-zinc-300 hover:text-rose-900 font-bold px-1 transition text-sm">✕</button>
       `;
       b.appendChild(div);
     };
 
-    // ================== UTILIDADES ==================
     window.cambiarPestaña = (p) => {
       ['visor', 'lista', 'editor'].forEach(id => {
         document.getElementById(`vista-${id}`).classList.add('hidden');
-        document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition";
+        document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs";
       });
       document.getElementById(`vista-${p}`).classList.remove('hidden');
-      document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition";
+      document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs";
     };
 
     window.renderizarListaRecetas = () => {
       const t = document.getElementById('tabla-todas-recetas');
       t.innerHTML = window.recetasDB.map(r => `
-        <tr class="border-b hover:bg-gray-100 transition">
-          <td class="p-3 font-bold">${r.nombre}</td>
-          <td class="p-3 text-gray-500 uppercase text-xs">${r.partida || '-'}</td>
-          <td class="p-3 text-center">${r.rendimiento_base} ${r.unidad_base || 'Pax'}</td>
-          <td class="p-3 text-center">
-            <button onclick="editarReceta('${r.id}')" class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">Editar</button>
-            <button onclick="eliminarReceta('${r.id}')" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">Borrar</button>
+        <tr class="border-b border-zinc-100 hover:bg-zinc-50 transition">
+          <td class="p-4 font-bold text-zinc-800">${r.nombre}</td>
+          <td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td>
+          <td class="p-4 text-center font-medium tabular-nums text-sm">${r.rendimiento_base} <span class="text-[10px] text-zinc-400 uppercase">${r.unidad_base || 'Pax'}</span></td>
+          <td class="p-4 text-center space-x-2">
+            <button onclick="editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button>
+            <button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button>
           </td>
-        </tr>`).join('') || '<tr><td colspan="4" class="p-4 text-center text-gray-400">Sin recetas</td></tr>';
+        </tr>`).join('') || '<tr><td colspan="4" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">Sin recetas registradas</td></tr>';
     };
 
     window.editarReceta = (id) => {
@@ -497,7 +506,6 @@
         if(r.bloques && r.bloques.length > 0) {
           r.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes));
         } else {
-          // Migración para recetas viejas sin bloques
           window.agregarBloqueSubreceta('Base', r.rendimiento_base, r.unidad_base, r.procedimiento, r.ingredientes);
         }
       } else {
