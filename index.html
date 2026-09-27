@@ -18,12 +18,14 @@
 
   <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
     
+    <!-- NUEVO: 3 Pestañas en lugar de 2 -->
     <div class="flex border-b">
       <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition">📖 Visor de Recetas</button>
+      <button id="tab-lista" onclick="cambiarPestaña('lista')" class="flex-1 py-4 text-center tab-inactive transition">📋 Lista de Recetas</button>
       <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition">✏️ Editor de Recetas</button>
     </div>
 
-    <!-- PESTAÑA VISOR -->
+    <!-- PESTAÑA 1: VISOR -->
     <div id="vista-visor" class="p-6">
       <div id="controles-impresion" class="bg-gray-50 p-4 rounded-lg mb-6 flex flex-col md:flex-row gap-4 items-center justify-between border">
         <div class="w-full md:w-1/2">
@@ -80,7 +82,30 @@
       </div>
     </div>
 
-    <!-- PESTAÑA EDITOR -->
+    <!-- PESTAÑA 2: LISTA DE RECETAS -->
+    <div id="vista-lista" class="p-6 hidden">
+      <div class="bg-gray-50 p-6 rounded-lg border">
+        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Administrar Recetas</h2>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse bg-white rounded-md overflow-hidden shadow-sm">
+            <thead class="bg-gray-100 text-gray-600 border-b">
+              <tr>
+                <th class="p-3 font-semibold">Nombre de la Receta</th>
+                <th class="p-3 font-semibold text-center w-24">Pax Base</th>
+                <th class="p-3 font-semibold text-center w-48">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tabla-todas-recetas" class="text-gray-700">
+              <!-- Se llena con JS -->
+            </tbody>
+          </table>
+        </div>
+        
+      </div>
+    </div>
+
+    <!-- PESTAÑA 3: EDITOR -->
     <div id="vista-editor" class="p-6 hidden">
       <div class="bg-gray-50 p-6 rounded-lg border">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
@@ -116,6 +141,9 @@
           <button onclick="guardarReceta()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow transition">
             💾 Guardar en Firebase
           </button>
+          <button onclick="limpiarEditor()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded shadow transition">
+            Limpiar / Nueva
+          </button>
           <div id="loader-guardar" class="loader"></div>
           <span id="mensaje-estado" class="text-sm font-bold"></span>
         </div>
@@ -126,11 +154,11 @@
 
   <!-- SCRIPT DE FIREBASE -->
   <script type="module">
-    // Importamos Firebase
+    // Importamos Firebase (Se añadió deleteDoc)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-    // Tu configuración exacta
+    // Tu configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBJs05is5zZ25rteHveq0ubaXtX1Xw1K_8",
       authDomain: "recetario-le-chique.firebaseapp.com",
@@ -164,16 +192,76 @@
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
         selectEditor.innerHTML = '<option value="">-- Crear Nueva Receta --</option>';
 
-        // Ordenar alfabéticamente (opcional pero se ve mejor)
+        // Ordenar alfabéticamente
         window.recetasDB.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         window.recetasDB.forEach(receta => {
           selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`;
           selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`;
         });
+
+        // Actualizar la tabla de la nueva pestaña
+        window.renderizarListaRecetas();
+
       } catch (error) {
-        selectVisor.innerHTML = '<option value="">❌ Error al cargar. Revisa que Firebase esté en Modo de Prueba.</option>';
+        selectVisor.innerHTML = '<option value="">❌ Error al cargar. Revisa Firebase.</option>';
         console.error(error);
+      }
+    };
+
+    // --- RENDERIZAR LA LISTA (NUEVA PESTAÑA) ---
+    window.renderizarListaRecetas = () => {
+      const tabla = document.getElementById('tabla-todas-recetas');
+      tabla.innerHTML = '';
+      
+      if(window.recetasDB.length === 0) {
+        tabla.innerHTML = '<tr><td colspan="3" class="p-6 text-center text-gray-500 italic">No hay recetas guardadas todavía. Ve al Editor para crear una.</td></tr>';
+        return;
+      }
+
+      window.recetasDB.forEach(receta => {
+        tabla.innerHTML += `
+          <tr class="border-b hover:bg-gray-100 transition">
+            <td class="p-3 font-medium text-gray-800">${receta.nombre}</td>
+            <td class="p-3 text-center text-gray-600">${receta.pax_base}</td>
+            <td class="p-3 flex justify-center gap-2">
+              <button onclick="editarRecetaDesdeLista('${receta.id}')" class="bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold px-3 py-1 rounded text-sm transition shadow-sm">✏️ Editar</button>
+              <button onclick="eliminarReceta('${receta.id}')" class="bg-red-100 text-red-700 hover:bg-red-200 font-semibold px-3 py-1 rounded text-sm transition shadow-sm">🗑️ Borrar</button>
+            </td>
+          </tr>
+        `;
+      });
+    };
+
+    // --- ACCIONES DE LA LISTA ---
+    window.editarRecetaDesdeLista = (id) => {
+      document.getElementById('selector-editor').value = id;
+      window.cargarEnEditor();
+      window.cambiarPestaña('editor');
+    };
+
+    window.eliminarReceta = async (id) => {
+      const confirmacion = confirm("¿Estás seguro de que deseas eliminar esta receta? Esta acción no se puede deshacer.");
+      if (!confirmacion) return;
+
+      try {
+        await deleteDoc(doc(db, "recetas", id));
+        window.mostrarMensaje("🗑️ Receta eliminada", "text-red-600");
+        
+        // Recargar todo después de borrar
+        await window.obtenerRecetasDeFirebase();
+        
+        // Si la receta borrada estaba en el visor o editor, limpiar
+        if(window.recetaActual && window.recetaActual.id === id) {
+          window.recetaActual = null;
+          document.getElementById('contenido-receta').classList.add('hidden');
+          document.getElementById('titulo-receta').innerText = "Selecciona una receta";
+        }
+        window.limpiarEditor();
+
+      } catch (error) {
+        alert("Error al eliminar la receta. Revisa la consola.");
+        console.error("Error eliminando documento: ", error);
       }
     };
 
@@ -210,7 +298,6 @@
       window.mostrarMensaje("Guardando en la nube...", "text-blue-600");
 
       try {
-        // Guarda o actualiza el documento en la colección "recetas" con su ID
         await setDoc(doc(db, "recetas", id), datosGuardar);
         
         window.mostrarMensaje("✅ Receta guardada con éxito", "text-green-600");
@@ -282,10 +369,12 @@
     };
 
     window.cambiarPestaña = (pestaña) => {
-      document.getElementById('vista-visor').classList.add('hidden');
-      document.getElementById('vista-editor').classList.add('hidden');
-      document.getElementById('tab-visor').className = "flex-1 py-4 text-center tab-inactive transition";
-      document.getElementById('tab-editor').className = "flex-1 py-4 text-center tab-inactive transition";
+      // Ocultar todas las vistas y desactivar todos los botones
+      ['visor', 'lista', 'editor'].forEach(p => {
+        document.getElementById(`vista-${p}`).classList.add('hidden');
+        document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-inactive transition";
+      });
+      // Mostrar la seleccionada
       document.getElementById(`vista-${pestaña}`).classList.remove('hidden');
       document.getElementById(`tab-${pestaña}`).className = "flex-1 py-4 text-center tab-active transition";
     };
@@ -320,6 +409,7 @@
       document.getElementById('edit-nombre').value = '';
       document.getElementById('edit-pax-base').value = '4';
       document.getElementById('edit-procedimiento').value = '';
+      document.getElementById('selector-editor').value = '';
       document.getElementById('contenedor-ingredientes-editor').innerHTML = '';
       window.agregarFilaIngrediente();
     };
