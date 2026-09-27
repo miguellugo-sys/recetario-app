@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>App Recetario - Le Chique</title>
+  <title>Recetario Pro - Le Chique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
@@ -12,153 +12,193 @@
     .tab-inactive { color: #6b7280; }
     .loader { border: 4px solid #f3f3f3; border-top: 4px solid #ef4444; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: auto; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; margin: 2px; }
   </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="p-2 md:p-6">
 
-  <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+  <div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
     
-    <!-- NUEVO: 3 Pestañas en lugar de 2 -->
-    <div class="flex border-b">
-      <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition">📖 Visor de Recetas</button>
-      <button id="tab-lista" onclick="cambiarPestaña('lista')" class="flex-1 py-4 text-center tab-inactive transition">📋 Lista de Recetas</button>
-      <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition">✏️ Editor de Recetas</button>
+    <!-- Navegación -->
+    <div class="flex border-b text-sm md:text-base">
+      <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition">📖 Visor y PDF</button>
+      <button id="tab-lista" onclick="cambiarPestaña('lista')" class="flex-1 py-4 text-center tab-inactive transition">📋 Mis Recetas</button>
+      <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition">✏️ Editor Avanzado</button>
     </div>
 
-    <!-- PESTAÑA 1: VISOR -->
+    <!-- ================= PESTAÑA VISOR ================= -->
     <div id="vista-visor" class="p-6">
-      <div id="controles-impresion" class="bg-gray-50 p-4 rounded-lg mb-6 flex flex-col md:flex-row gap-4 items-center justify-between border">
-        <div class="w-full md:w-1/2">
+      <div id="controles-impresion" class="bg-gray-50 p-4 rounded-lg mb-6 flex flex-wrap gap-4 items-end border">
+        <div class="flex-1 min-w-[200px]">
           <label class="block text-sm font-bold text-gray-700 mb-1">Seleccionar Receta</label>
           <select id="selector-receta" onchange="cargarRecetaSeleccionada()" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-red-500 outline-none">
             <option value="">Conectando a base de datos...</option>
           </select>
         </div>
-        <div class="w-full md:w-1/4">
-          <label class="block text-sm font-bold text-gray-700 mb-1">Pax Deseado</label>
-          <input type="number" id="input-pax" oninput="recalcularPax()" value="1" min="1" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-red-500 outline-none">
+        <div class="w-32">
+          <label class="block text-sm font-bold text-gray-700 mb-1">Deseado</label>
+          <input type="number" id="input-pax" oninput="recalcularPax()" value="1" step="any" min="0.1" class="w-full p-2 border rounded-md outline-none">
         </div>
-        <div class="w-full md:w-1/4 flex justify-end mt-4 md:mt-0">
-          <button onclick="descargarPDF()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded shadow transition flex items-center gap-2 w-full justify-center">
-            📄 Descargar PDF
+        <div class="w-24">
+          <label class="block text-sm font-bold text-gray-700 mb-1">Unidad</label>
+          <input type="text" id="display-unidad-input" readonly class="w-full p-2 border bg-gray-100 rounded-md outline-none text-gray-500 text-center">
+        </div>
+        <div>
+          <button onclick="descargarPDF()" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded shadow transition flex items-center gap-2">
+            📄 Generar PDF
           </button>
         </div>
       </div>
 
-      <div id="zona-impresion" class="bg-white p-8">
-        <div class="flex justify-between items-center border-b-2 border-gray-200 pb-4 mb-6">
-          <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-16 object-contain" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
-          <div class="text-center">
-            <h1 id="titulo-receta" class="text-2xl md:text-3xl font-black text-gray-800 uppercase tracking-wider">Selecciona una receta</h1>
-            <p class="text-gray-500 text-sm mt-1">Calculado para: <span id="display-pax" class="font-bold text-red-600 text-lg">0</span> Pax</p>
-            <p class="text-xs text-gray-400 mt-1">Pax Base Original: <span id="display-pax-base">0</span></p>
+      <!-- PDF ZONE -->
+      <div id="zona-impresion" class="bg-white p-8 border border-gray-100 shadow-sm relative">
+        <!-- HEADER -->
+        <div class="flex justify-between items-center border-b-2 border-black pb-4 mb-4">
+          <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-14 object-contain" onerror="this.src='https://placehold.co/150x50?text=Le+Chique'">
+          <div class="text-center flex-1 px-4">
+            <h1 id="titulo-receta" class="text-2xl font-black text-black uppercase tracking-wider">SELECCIONA UNA RECETA</h1>
+            <p class="text-sm font-bold mt-1 text-gray-700">RENDIMIENTO: <span id="display-pax" class="text-red-600">0</span> <span id="display-unidad">Kg</span></p>
           </div>
-          <img src="./assets/logo_michelin.png" alt="Michelin" class="h-16 object-contain" onerror="this.src='https://placehold.co/80x80?text=Michelin'">
+          <img src="./assets/logo_michelin.png" alt="Michelin" class="h-14 object-contain" onerror="this.src='https://placehold.co/80x80?text=Michelin'">
         </div>
 
         <div id="contenido-receta" class="hidden">
-          <h2 class="text-xl font-bold text-gray-700 mb-3 border-b pb-1">Ingredientes</h2>
-          <table class="w-full text-left mb-6 border-collapse">
-            <thead>
-              <tr class="bg-gray-100 text-gray-600 text-sm uppercase">
-                <th class="p-3 border">Ingrediente</th>
-                <th class="p-3 border w-32 text-right">Cantidad</th>
-                <th class="p-3 border w-24">Unidad</th>
-              </tr>
-            </thead>
-            <tbody id="tabla-ingredientes" class="text-gray-700"></tbody>
-          </table>
-          <h2 class="text-xl font-bold text-gray-700 mb-3 border-b pb-1">Procedimiento</h2>
-          <div id="texto-procedimiento" class="text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-md border"></div>
+          <!-- METADATA GRID -->
+          <div class="grid grid-cols-4 gap-4 text-xs mb-6 border-b pb-4">
+            <div class="col-span-1 border-r pr-2">
+              <span class="block text-gray-400 font-bold uppercase mb-1">Partida</span>
+              <span id="visor-partida" class="font-bold text-gray-800 uppercase">---</span>
+            </div>
+            <div class="col-span-1 border-r px-2">
+              <span class="block text-gray-400 font-bold uppercase mb-1">Tipo</span>
+              <span id="visor-tipo" class="font-bold text-gray-800 uppercase">---</span>
+            </div>
+            <div class="col-span-1 border-r px-2">
+              <span class="block text-gray-400 font-bold uppercase mb-1">Alergias</span>
+              <div id="visor-alergenos" class="flex flex-wrap gap-1"></div>
+            </div>
+            <div class="col-span-1 pl-2">
+              <span class="block text-gray-400 font-bold uppercase mb-1">Temporada</span>
+              <div id="visor-temporada" class="flex flex-wrap gap-1 text-gray-600 font-bold"></div>
+            </div>
+          </div>
+
+          <!-- BLOQUES DE SUB-RECETAS (Generados dinámicamente) -->
+          <div id="contenedor-bloques-visor" class="space-y-6">
+            <!-- Bloques se inyectan aquí -->
+          </div>
         </div>
         
-        <div class="mt-12 pt-4 border-t border-gray-200 flex justify-between items-center text-xs text-gray-400">
-          <p>Documento generado automáticamente.</p>
+        <div class="mt-8 pt-4 border-t border-gray-200 flex justify-between items-center text-[10px] text-gray-400">
+          <p>Documento técnico confidencial.</p>
           <div class="flex items-center gap-2">
-            <span>Powered by:</span>
-            <img src="./assets/mi_logo.png" alt="Mi Logo" class="h-8 object-contain rounded-full" onerror="this.src='https://placehold.co/40x40?text=Mi+Logo'">
+            <span>Tech by:</span>
+            <img src="./assets/mi_logo.png" alt="Mi Logo" class="h-6 object-contain" onerror="this.src='https://placehold.co/40x40?text=Mi+Logo'">
           </div>
         </div>
       </div>
     </div>
 
-    <!-- PESTAÑA 2: LISTA DE RECETAS -->
+    <!-- ================= PESTAÑA LISTA ================= -->
     <div id="vista-lista" class="p-6 hidden">
       <div class="bg-gray-50 p-6 rounded-lg border">
-        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Administrar Recetas</h2>
-        
+        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Base de Datos de Recetas</h2>
         <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse bg-white rounded-md overflow-hidden shadow-sm">
-            <thead class="bg-gray-100 text-gray-600 border-b">
+          <table class="w-full text-left border-collapse bg-white rounded-md shadow-sm">
+            <thead class="bg-gray-100 text-gray-600 border-b text-sm">
               <tr>
-                <th class="p-3 font-semibold">Nombre de la Receta</th>
-                <th class="p-3 font-semibold text-center w-24">Pax Base</th>
-                <th class="p-3 font-semibold text-center w-48">Acciones</th>
+                <th class="p-3 font-semibold">Platillo</th>
+                <th class="p-3 font-semibold">Partida</th>
+                <th class="p-3 font-semibold text-center">Rendimiento Base</th>
+                <th class="p-3 font-semibold text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody id="tabla-todas-recetas" class="text-gray-700">
-              <!-- Se llena con JS -->
-            </tbody>
+            <tbody id="tabla-todas-recetas" class="text-gray-700 text-sm"></tbody>
           </table>
         </div>
-        
       </div>
     </div>
 
-    <!-- PESTAÑA 3: EDITOR -->
-    <div id="vista-editor" class="p-6 hidden">
-      <div class="bg-gray-50 p-6 rounded-lg border">
-        <div class="flex justify-between items-center mb-4 border-b pb-2">
-          <h2 class="text-xl font-bold text-gray-800">Crear o Modificar Receta</h2>
-          <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border rounded text-sm outline-none">
-            <option value="">-- Crear Nueva Receta --</option>
-          </select>
-        </div>
+    <!-- ================= PESTAÑA EDITOR ================= -->
+    <div id="vista-editor" class="p-6 hidden bg-gray-50">
+      <div class="flex justify-between items-center mb-6 border-b pb-2">
+        <h2 class="text-2xl font-black text-gray-800 uppercase tracking-tight">Editor de Recetas</h2>
+        <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border rounded font-bold outline-none bg-white">
+          <option value="">+ CREAR NUEVA RECETA</option>
+        </select>
+      </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Nombre de la Receta</label>
-            <input type="text" id="edit-nombre" placeholder="Ej: Esférico de Aceituna" class="w-full p-2 border rounded outline-none">
+      <!-- SECCIÓN 1: DATOS GENERALES -->
+      <div class="bg-white p-4 rounded shadow-sm border mb-6">
+        <h3 class="text-sm font-bold text-red-600 uppercase mb-3 border-b pb-1">1. Información Principal</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Nombre Oficial</label>
+            <input type="text" id="edit-nombre" placeholder="Ej: Beurre Blanc de Tosazu" class="w-full p-2 border rounded outline-none font-bold">
           </div>
           <div>
-            <label class="block text-sm font-bold text-gray-700 mb-1">Pax Base (Original)</label>
-            <input type="number" id="edit-pax-base" value="4" min="1" class="w-full p-2 border rounded outline-none">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Rend. Total</label>
+            <input type="number" id="edit-pax-base" value="1" step="any" class="w-full p-2 border rounded outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Unidad Rend.</label>
+            <input type="text" id="edit-unidad-base" placeholder="Ej: Kg, L, Pax" value="Kg" class="w-full p-2 border rounded outline-none">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Partida</label>
+            <input type="text" id="edit-partida" placeholder="Ej: Cuarto Caliente" class="w-full p-2 border rounded outline-none">
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Tipo</label>
+            <input type="text" id="edit-tipo" placeholder="Ej: Salsas y Vinagretas" class="w-full p-2 border rounded outline-none">
           </div>
         </div>
+      </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-bold text-gray-700 mb-1">Ingredientes</label>
-          <div id="contenedor-ingredientes-editor" class="space-y-2 mb-2"></div>
-          <button onclick="agregarFilaIngrediente()" class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded shadow">+ Añadir otro ingrediente</button>
+      <!-- SECCIÓN 2: ALÉRGENOS Y TEMPORADA -->
+      <div class="bg-white p-4 rounded shadow-sm border mb-6">
+        <h3 class="text-sm font-bold text-red-600 uppercase mb-3 border-b pb-1">2. Clasificación y Alérgenos</h3>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Alérgenos (Selecciona los presentes)</label>
+        <div id="contenedor-alergenos" class="flex flex-wrap gap-2 mb-4">
+          <!-- Checkboxes generados por JS -->
         </div>
+        <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Temporada Óptima</label>
+        <div id="contenedor-temporada" class="flex flex-wrap gap-2">
+          <!-- Checkboxes generados por JS -->
+        </div>
+      </div>
 
-        <div class="mb-4">
-          <label class="block text-sm font-bold text-gray-700 mb-1">Procedimiento</label>
-          <textarea id="edit-procedimiento" rows="4" placeholder="1. Primer paso..." class="w-full p-2 border rounded outline-none"></textarea>
+      <!-- SECCIÓN 3: SUB-RECETAS (Mise en Place) -->
+      <div class="mb-6">
+        <div class="flex justify-between items-center mb-3">
+          <h3 class="text-sm font-bold text-red-600 uppercase">3. Sub-Recetas (Mise en Place)</h3>
+          <button onclick="agregarBloqueSubreceta()" class="bg-gray-800 hover:bg-black text-white text-xs font-bold py-1 px-3 rounded shadow">+ AÑADIR SUB-RECETA</button>
         </div>
+        <div id="contenedor-bloques-editor" class="space-y-4">
+          <!-- Bloques se añaden aquí -->
+        </div>
+      </div>
 
-        <div class="flex items-center gap-4 border-t pt-4 mt-4">
-          <button onclick="guardarReceta()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow transition">
-            💾 Guardar en Firebase
-          </button>
-          <button onclick="limpiarEditor()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-6 rounded shadow transition">
-            Limpiar / Nueva
-          </button>
-          <div id="loader-guardar" class="loader"></div>
-          <span id="mensaje-estado" class="text-sm font-bold"></span>
-        </div>
+      <!-- BOTONES DE GUARDADO -->
+      <div class="flex items-center justify-end gap-4 border-t border-gray-300 pt-4 mt-6">
+        <span id="mensaje-estado" class="text-sm font-bold"></span>
+        <div id="loader-guardar" class="loader"></div>
+        <button onclick="limpiarEditor()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-6 rounded shadow transition">
+          Cancelar / Limpiar
+        </button>
+        <button onclick="guardarReceta()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-8 rounded shadow transition">
+          💾 Guardar Receta Completa
+        </button>
       </div>
     </div>
 
   </div>
 
-  <!-- SCRIPT DE FIREBASE -->
+  <!-- LÓGICA CORE -->
   <script type="module">
-    // Importamos Firebase (Se añadió deleteDoc)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-    // Tu configuración de Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyBJs05is5zZ25rteHveq0ubaXtX1Xw1K_8",
       authDomain: "recetario-le-chique.firebaseapp.com",
@@ -168,15 +208,36 @@
       appId: "1:78526035298:web:5d52c7422190a47f1fe83b"
     };
 
-    // Inicializar app y base de datos
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Variables globales
+    // Variables Globales
     window.recetasDB = []; 
     window.recetaActual = null;
+    let blockCounter = 0;
 
-    // --- OBTENER RECETAS DE FIREBASE ---
+    const ALERGENOS_LISTA = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"];
+    const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+    // ================== INIT ==================
+    window.onload = () => {
+      generarCheckboxes('contenedor-alergenos', ALERGENOS_LISTA, 'alergeno');
+      generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes');
+      window.obtenerRecetasDeFirebase();
+      window.agregarBloqueSubreceta(); 
+    };
+
+    function generarCheckboxes(containerId, items, namePrefix) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.map(item => `
+        <label class="flex items-center gap-1 bg-gray-100 px-2 py-1 rounded border cursor-pointer hover:bg-gray-200">
+          <input type="checkbox" value="${item}" class="chk-${namePrefix} w-3 h-3 text-red-600">
+          <span class="text-xs font-semibold text-gray-700">${item}</span>
+        </label>
+      `).join('');
+    }
+
+    // ================== FIREBASE ==================
     window.obtenerRecetasDeFirebase = async () => {
       const selectVisor = document.getElementById('selector-receta');
       const selectEditor = document.getElementById('selector-editor');
@@ -185,246 +246,295 @@
       try {
         const querySnapshot = await getDocs(collection(db, "recetas"));
         window.recetasDB = [];
-        querySnapshot.forEach((documento) => {
-          window.recetasDB.push(documento.data());
-        });
+        querySnapshot.forEach((doc) => window.recetasDB.push(doc.data()));
         
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
-        selectEditor.innerHTML = '<option value="">-- Crear Nueva Receta --</option>';
+        selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
 
-        // Ordenar alfabéticamente
         window.recetasDB.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         window.recetasDB.forEach(receta => {
           selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`;
           selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`;
         });
-
-        // Actualizar la tabla de la nueva pestaña
         window.renderizarListaRecetas();
-
       } catch (error) {
-        selectVisor.innerHTML = '<option value="">❌ Error al cargar. Revisa Firebase.</option>';
         console.error(error);
+        selectVisor.innerHTML = '<option value="">❌ Error de conexión</option>';
       }
     };
 
-    // --- RENDERIZAR LA LISTA (NUEVA PESTAÑA) ---
-    window.renderizarListaRecetas = () => {
-      const tabla = document.getElementById('tabla-todas-recetas');
-      tabla.innerHTML = '';
-      
-      if(window.recetasDB.length === 0) {
-        tabla.innerHTML = '<tr><td colspan="3" class="p-6 text-center text-gray-500 italic">No hay recetas guardadas todavía. Ve al Editor para crear una.</td></tr>';
-        return;
-      }
-
-      window.recetasDB.forEach(receta => {
-        tabla.innerHTML += `
-          <tr class="border-b hover:bg-gray-100 transition">
-            <td class="p-3 font-medium text-gray-800">${receta.nombre}</td>
-            <td class="p-3 text-center text-gray-600">${receta.pax_base}</td>
-            <td class="p-3 flex justify-center gap-2">
-              <button onclick="editarRecetaDesdeLista('${receta.id}')" class="bg-blue-100 text-blue-700 hover:bg-blue-200 font-semibold px-3 py-1 rounded text-sm transition shadow-sm">✏️ Editar</button>
-              <button onclick="eliminarReceta('${receta.id}')" class="bg-red-100 text-red-700 hover:bg-red-200 font-semibold px-3 py-1 rounded text-sm transition shadow-sm">🗑️ Borrar</button>
-            </td>
-          </tr>
-        `;
-      });
-    };
-
-    // --- ACCIONES DE LA LISTA ---
-    window.editarRecetaDesdeLista = (id) => {
-      document.getElementById('selector-editor').value = id;
-      window.cargarEnEditor();
-      window.cambiarPestaña('editor');
-    };
-
-    window.eliminarReceta = async (id) => {
-      const confirmacion = confirm("¿Estás seguro de que deseas eliminar esta receta? Esta acción no se puede deshacer.");
-      if (!confirmacion) return;
-
-      try {
-        await deleteDoc(doc(db, "recetas", id));
-        window.mostrarMensaje("🗑️ Receta eliminada", "text-red-600");
-        
-        // Recargar todo después de borrar
-        await window.obtenerRecetasDeFirebase();
-        
-        // Si la receta borrada estaba en el visor o editor, limpiar
-        if(window.recetaActual && window.recetaActual.id === id) {
-          window.recetaActual = null;
-          document.getElementById('contenido-receta').classList.add('hidden');
-          document.getElementById('titulo-receta').innerText = "Selecciona una receta";
-        }
-        window.limpiarEditor();
-
-      } catch (error) {
-        alert("Error al eliminar la receta. Revisa la consola.");
-        console.error("Error eliminando documento: ", error);
-      }
-    };
-
-    // --- GUARDAR RECETA EN FIREBASE ---
     window.guardarReceta = async () => {
       const nombre = document.getElementById('edit-nombre').value.trim();
-      const pax_base = parseInt(document.getElementById('edit-pax-base').value);
-      const procedimiento = document.getElementById('edit-procedimiento').value.trim();
+      const rendimiento_base = parseFloat(document.getElementById('edit-pax-base').value);
+      const unidad_base = document.getElementById('edit-unidad-base').value.trim();
       
-      if (!nombre || !pax_base || isNaN(pax_base)) {
-        window.mostrarMensaje("Por favor, llena el nombre y el pax base.", "text-red-600");
-        return;
+      if (!nombre || !rendimiento_base || isNaN(rendimiento_base)) {
+        return window.mostrarMensaje("Falta Nombre o Rendimiento Base.", "text-red-600");
       }
 
-      const ingredientes = [];
-      const filas = document.querySelectorAll('.fila-ingrediente');
-      filas.forEach(fila => {
-        const ingNombre = fila.querySelector('.ing-nombre').value.trim();
-        const ingCant = parseFloat(fila.querySelector('.ing-cant').value);
-        const ingUnidad = fila.querySelector('.ing-unidad').value.trim();
-        if (ingNombre && !isNaN(ingCant)) {
-          ingredientes.push({ nombre: ingNombre, cantidad: ingCant, unidad: ingUnidad });
-        }
+      const alergenos = Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value);
+      const temporada = Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value);
+      
+      // Recolectar Bloques
+      const bloques = [];
+      const domBloques = document.querySelectorAll('.bloque-receta');
+      domBloques.forEach(b => {
+        const nombreBloque = b.querySelector('.b-nombre').value.trim() || "Preparación Base";
+        const rendBloque = parseFloat(b.querySelector('.b-rend').value) || rendimiento_base;
+        const uniBloque = b.querySelector('.b-uni').value.trim() || unidad_base;
+        const procedimiento = b.querySelector('.b-proc').value.trim();
+        
+        const ingredientes = [];
+        b.querySelectorAll('.fila-ingrediente').forEach(fila => {
+          const ingNombre = fila.querySelector('.ing-nombre').value.trim();
+          const ingCant = parseFloat(fila.querySelector('.ing-cant').value);
+          const ingUnidad = fila.querySelector('.ing-unidad').value.trim();
+          if (ingNombre && !isNaN(ingCant)) {
+            ingredientes.push({ nombre: ingNombre, cantidad: ingCant, unidad: ingUnidad });
+          }
+        });
+
+        bloques.push({ nombre: nombreBloque, rendimiento: rendBloque, unidad: uniBloque, ingredientes, procedimiento });
       });
 
       let id = document.getElementById('selector-editor').value;
-      if (!id) {
-        id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-      }
+      if (!id) id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-      const datosGuardar = { id, nombre, pax_base, ingredientes, procedimiento };
+      const datos = { 
+        id, nombre, rendimiento_base, unidad_base, 
+        partida: document.getElementById('edit-partida').value.trim(), 
+        tipo: document.getElementById('edit-tipo').value.trim(),
+        alergenos, temporada, bloques 
+      };
 
       document.getElementById('loader-guardar').style.display = 'block';
-      window.mostrarMensaje("Guardando en la nube...", "text-blue-600");
-
       try {
-        await setDoc(doc(db, "recetas", id), datosGuardar);
-        
-        window.mostrarMensaje("✅ Receta guardada con éxito", "text-green-600");
+        await setDoc(doc(db, "recetas", id), datos);
+        window.mostrarMensaje("✅ Receta guardada", "text-green-600");
         document.getElementById('loader-guardar').style.display = 'none';
-        
         await window.obtenerRecetasDeFirebase();
-        
-        if(!document.getElementById('selector-editor').value) {
-          window.limpiarEditor();
-        }
+        if(!document.getElementById('selector-editor').value) window.limpiarEditor();
       } catch (error) {
-        window.mostrarMensaje("❌ Error al guardar. (Revisa reglas de Firebase)", "text-red-600");
+        window.mostrarMensaje("❌ Error al guardar.", "text-red-600");
         document.getElementById('loader-guardar').style.display = 'none';
-        console.error(error);
       }
     };
 
-    // --- FUNCIONES VISUALES ---
+    // ================== VISOR Y PDF ==================
     window.cargarRecetaSeleccionada = () => {
-      const idSeleccionado = document.getElementById('selector-receta').value;
-      window.recetaActual = window.recetasDB.find(r => r.id === idSeleccionado);
+      const id = document.getElementById('selector-receta').value;
+      window.recetaActual = window.recetasDB.find(r => r.id === id);
       
       if (window.recetaActual) {
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
-        document.getElementById('display-pax-base').innerText = window.recetaActual.pax_base;
-        document.getElementById('input-pax').value = window.recetaActual.pax_base;
-        document.getElementById('display-pax').innerText = window.recetaActual.pax_base;
-        document.getElementById('texto-procedimiento').innerText = window.recetaActual.procedimiento;
-        window.renderizarIngredientes(window.recetaActual.pax_base);
+        
+        // Metadatos
+        document.getElementById('input-pax').value = window.recetaActual.rendimiento_base;
+        document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base;
+        document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base;
+        document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
+        
+        document.getElementById('visor-partida').innerText = window.recetaActual.partida || "N/A";
+        document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "N/A";
+        
+        document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill bg-red-100 text-red-800 border border-red-200">${a}</span>`).join('') || "-";
+        document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).join(', ') || "TODO EL AÑO";
+        
+        window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
       } else {
         document.getElementById('contenido-receta').classList.add('hidden');
-        document.getElementById('titulo-receta').innerText = "Selecciona una receta";
-        document.getElementById('display-pax-base').innerText = "0";
-        document.getElementById('display-pax').innerText = "0";
       }
     };
 
     window.recalcularPax = () => {
       if (!window.recetaActual) return;
-      const paxDeseado = parseFloat(document.getElementById('input-pax').value) || 0;
+      const paxDeseado = parseFloat(document.getElementById('input-pax').value) || 0.1;
       document.getElementById('display-pax').innerText = paxDeseado;
-      window.renderizarIngredientes(paxDeseado);
+      window.renderizarBloquesVisor(paxDeseado);
     };
 
-    window.renderizarIngredientes = (paxDeseado) => {
-      const tabla = document.getElementById('tabla-ingredientes');
-      tabla.innerHTML = '';
-      const factor = paxDeseado / window.recetaActual.pax_base;
-      window.recetaActual.ingredientes.forEach(ing => {
-        const cantidadCalculada = (ing.cantidad * factor);
-        const cantidadMostrada = cantidadCalculada % 1 === 0 ? cantidadCalculada : cantidadCalculada.toFixed(2);
-        tabla.innerHTML += `
-          <tr class="border-b hover:bg-gray-50">
-            <td class="p-3">${ing.nombre}</td>
-            <td class="p-3 text-right font-bold text-red-600">${cantidadMostrada}</td>
-            <td class="p-3 text-gray-500">${ing.unidad}</td>
-          </tr>
+    window.renderizarBloquesVisor = (paxDeseado) => {
+      const contenedor = document.getElementById('contenedor-bloques-visor');
+      contenedor.innerHTML = '';
+      
+      const factorGlobal = paxDeseado / window.recetaActual.rendimiento_base;
+
+      (window.recetaActual.bloques || []).forEach(bloque => {
+        const rendCalculado = bloque.rendimiento * factorGlobal;
+        const rendDisplay = rendCalculado % 1 === 0 ? rendCalculado : rendCalculado.toFixed(3);
+
+        let tablaIng = bloque.ingredientes.map(ing => {
+          const cantCalculada = ing.cantidad * factorGlobal;
+          const cantDisp = cantCalculada % 1 === 0 ? cantCalculada : cantCalculada.toFixed(2);
+          return `
+            <tr class="border-b border-gray-200">
+              <td class="py-1 text-gray-800 font-medium">${cantDisp} <span class="text-xs text-gray-500">${ing.unidad}</span></td>
+              <td class="py-1 text-gray-800 uppercase text-sm">${ing.nombre}</td>
+            </tr>`;
+        }).join('');
+
+        contenedor.innerHTML += `
+          <div class="mb-4 break-inside-avoid">
+            <h3 class="bg-black text-white text-xs font-bold py-1 px-2 uppercase tracking-wide flex justify-between">
+              <span>Para ${rendDisplay} ${bloque.unidad} de ${bloque.nombre}</span>
+              <span class="text-gray-300">- ${window.recetaActual.partida || ''}</span>
+            </h3>
+            <div class="flex flex-col md:flex-row gap-4 mt-2">
+              <div class="md:w-1/2">
+                <table class="w-full text-left text-sm">
+                  <tbody>${tablaIng}</tbody>
+                </table>
+              </div>
+              <div class="md:w-1/2 bg-gray-50 p-3 rounded border text-sm text-gray-700 whitespace-pre-wrap leading-tight">
+                ${bloque.procedimiento}
+              </div>
+            </div>
+          </div>
         `;
       });
     };
 
     window.descargarPDF = () => {
-      if (!window.recetaActual) return alert("Selecciona una receta primero.");
+      if (!window.recetaActual) return alert("Selecciona una receta.");
       const elemento = document.getElementById('zona-impresion');
-      const nombreArchivo = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('display-pax').innerText}pax.pdf`;
-      const opt = { margin: 0.5, filename: nombreArchivo, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+      const filename = `${window.recetaActual.nombre}_${document.getElementById('display-pax').innerText}${window.recetaActual.unidad_base}.pdf`;
+      const opt = { margin: 0.4, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
       html2pdf().set(opt).from(elemento).save();
     };
 
-    window.cambiarPestaña = (pestaña) => {
-      // Ocultar todas las vistas y desactivar todos los botones
-      ['visor', 'lista', 'editor'].forEach(p => {
-        document.getElementById(`vista-${p}`).classList.add('hidden');
-        document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-inactive transition";
-      });
-      // Mostrar la seleccionada
-      document.getElementById(`vista-${pestaña}`).classList.remove('hidden');
-      document.getElementById(`tab-${pestaña}`).className = "flex-1 py-4 text-center tab-active transition";
+    // ================== GESTOR DE BLOQUES EDITOR ==================
+    window.agregarBloqueSubreceta = (nombre = '', rend = '', uni = '', proc = '', ingredientes = []) => {
+      const bId = `bloque-${blockCounter++}`;
+      const div = document.createElement('div');
+      div.className = 'bloque-receta bg-white border border-gray-300 rounded p-4 relative shadow-sm';
+      div.id = bId;
+      div.innerHTML = `
+        <button onclick="this.parentElement.remove()" class="absolute top-2 right-2 text-red-500 hover:bg-red-100 p-1 rounded font-bold text-xs">❌ Borrar Bloque</button>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3 pr-10">
+          <div><label class="text-[10px] uppercase font-bold text-gray-400 block">Nombre Sub-receta</label><input type="text" value="${nombre}" placeholder="Ej: Vinagre Tosazu" class="b-nombre w-full border-b p-1 outline-none text-sm font-bold"></div>
+          <div><label class="text-[10px] uppercase font-bold text-gray-400 block">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b p-1 outline-none text-sm"></div>
+          <div><label class="text-[10px] uppercase font-bold text-gray-400 block">Unidad (Kg, L)</label><input type="text" value="${uni}" class="b-uni w-full border-b p-1 outline-none text-sm"></div>
+        </div>
+        <div class="flex flex-col md:flex-row gap-4">
+          <div class="md:w-1/2 border-r pr-4">
+            <div class="flex justify-between items-center mb-2">
+              <label class="text-xs font-bold text-gray-600 uppercase">Ingredientes</label>
+              <button onclick="agregarIngrediente('${bId}')" class="text-[10px] bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded">+ Ingrediente</button>
+            </div>
+            <div class="c-ingredientes space-y-1"></div>
+          </div>
+          <div class="md:w-1/2">
+            <label class="text-xs font-bold text-gray-600 uppercase block mb-2">Procedimiento Numerado</label>
+            <textarea class="b-proc w-full border rounded p-2 text-sm outline-none bg-gray-50 h-24" placeholder="1. Calentar...\n2. Reducir...">${proc}</textarea>
+          </div>
+        </div>
+      `;
+      document.getElementById('contenedor-bloques-editor').appendChild(div);
+      
+      if(ingredientes.length === 0) window.agregarIngrediente(bId);
+      else ingredientes.forEach(ing => window.agregarIngrediente(bId, ing.nombre, ing.cantidad, ing.unidad));
     };
 
-    window.agregarFilaIngrediente = (nombre = '', cant = '', unidad = '') => {
+    window.agregarIngrediente = (bloqueId, nombre = '', cant = '', unidad = '') => {
+      const b = document.getElementById(bloqueId).querySelector('.c-ingredientes');
       const div = document.createElement('div');
-      div.className = 'flex gap-2 fila-ingrediente items-center';
+      div.className = 'fila-ingrediente flex gap-1';
       div.innerHTML = `
-        <input type="text" placeholder="Nombre" value="${nombre}" class="ing-nombre flex-1 p-2 border rounded outline-none">
-        <input type="number" placeholder="Cant." value="${cant}" step="any" class="ing-cant w-24 p-2 border rounded outline-none">
-        <input type="text" placeholder="Unid." value="${unidad}" class="ing-unidad w-24 p-2 border rounded outline-none">
-        <button onclick="this.parentElement.remove()" class="text-red-500 font-bold px-2 hover:bg-red-100 rounded">X</button>
+        <input type="text" placeholder="Nombre" value="${nombre}" class="ing-nombre flex-1 border p-1 text-xs outline-none rounded">
+        <input type="number" placeholder="Cant." value="${cant}" step="any" class="ing-cant w-16 border p-1 text-xs outline-none rounded">
+        <input type="text" placeholder="Unid" value="${unidad}" class="ing-unidad w-12 border p-1 text-xs outline-none rounded">
+        <button onclick="this.parentElement.remove()" class="text-red-500 font-bold px-1 hover:bg-red-50 text-xs">X</button>
       `;
-      document.getElementById('contenedor-ingredientes-editor').appendChild(div);
+      b.appendChild(div);
+    };
+
+    // ================== UTILIDADES ==================
+    window.cambiarPestaña = (p) => {
+      ['visor', 'lista', 'editor'].forEach(id => {
+        document.getElementById(`vista-${id}`).classList.add('hidden');
+        document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition";
+      });
+      document.getElementById(`vista-${p}`).classList.remove('hidden');
+      document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition";
+    };
+
+    window.renderizarListaRecetas = () => {
+      const t = document.getElementById('tabla-todas-recetas');
+      t.innerHTML = window.recetasDB.map(r => `
+        <tr class="border-b hover:bg-gray-100 transition">
+          <td class="p-3 font-bold">${r.nombre}</td>
+          <td class="p-3 text-gray-500 uppercase text-xs">${r.partida || '-'}</td>
+          <td class="p-3 text-center">${r.rendimiento_base} ${r.unidad_base || 'Pax'}</td>
+          <td class="p-3 text-center">
+            <button onclick="editarReceta('${r.id}')" class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs">Editar</button>
+            <button onclick="eliminarReceta('${r.id}')" class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">Borrar</button>
+          </td>
+        </tr>`).join('') || '<tr><td colspan="4" class="p-4 text-center text-gray-400">Sin recetas</td></tr>';
+    };
+
+    window.editarReceta = (id) => {
+      document.getElementById('selector-editor').value = id;
+      window.cargarEnEditor();
+      window.cambiarPestaña('editor');
     };
 
     window.cargarEnEditor = () => {
-      const idSeleccionado = document.getElementById('selector-editor').value;
-      document.getElementById('contenedor-ingredientes-editor').innerHTML = ''; 
-      if (idSeleccionado) {
-        const recetaEdit = window.recetasDB.find(r => r.id === idSeleccionado);
-        document.getElementById('edit-nombre').value = recetaEdit.nombre;
-        document.getElementById('edit-pax-base').value = recetaEdit.pax_base;
-        document.getElementById('edit-procedimiento').value = recetaEdit.procedimiento;
-        recetaEdit.ingredientes.forEach(ing => window.agregarFilaIngrediente(ing.nombre, ing.cantidad, ing.unidad));
+      const id = document.getElementById('selector-editor').value;
+      window.limpiarFormularioBase();
+      if (id) {
+        const r = window.recetasDB.find(x => x.id === id);
+        document.getElementById('edit-nombre').value = r.nombre;
+        document.getElementById('edit-pax-base').value = r.rendimiento_base;
+        document.getElementById('edit-unidad-base').value = r.unidad_base || 'Kg';
+        document.getElementById('edit-partida').value = r.partida || '';
+        document.getElementById('edit-tipo').value = r.tipo || '';
+        
+        document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value));
+        document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
+
+        if(r.bloques && r.bloques.length > 0) {
+          r.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes));
+        } else {
+          // Migración para recetas viejas sin bloques
+          window.agregarBloqueSubreceta('Base', r.rendimiento_base, r.unidad_base, r.procedimiento, r.ingredientes);
+        }
       } else {
-        window.limpiarEditor();
+        window.agregarBloqueSubreceta();
       }
     };
 
-    window.limpiarEditor = () => {
+    window.limpiarFormularioBase = () => {
       document.getElementById('edit-nombre').value = '';
-      document.getElementById('edit-pax-base').value = '4';
-      document.getElementById('edit-procedimiento').value = '';
+      document.getElementById('edit-pax-base').value = '1';
+      document.getElementById('edit-unidad-base').value = 'Kg';
+      document.getElementById('edit-partida').value = '';
+      document.getElementById('edit-tipo').value = '';
+      document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false);
+      document.getElementById('contenedor-bloques-editor').innerHTML = '';
+    };
+
+    window.limpiarEditor = () => {
       document.getElementById('selector-editor').value = '';
-      document.getElementById('contenedor-ingredientes-editor').innerHTML = '';
-      window.agregarFilaIngrediente();
+      window.limpiarFormularioBase();
+      window.agregarBloqueSubreceta();
+    };
+
+    window.eliminarReceta = async (id) => {
+      if (!confirm("¿Eliminar receta permanentemente?")) return;
+      try {
+        await deleteDoc(doc(db, "recetas", id));
+        await window.obtenerRecetasDeFirebase();
+        window.limpiarEditor();
+      } catch (e) { alert("Error al borrar."); }
     };
 
     window.mostrarMensaje = (texto, claseColor) => {
       const span = document.getElementById('mensaje-estado');
       span.innerText = texto;
       span.className = `text-sm font-bold ${claseColor}`;
-      setTimeout(() => { span.innerText = ""; }, 5000);
-    };
-
-    // Inicializar al cargar la página
-    window.onload = () => {
-      window.obtenerRecetasDeFirebase();
-      window.agregarFilaIngrediente(); 
+      setTimeout(() => span.innerText = "", 5000);
     };
   </script>
 </body>
