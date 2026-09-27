@@ -143,16 +143,16 @@
   </div>
 
   <script>
-    // === ENLACE A TU GOOGLE APPS SCRIPT ===
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyDvQUfLh-Vcxc4vUhKkTIL1amv4Gysr49Sn4MVspDEFTMeIRFKI9KF5Qn0XKkgWrkQbg/exec";
+    // === ENLACE A TU GOOGLE APPS SCRIPT (NUEVO Y ACTUALIZADO) ===
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyhBR9Can0qdPrE_8i7QGKd9OoNiwk-PyqxrT9RLvRExD17wlAvwyUNYEkiuaUJlaboFg/exec";
     
-    let recetasDB = []; // Aquí se guardarán las recetas descargadas
+    let recetasDB = []; 
     let recetaActual = null;
 
     // Iniciar la app
     window.onload = () => {
       obtenerRecetasDeGoogle();
-      agregarFilaIngrediente(); // Añade una fila vacía al editor por defecto
+      agregarFilaIngrediente(); 
     };
 
     // --- FUNCIONES DE COMUNICACIÓN CON GOOGLE SHEETS ---
@@ -203,7 +203,7 @@
         }
       });
 
-      // Crear ID amigable si es nueva (ej: Esférico de Aceituna -> esferico-de-aceituna)
+      // Crear ID amigable
       let id = document.getElementById('selector-editor').value;
       if (!id) {
         id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -216,28 +216,25 @@
       mostrarMensaje("Guardando en Google Sheets...", "text-blue-600");
 
       try {
-        // SOLUCIÓN AL ERROR CORS: mode: 'no-cors'
+        // Hacemos el envío normal de texto (sin la "venda" del no-cors)
         await fetch(SCRIPT_URL, {
           method: 'POST',
-          mode: 'no-cors',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify(datosGuardar)
         });
         
-        mostrarMensaje("✅ Receta enviada a Google Sheets", "text-green-600");
+        mostrarMensaje("✅ Receta guardada con éxito", "text-green-600");
         document.getElementById('loader-guardar').style.display = 'none';
         
-        // Esperamos 2 segundos para dar tiempo a que Google guarde, y recargamos
-        setTimeout(() => {
-          obtenerRecetasDeGoogle();
-        }, 2000);
+        // Recargar las recetas para que aparezca la nueva
+        obtenerRecetasDeGoogle();
         
         // Limpiar formulario si era nueva
         if(!document.getElementById('selector-editor').value) {
           limpiarEditor();
         }
       } catch (error) {
-        mostrarMensaje("❌ Error de red. Intenta de nuevo.", "text-red-600");
+        mostrarMensaje("❌ Error al guardar. Revisa la consola.", "text-red-600");
         document.getElementById('loader-guardar').style.display = 'none';
         console.error(error);
       }
@@ -282,7 +279,6 @@
 
       recetaActual.ingredientes.forEach(ing => {
         const cantidadCalculada = (ing.cantidad * factor);
-        // Mostrar sin decimales si es exacto, o con 2 decimales si no lo es
         const cantidadMostrada = cantidadCalculada % 1 === 0 ? cantidadCalculada : cantidadCalculada.toFixed(2);
 
         tabla.innerHTML += `
