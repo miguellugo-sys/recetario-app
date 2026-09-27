@@ -4,12 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>App Recetario - Le Chique</title>
-  <!-- Tailwind CSS para el diseño -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- html2pdf para generar el PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   <style>
-    /* Estilos base */
     body { background-color: #f3f4f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .tab-active { border-bottom: 2px solid #ef4444; color: #ef4444; font-weight: bold; }
     .tab-inactive { color: #6b7280; }
@@ -21,16 +18,13 @@
 
   <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
     
-    <!-- Navegación de Pestañas -->
     <div class="flex border-b">
       <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition">📖 Visor de Recetas</button>
       <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition">✏️ Editor de Recetas</button>
     </div>
 
-    <!-- PESTAÑA 1: VISOR Y PDF -->
+    <!-- PESTAÑA VISOR -->
     <div id="vista-visor" class="p-6">
-      
-      <!-- Controles que NO se imprimen -->
       <div id="controles-impresion" class="bg-gray-50 p-4 rounded-lg mb-6 flex flex-col md:flex-row gap-4 items-center justify-between border">
         <div class="w-full md:w-1/2">
           <label class="block text-sm font-bold text-gray-700 mb-1">Seleccionar Receta</label>
@@ -49,10 +43,7 @@
         </div>
       </div>
 
-      <!-- ZONA DE IMPRESIÓN (Esto es lo que sale en el PDF) -->
       <div id="zona-impresion" class="bg-white p-8">
-        
-        <!-- Logos -->
         <div class="flex justify-between items-center border-b-2 border-gray-200 pb-4 mb-6">
           <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-16 object-contain" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
           <div class="text-center">
@@ -73,30 +64,23 @@
                 <th class="p-3 border w-24">Unidad</th>
               </tr>
             </thead>
-            <tbody id="tabla-ingredientes" class="text-gray-700">
-              <!-- Se llena con JS -->
-            </tbody>
+            <tbody id="tabla-ingredientes" class="text-gray-700"></tbody>
           </table>
-
           <h2 class="text-xl font-bold text-gray-700 mb-3 border-b pb-1">Procedimiento</h2>
-          <div id="texto-procedimiento" class="text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-md border">
-            <!-- Se llena con JS -->
-          </div>
+          <div id="texto-procedimiento" class="text-gray-700 whitespace-pre-wrap leading-relaxed bg-gray-50 p-4 rounded-md border"></div>
         </div>
         
-        <!-- Footer Personalizado para el PDF -->
         <div class="mt-12 pt-4 border-t border-gray-200 flex justify-between items-center text-xs text-gray-400">
           <p>Documento generado automáticamente.</p>
           <div class="flex items-center gap-2">
             <span>Powered by:</span>
-            <!-- Tu logo personal -->
             <img src="./assets/mi_logo.png" alt="Mi Logo" class="h-8 object-contain rounded-full" onerror="this.src='https://placehold.co/40x40?text=Mi+Logo'">
           </div>
         </div>
       </div>
     </div>
 
-    <!-- PESTAÑA 2: EDITOR DE RECETAS -->
+    <!-- PESTAÑA EDITOR -->
     <div id="vista-editor" class="p-6 hidden">
       <div class="bg-gray-50 p-6 rounded-lg border">
         <div class="flex justify-between items-center mb-4 border-b pb-2">
@@ -119,9 +103,7 @@
 
         <div class="mb-4">
           <label class="block text-sm font-bold text-gray-700 mb-1">Ingredientes</label>
-          <div id="contenedor-ingredientes-editor" class="space-y-2 mb-2">
-            <!-- Las filas de ingredientes irán aquí -->
-          </div>
+          <div id="contenedor-ingredientes-editor" class="space-y-2 mb-2"></div>
           <button onclick="agregarFilaIngrediente()" class="text-sm bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded shadow">+ Añadir otro ingrediente</button>
         </div>
 
@@ -143,20 +125,17 @@
   </div>
 
   <script>
-    // === TU NUEVO ENLACE A GOOGLE APPS SCRIPT ===
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyoHYctD5slvmtk7p4Y5_EnZQL_Zaf8fLG5-liCsAcDBpaFpbktaRZk4-lRK4PJwAdoWQ/exec";
+    // ⚠️ PEGA TU NUEVO ENLACE AQUÍ ADENTRO:
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_tO3DVQTTTwiKqX11M6ObNA7vpN31How6nm2Xy6VRY36I1Mv0jy5Y7dZnoIC42u5A9w/exec";
     
     let recetasDB = []; 
     let recetaActual = null;
 
-    // Iniciar la app
     window.onload = () => {
       obtenerRecetasDeGoogle();
       agregarFilaIngrediente(); 
     };
 
-    // --- FUNCIONES DE COMUNICACIÓN CON GOOGLE SHEETS ---
-    
     async function obtenerRecetasDeGoogle() {
       const selectVisor = document.getElementById('selector-receta');
       const selectEditor = document.getElementById('selector-editor');
@@ -166,18 +145,15 @@
         const respuesta = await fetch(SCRIPT_URL);
         recetasDB = await respuesta.json();
         
-        // Limpiar selectores
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
         selectEditor.innerHTML = '<option value="">-- Crear Nueva Receta --</option>';
 
-        // Llenar selectores
         recetasDB.forEach(receta => {
           selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`;
           selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`;
         });
       } catch (error) {
         selectVisor.innerHTML = '<option value="">❌ Error al cargar recetas</option>';
-        console.error("Error al conectar con Google Sheets:", error);
       }
     }
 
@@ -191,7 +167,6 @@
         return;
       }
 
-      // Recolectar ingredientes del editor
       const ingredientes = [];
       const filas = document.querySelectorAll('.fila-ingrediente');
       filas.forEach(fila => {
@@ -203,7 +178,6 @@
         }
       });
 
-      // Crear ID amigable
       let id = document.getElementById('selector-editor').value;
       if (!id) {
         id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -211,49 +185,41 @@
 
       const datosGuardar = { id, nombre, pax_base, ingredientes, procedimiento };
 
-      // Mostrar cargando
       document.getElementById('loader-guardar').style.display = 'block';
       mostrarMensaje("Guardando en Google Sheets...", "text-blue-600");
 
       try {
-        await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify(datosGuardar)
-        });
+        // ✨ EL TRUCO PARA FIREFOX: Enviamos los datos por la URL (GET) en vez de por POST
+        const urlSegura = SCRIPT_URL + "?action=save&datos=" + encodeURIComponent(JSON.stringify(datosGuardar));
+        
+        await fetch(urlSegura);
         
         mostrarMensaje("✅ Receta guardada con éxito", "text-green-600");
         document.getElementById('loader-guardar').style.display = 'none';
         
-        // Recargar las recetas para que aparezca la nueva
         obtenerRecetasDeGoogle();
         
-        // Limpiar formulario si era nueva
         if(!document.getElementById('selector-editor').value) {
           limpiarEditor();
         }
       } catch (error) {
-        mostrarMensaje("❌ Error al guardar. Revisa la consola.", "text-red-600");
+        mostrarMensaje("❌ Error. Intenta desactivar el bloqueador de rastreo de Firefox.", "text-red-600");
         document.getElementById('loader-guardar').style.display = 'none';
         console.error(error);
       }
     }
 
-    // --- FUNCIONES DEL VISOR ---
-
+    // (El resto del código visual sigue igual)
     function cargarRecetaSeleccionada() {
       const idSeleccionado = document.getElementById('selector-receta').value;
       recetaActual = recetasDB.find(r => r.id === idSeleccionado);
-      
       if (recetaActual) {
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = recetaActual.nombre;
         document.getElementById('display-pax-base').innerText = recetaActual.pax_base;
-        
         document.getElementById('input-pax').value = recetaActual.pax_base;
         document.getElementById('display-pax').innerText = recetaActual.pax_base;
         document.getElementById('texto-procedimiento').innerText = recetaActual.procedimiento;
-        
         renderizarIngredientes(recetaActual.pax_base);
       } else {
         document.getElementById('contenido-receta').classList.add('hidden');
@@ -273,13 +239,10 @@
     function renderizarIngredientes(paxDeseado) {
       const tabla = document.getElementById('tabla-ingredientes');
       tabla.innerHTML = '';
-      
       const factor = paxDeseado / recetaActual.pax_base;
-
       recetaActual.ingredientes.forEach(ing => {
         const cantidadCalculada = (ing.cantidad * factor);
         const cantidadMostrada = cantidadCalculada % 1 === 0 ? cantidadCalculada : cantidadCalculada.toFixed(2);
-
         tabla.innerHTML += `
           <tr class="border-b hover:bg-gray-50">
             <td class="p-3">${ing.nombre}</td>
@@ -291,33 +254,18 @@
     }
 
     function descargarPDF() {
-      if (!recetaActual) {
-        alert("Por favor selecciona una receta primero.");
-        return;
-      }
+      if (!recetaActual) return alert("Selecciona una receta primero.");
       const elemento = document.getElementById('zona-impresion');
       const nombreArchivo = `${recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('display-pax').innerText}pax.pdf`;
-      
-      const opt = {
-        margin:       0.5,
-        filename:     nombreArchivo,
-        image:        { type: 'jpeg', quality: 0.98 },
-        html2canvas:  { scale: 2, useCORS: true },
-        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-      };
-
+      const opt = { margin: 0.5, filename: nombreArchivo, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
       html2pdf().set(opt).from(elemento).save();
     }
-
-    // --- FUNCIONES DEL EDITOR ---
 
     function cambiarPestaña(pestaña) {
       document.getElementById('vista-visor').classList.add('hidden');
       document.getElementById('vista-editor').classList.add('hidden');
-      
       document.getElementById('tab-visor').className = "flex-1 py-4 text-center tab-inactive transition";
       document.getElementById('tab-editor').className = "flex-1 py-4 text-center tab-inactive transition";
-
       document.getElementById(`vista-${pestaña}`).classList.remove('hidden');
       document.getElementById(`tab-${pestaña}`).className = "flex-1 py-4 text-center tab-active transition";
     }
@@ -326,9 +274,9 @@
       const div = document.createElement('div');
       div.className = 'flex gap-2 fila-ingrediente items-center';
       div.innerHTML = `
-        <input type="text" placeholder="Nombre (ej: Sal)" value="${nombre}" class="ing-nombre flex-1 p-2 border rounded outline-none">
+        <input type="text" placeholder="Nombre" value="${nombre}" class="ing-nombre flex-1 p-2 border rounded outline-none">
         <input type="number" placeholder="Cant." value="${cant}" step="any" class="ing-cant w-24 p-2 border rounded outline-none">
-        <input type="text" placeholder="Unid. (ej: g, ml)" value="${unidad}" class="ing-unidad w-24 p-2 border rounded outline-none">
+        <input type="text" placeholder="Unid." value="${unidad}" class="ing-unidad w-24 p-2 border rounded outline-none">
         <button onclick="this.parentElement.remove()" class="text-red-500 font-bold px-2 hover:bg-red-100 rounded">X</button>
       `;
       document.getElementById('contenedor-ingredientes-editor').appendChild(div);
@@ -336,17 +284,13 @@
 
     function cargarEnEditor() {
       const idSeleccionado = document.getElementById('selector-editor').value;
-      document.getElementById('contenedor-ingredientes-editor').innerHTML = ''; // Limpiar filas
-
+      document.getElementById('contenedor-ingredientes-editor').innerHTML = ''; 
       if (idSeleccionado) {
         const recetaEdit = recetasDB.find(r => r.id === idSeleccionado);
         document.getElementById('edit-nombre').value = recetaEdit.nombre;
         document.getElementById('edit-pax-base').value = recetaEdit.pax_base;
         document.getElementById('edit-procedimiento').value = recetaEdit.procedimiento;
-        
-        recetaEdit.ingredientes.forEach(ing => {
-          agregarFilaIngrediente(ing.nombre, ing.cantidad, ing.unidad);
-        });
+        recetaEdit.ingredientes.forEach(ing => agregarFilaIngrediente(ing.nombre, ing.cantidad, ing.unidad));
       } else {
         limpiarEditor();
       }
