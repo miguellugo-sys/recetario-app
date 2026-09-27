@@ -29,7 +29,7 @@
         <div class="w-full md:w-1/2">
           <label class="block text-sm font-bold text-gray-700 mb-1">Seleccionar Receta</label>
           <select id="selector-receta" onchange="cargarRecetaSeleccionada()" class="w-full p-2 border rounded-md focus:ring-2 focus:ring-red-500 outline-none">
-            <option value="">Cargando recetas desde Google...</option>
+            <option value="">Conectando a base de datos...</option>
           </select>
         </div>
         <div class="w-full md:w-1/4">
@@ -114,7 +114,7 @@
 
         <div class="flex items-center gap-4 border-t pt-4 mt-4">
           <button onclick="guardarReceta()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded shadow transition">
-            💾 Guardar en Google Sheets
+            💾 Guardar en Firebase
           </button>
           <div id="loader-guardar" class="loader"></div>
           <span id="mensaje-estado" class="text-sm font-bold"></span>
@@ -124,46 +124,67 @@
 
   </div>
 
-  <script>
-    // ⚠️ PEGA TU NUEVO ENLACE AQUÍ ADENTRO:
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby_tO3DVQTTTwiKqX11M6ObNA7vpN31How6nm2Xy6VRY36I1Mv0jy5Y7dZnoIC42u5A9w/exec";
-    
-    let recetasDB = []; 
-    let recetaActual = null;
+  <!-- SCRIPT DE FIREBASE -->
+  <script type="module">
+    // Importamos Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 
-    window.onload = () => {
-      obtenerRecetasDeGoogle();
-      agregarFilaIngrediente(); 
+    // Tu configuración exacta
+    const firebaseConfig = {
+      apiKey: "AIzaSyBJs05is5zZ25rteHveq0ubaXtX1Xw1K_8",
+      authDomain: "recetario-le-chique.firebaseapp.com",
+      projectId: "recetario-le-chique",
+      storageBucket: "recetario-le-chique.firebasestorage.app",
+      messagingSenderId: "78526035298",
+      appId: "1:78526035298:web:5d52c7422190a47f1fe83b"
     };
 
-    async function obtenerRecetasDeGoogle() {
+    // Inicializar app y base de datos
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Variables globales
+    window.recetasDB = []; 
+    window.recetaActual = null;
+
+    // --- OBTENER RECETAS DE FIREBASE ---
+    window.obtenerRecetasDeFirebase = async () => {
       const selectVisor = document.getElementById('selector-receta');
       const selectEditor = document.getElementById('selector-editor');
-      selectVisor.innerHTML = '<option value="">Descargando desde Google Sheets...</option>';
+      selectVisor.innerHTML = '<option value="">Descargando desde Firebase...</option>';
       
       try {
-        const respuesta = await fetch(SCRIPT_URL);
-        recetasDB = await respuesta.json();
+        const querySnapshot = await getDocs(collection(db, "recetas"));
+        window.recetasDB = [];
+        querySnapshot.forEach((documento) => {
+          window.recetasDB.push(documento.data());
+        });
         
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
         selectEditor.innerHTML = '<option value="">-- Crear Nueva Receta --</option>';
 
-        recetasDB.forEach(receta => {
+        // Ordenar alfabéticamente (opcional pero se ve mejor)
+        window.recetasDB.sort((a, b) => a.nombre.localeCompare(b.nombre));
+
+        window.recetasDB.forEach(receta => {
           selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`;
           selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`;
         });
       } catch (error) {
-        selectVisor.innerHTML = '<option value="">❌ Error al cargar recetas</option>';
+        selectVisor.innerHTML = '<option value="">❌ Error al cargar. Revisa que Firebase esté en Modo de Prueba.</option>';
+        console.error(error);
       }
-    }
+    };
 
-    async function guardarReceta() {
+    // --- GUARDAR RECETA EN FIREBASE ---
+    window.guardarReceta = async () => {
       const nombre = document.getElementById('edit-nombre').value.trim();
       const pax_base = parseInt(document.getElementById('edit-pax-base').value);
       const procedimiento = document.getElementById('edit-procedimiento').value.trim();
       
       if (!nombre || !pax_base || isNaN(pax_base)) {
-        mostrarMensaje("Por favor, llena el nombre y el pax base.", "text-red-600");
+        window.mostrarMensaje("Por favor, llena el nombre y el pax base.", "text-red-600");
         return;
       }
 
@@ -186,61 +207,60 @@
       const datosGuardar = { id, nombre, pax_base, ingredientes, procedimiento };
 
       document.getElementById('loader-guardar').style.display = 'block';
-      mostrarMensaje("Guardando en Google Sheets...", "text-blue-600");
+      window.mostrarMensaje("Guardando en la nube...", "text-blue-600");
 
       try {
-        // ✨ EL TRUCO PARA FIREFOX: Enviamos los datos por la URL (GET) en vez de por POST
-        const urlSegura = SCRIPT_URL + "?action=save&datos=" + encodeURIComponent(JSON.stringify(datosGuardar));
+        // Guarda o actualiza el documento en la colección "recetas" con su ID
+        await setDoc(doc(db, "recetas", id), datosGuardar);
         
-        await fetch(urlSegura);
-        
-        mostrarMensaje("✅ Receta guardada con éxito", "text-green-600");
+        window.mostrarMensaje("✅ Receta guardada con éxito", "text-green-600");
         document.getElementById('loader-guardar').style.display = 'none';
         
-        obtenerRecetasDeGoogle();
+        await window.obtenerRecetasDeFirebase();
         
         if(!document.getElementById('selector-editor').value) {
-          limpiarEditor();
+          window.limpiarEditor();
         }
       } catch (error) {
-        mostrarMensaje("❌ Error. Intenta desactivar el bloqueador de rastreo de Firefox.", "text-red-600");
+        window.mostrarMensaje("❌ Error al guardar. (Revisa reglas de Firebase)", "text-red-600");
         document.getElementById('loader-guardar').style.display = 'none';
         console.error(error);
       }
-    }
+    };
 
-    // (El resto del código visual sigue igual)
-    function cargarRecetaSeleccionada() {
+    // --- FUNCIONES VISUALES ---
+    window.cargarRecetaSeleccionada = () => {
       const idSeleccionado = document.getElementById('selector-receta').value;
-      recetaActual = recetasDB.find(r => r.id === idSeleccionado);
-      if (recetaActual) {
+      window.recetaActual = window.recetasDB.find(r => r.id === idSeleccionado);
+      
+      if (window.recetaActual) {
         document.getElementById('contenido-receta').classList.remove('hidden');
-        document.getElementById('titulo-receta').innerText = recetaActual.nombre;
-        document.getElementById('display-pax-base').innerText = recetaActual.pax_base;
-        document.getElementById('input-pax').value = recetaActual.pax_base;
-        document.getElementById('display-pax').innerText = recetaActual.pax_base;
-        document.getElementById('texto-procedimiento').innerText = recetaActual.procedimiento;
-        renderizarIngredientes(recetaActual.pax_base);
+        document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
+        document.getElementById('display-pax-base').innerText = window.recetaActual.pax_base;
+        document.getElementById('input-pax').value = window.recetaActual.pax_base;
+        document.getElementById('display-pax').innerText = window.recetaActual.pax_base;
+        document.getElementById('texto-procedimiento').innerText = window.recetaActual.procedimiento;
+        window.renderizarIngredientes(window.recetaActual.pax_base);
       } else {
         document.getElementById('contenido-receta').classList.add('hidden');
         document.getElementById('titulo-receta').innerText = "Selecciona una receta";
         document.getElementById('display-pax-base').innerText = "0";
         document.getElementById('display-pax').innerText = "0";
       }
-    }
+    };
 
-    function recalcularPax() {
-      if (!recetaActual) return;
+    window.recalcularPax = () => {
+      if (!window.recetaActual) return;
       const paxDeseado = parseFloat(document.getElementById('input-pax').value) || 0;
       document.getElementById('display-pax').innerText = paxDeseado;
-      renderizarIngredientes(paxDeseado);
-    }
+      window.renderizarIngredientes(paxDeseado);
+    };
 
-    function renderizarIngredientes(paxDeseado) {
+    window.renderizarIngredientes = (paxDeseado) => {
       const tabla = document.getElementById('tabla-ingredientes');
       tabla.innerHTML = '';
-      const factor = paxDeseado / recetaActual.pax_base;
-      recetaActual.ingredientes.forEach(ing => {
+      const factor = paxDeseado / window.recetaActual.pax_base;
+      window.recetaActual.ingredientes.forEach(ing => {
         const cantidadCalculada = (ing.cantidad * factor);
         const cantidadMostrada = cantidadCalculada % 1 === 0 ? cantidadCalculada : cantidadCalculada.toFixed(2);
         tabla.innerHTML += `
@@ -251,26 +271,26 @@
           </tr>
         `;
       });
-    }
+    };
 
-    function descargarPDF() {
-      if (!recetaActual) return alert("Selecciona una receta primero.");
+    window.descargarPDF = () => {
+      if (!window.recetaActual) return alert("Selecciona una receta primero.");
       const elemento = document.getElementById('zona-impresion');
-      const nombreArchivo = `${recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('display-pax').innerText}pax.pdf`;
+      const nombreArchivo = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('display-pax').innerText}pax.pdf`;
       const opt = { margin: 0.5, filename: nombreArchivo, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
       html2pdf().set(opt).from(elemento).save();
-    }
+    };
 
-    function cambiarPestaña(pestaña) {
+    window.cambiarPestaña = (pestaña) => {
       document.getElementById('vista-visor').classList.add('hidden');
       document.getElementById('vista-editor').classList.add('hidden');
       document.getElementById('tab-visor').className = "flex-1 py-4 text-center tab-inactive transition";
       document.getElementById('tab-editor').className = "flex-1 py-4 text-center tab-inactive transition";
       document.getElementById(`vista-${pestaña}`).classList.remove('hidden');
       document.getElementById(`tab-${pestaña}`).className = "flex-1 py-4 text-center tab-active transition";
-    }
+    };
 
-    function agregarFilaIngrediente(nombre = '', cant = '', unidad = '') {
+    window.agregarFilaIngrediente = (nombre = '', cant = '', unidad = '') => {
       const div = document.createElement('div');
       div.className = 'flex gap-2 fila-ingrediente items-center';
       div.innerHTML = `
@@ -280,36 +300,42 @@
         <button onclick="this.parentElement.remove()" class="text-red-500 font-bold px-2 hover:bg-red-100 rounded">X</button>
       `;
       document.getElementById('contenedor-ingredientes-editor').appendChild(div);
-    }
+    };
 
-    function cargarEnEditor() {
+    window.cargarEnEditor = () => {
       const idSeleccionado = document.getElementById('selector-editor').value;
       document.getElementById('contenedor-ingredientes-editor').innerHTML = ''; 
       if (idSeleccionado) {
-        const recetaEdit = recetasDB.find(r => r.id === idSeleccionado);
+        const recetaEdit = window.recetasDB.find(r => r.id === idSeleccionado);
         document.getElementById('edit-nombre').value = recetaEdit.nombre;
         document.getElementById('edit-pax-base').value = recetaEdit.pax_base;
         document.getElementById('edit-procedimiento').value = recetaEdit.procedimiento;
-        recetaEdit.ingredientes.forEach(ing => agregarFilaIngrediente(ing.nombre, ing.cantidad, ing.unidad));
+        recetaEdit.ingredientes.forEach(ing => window.agregarFilaIngrediente(ing.nombre, ing.cantidad, ing.unidad));
       } else {
-        limpiarEditor();
+        window.limpiarEditor();
       }
-    }
+    };
 
-    function limpiarEditor() {
+    window.limpiarEditor = () => {
       document.getElementById('edit-nombre').value = '';
       document.getElementById('edit-pax-base').value = '4';
       document.getElementById('edit-procedimiento').value = '';
       document.getElementById('contenedor-ingredientes-editor').innerHTML = '';
-      agregarFilaIngrediente();
-    }
+      window.agregarFilaIngrediente();
+    };
 
-    function mostrarMensaje(texto, claseColor) {
+    window.mostrarMensaje = (texto, claseColor) => {
       const span = document.getElementById('mensaje-estado');
       span.innerText = texto;
       span.className = `text-sm font-bold ${claseColor}`;
       setTimeout(() => { span.innerText = ""; }, 5000);
-    }
+    };
+
+    // Inicializar al cargar la página
+    window.onload = () => {
+      window.obtenerRecetasDeFirebase();
+      window.agregarFilaIngrediente(); 
+    };
   </script>
 </body>
 </html>
