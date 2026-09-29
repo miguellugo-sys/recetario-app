@@ -131,7 +131,6 @@
               </div>
             </div>
 
-            <!-- BLOQUES DE SUB-RECETAS -->
             <div id="contenedor-bloques-visor" class="space-y-8"></div>
           </div>
           
@@ -145,10 +144,24 @@
         </div>
       </div>
 
-      <!-- ================= PESTAÑA LISTA ================= -->
+      <!-- ================= PESTAÑA LISTA (NUEVO BUSCADOR Y BACKUP) ================= -->
       <div id="vista-lista" class="p-6 hidden">
         <div class="bg-white p-6 rounded-sm border border-zinc-200">
-          <h2 class="font-serif text-2xl font-black text-zinc-900 mb-6 border-b border-zinc-200 pb-3">Base de Datos de Recetas</h2>
+          
+          <!-- Encabezado con Buscador y Botón de Backup -->
+          <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-zinc-200 pb-4 gap-4">
+            <h2 class="font-serif text-2xl font-black text-zinc-900">Base de Datos de Recetas</h2>
+            
+            <div class="flex w-full md:w-auto items-center gap-3">
+              <input type="text" id="input-buscador" onkeyup="filtrarRecetas()" placeholder="🔍 Buscar por nombre, partida o sucursal..." class="w-full md:w-72 p-2.5 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900 bg-zinc-50">
+              
+              <!-- Botón oculto por defecto, se activa solo para el Admin -->
+              <button id="btn-backup" onclick="descargarBackup()" class="hidden bg-zinc-800 hover:bg-black text-white px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition shadow-sm">
+                💾 Backup JSON
+              </button>
+            </div>
+          </div>
+
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead class="bg-zinc-50 text-zinc-500 border-b border-zinc-200 text-xs uppercase tracking-wider">
@@ -187,7 +200,6 @@
               <input type="text" id="edit-nombre" placeholder="Ej: Beurre Blanc de Tosazu" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none font-bold text-zinc-800">
             </div>
             
-            <!-- NUEVO SELECTOR DE SUCURSAL -->
             <div class="md:col-span-1">
               <label class="block text-[10px] font-bold text-rose-900 uppercase tracking-wider mb-1.5">Sucursal / CECO</label>
               <select id="edit-sucursal" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm font-semibold bg-rose-50 text-rose-900 focus:ring-1 focus:ring-rose-900">
@@ -270,17 +282,12 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // ==========================================
-    // 🧠 DICCIONARIO DE ROLES / SUCURSALES (CECO)
-    // Agrega aquí los correos de tus chefs y a qué restaurante pertenecen.
-    // Opciones válidas: "TODAS", "Le Chique", "Xuna", "Texas", "NY"
-    // ==========================================
+    // DICCIONARIO DE ROLES / SUCURSALES (CECO)
     const DICCIONARIO_USUARIOS = {
       "admin@lechique.com": "TODAS",
       "chef@xuna.com": "Xuna",
       "chef@texas.com": "Texas"
     };
-    // ==========================================
 
     window.recetasDB = []; 
     window.recetaActual = null;
@@ -299,7 +306,6 @@
     onAuthStateChanged(auth, (user) => {
       if (user) {
         window.usuarioActual = user;
-        // Asignar rol basado en el diccionario (Por defecto le damos "Le Chique" si no está en la lista)
         window.rolSucursal = DICCIONARIO_USUARIOS[user.email] || "Le Chique";
         
         document.getElementById('vista-login').classList.add('hidden');
@@ -307,6 +313,13 @@
         document.getElementById('user-email-display').innerText = user.email;
         document.getElementById('user-role-display').innerText = window.rolSucursal;
         
+        // Habilitar botón de Backup solo si es Admin ("TODAS")
+        if(window.rolSucursal === "TODAS") {
+          document.getElementById('btn-backup').classList.remove('hidden');
+        } else {
+          document.getElementById('btn-backup').classList.add('hidden');
+        }
+
         window.obtenerRecetasDeFirebase();
         if(document.getElementById('contenedor-bloques-editor').children.length === 0) {
           window.agregarBloqueSubreceta();
@@ -365,9 +378,8 @@
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          const recSucursal = data.sucursal || 'Le Chique'; // Compatibilidad recetas viejas
+          const recSucursal = data.sucursal || 'Le Chique';
           
-          // FILTRO INTELIGENTE DE SUCURSALES
           if (window.rolSucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.rolSucursal) {
             window.recetasDB.push(data);
           }
@@ -386,6 +398,33 @@
       } catch (error) {
         selectVisor.innerHTML = '<option value="">❌ Error de conexión</option>';
       }
+    };
+
+    // --- NUEVO: FUNCIÓN DE FILTRADO (BUSCADOR) ---
+    window.filtrarRecetas = () => {
+      const texto = document.getElementById('input-buscador').value;
+      window.renderizarListaRecetas(texto);
+    };
+
+    // --- NUEVO: FUNCIÓN DE EXPORTACIÓN (BACKUP) ---
+    window.descargarBackup = () => {
+      if (!window.recetasDB || window.recetasDB.length === 0) {
+        return alert("No hay recetas disponibles para respaldar.");
+      }
+      
+      const jsonString = JSON.stringify(window.recetasDB, null, 2);
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      
+      const fecha = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Backup_LeChique_${fecha}.json`;
+      
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
     };
 
     window.guardarReceta = async () => {
@@ -459,7 +498,6 @@
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
         
-        // Píldora de CECO visible
         const pillCeco = document.getElementById('visor-ceco');
         pillCeco.classList.remove('hidden');
         pillCeco.innerText = window.recetaActual.sucursal || 'Le Chique';
@@ -625,9 +663,19 @@
       document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs";
     };
 
-    window.renderizarListaRecetas = () => {
+    // --- ACTUALIZADO: La tabla ahora respeta el texto de búsqueda (filtro) ---
+    window.renderizarListaRecetas = (textoFiltro = '') => {
       const t = document.getElementById('tabla-todas-recetas');
-      t.innerHTML = window.recetasDB.map(r => {
+      const filtro = textoFiltro.toLowerCase();
+      
+      const filtradas = window.recetasDB.filter(r => {
+        const nombreMatch = r.nombre && r.nombre.toLowerCase().includes(filtro);
+        const partidaMatch = r.partida && r.partida.toLowerCase().includes(filtro);
+        const sucursalMatch = r.sucursal && r.sucursal.toLowerCase().includes(filtro);
+        return nombreMatch || partidaMatch || sucursalMatch;
+      });
+
+      t.innerHTML = filtradas.map(r => {
         const modificacion = r.auditoria ? `${r.auditoria.fecha.split(' ')[0]}<br><span class="text-[9px] text-zinc-400 normal-case">${r.auditoria.modificado_por}</span>` : '---';
         const sucursalLabel = r.sucursal || 'Le Chique';
         return `
@@ -636,12 +684,12 @@
           <td class="p-4"><span class="pill pill-ceco">${sucursalLabel}</span></td>
           <td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td>
           <td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${modificacion}</td>
-          <td class="p-4 text-center space-x-2">
+          <td class="p-4 text-center space-x-2 whitespace-nowrap">
             <button onclick="editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button>
             <button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button>
           </td>
         </tr>`
-      }).join('') || '<tr><td colspan="5" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">Sin recetas registradas</td></tr>';
+      }).join('') || '<tr><td colspan="5" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">No se encontraron recetas</td></tr>';
     };
 
     window.editarReceta = (id) => {
