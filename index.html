@@ -168,7 +168,6 @@
             <div class="flex w-full md:w-auto items-center gap-3">
               <input type="text" id="input-buscador" onkeyup="filtrarRecetas()" placeholder="🔍 Buscar receta..." class="w-full md:w-72 p-2.5 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900 bg-zinc-50">
               
-              <!-- Solo Admin ve Backup -->
               <button id="btn-backup" onclick="descargarBackup()" class="hidden bg-zinc-800 hover:bg-black text-white px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition shadow-sm">
                 💾 Backup
               </button>
@@ -363,7 +362,6 @@
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         
-        // 1. Obtener perfil de BD
         let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna' };
         
         if (user.email.toLowerCase() === 'miguellugo@mlcocina.com') {
@@ -374,7 +372,6 @@
           if(snap.exists()){
             perfil = snap.data();
           } else {
-            // Usuario creó cuenta pero no ha sido autorizado por Miguel
             await signOut(auth);
             const err = document.getElementById('login-error');
             err.innerText = "Cuenta creada pero NO AUTORIZADA. Contacta a miguellugo@mlcocina.com.";
@@ -386,14 +383,12 @@
         window.usuarioActual = user;
         window.perfilUsuario = perfil;
         
-        // Setup UI
         document.getElementById('vista-login').classList.add('hidden');
         document.getElementById('app-principal').classList.remove('hidden');
         document.getElementById('user-email-display').innerText = user.email;
         document.getElementById('user-ceco-display').innerText = perfil.sucursal;
         document.getElementById('user-role-display').innerText = perfil.rol;
         
-        // Permisos de Pestañas
         if(perfil.rol === 'SuperAdmin') {
           document.getElementById('tab-editor').classList.remove('hidden');
           document.getElementById('tab-admin').classList.remove('hidden');
@@ -402,16 +397,14 @@
         } else if(perfil.rol === 'Editor') {
           document.getElementById('tab-editor').classList.remove('hidden');
           document.getElementById('tab-admin').classList.add('hidden');
-          document.getElementById('selector-editor').classList.add('hidden'); // Solo crea, no modifica
+          document.getElementById('selector-editor').classList.add('hidden');
           document.getElementById('btn-backup').classList.add('hidden');
         } else {
-          // Lector
           document.getElementById('tab-editor').classList.add('hidden');
           document.getElementById('tab-admin').classList.add('hidden');
           document.getElementById('btn-backup').classList.add('hidden');
         }
 
-        // Cargar Base de datos base
         await window.cargarSucursalesBD();
         if(perfil.rol === 'SuperAdmin') {
           await window.cargarUsuariosBD();
@@ -483,9 +476,11 @@
         await setDoc(docRef, { lista: window.sucursalesConfig });
       }
 
-      // Actualizar selectores
       let optionsHtml = '<option value="Global">Global (Compartida)</option>';
-      let optionsAdmin = '';
+      
+      // PARCHE APLICADO AQUÍ: Agregada la opción TODAS para el Panel Admin
+      let optionsAdmin = '<option value="TODAS">TODAS (Acceso Global)</option>'; 
+      
       window.sucursalesConfig.forEach(s => {
         optionsHtml += `<option value="${s}">${s}</option>`;
         optionsAdmin += `<option value="${s}">${s}</option>`;
@@ -596,7 +591,8 @@
           const data = doc.data();
           const recSucursal = data.sucursal || 'Le Chique';
           
-          if (window.perfilUsuario.rol === "SuperAdmin" || recSucursal === "Global" || recSucursal === window.perfilUsuario.sucursal) {
+          // PARCHE APLICADO AQUÍ: Validar si la sucursal del usuario es "TODAS"
+          if (window.perfilUsuario.rol === "SuperAdmin" || window.perfilUsuario.sucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.perfilUsuario.sucursal) {
             window.recetasDB.push(data);
           }
         });
@@ -669,7 +665,6 @@
         bloques.push({ nombre: nombreBloque, rendimiento: rendBloque, unidad: uniBloque, ingredientes, procedimiento });
       });
 
-      // Si es Editor, forzar a crear ID nuevo SIEMPRE para no sobreescribir.
       let id = document.getElementById('selector-editor').value;
       if (!id || window.perfilUsuario.rol === 'Editor') {
         id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
@@ -695,7 +690,7 @@
         window.mostrarMensaje("✅ Receta guardada", "text-green-600");
         document.getElementById('loader-guardar').style.display = 'none';
         await window.obtenerRecetasDeFirebase();
-        window.limpiarEditor(); // Siempre limpia al guardar para evitar dobles
+        window.limpiarEditor(); 
       } catch (error) {
         window.mostrarMensaje("❌ Error al guardar.", "text-rose-900");
         document.getElementById('loader-guardar').style.display = 'none';
@@ -878,10 +873,8 @@
         document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden";
       });
       
-      // Mostrar pestaña solicitada
       document.getElementById(`vista-${p}`).classList.remove('hidden');
       
-      // Mostrar botones de navegación según permisos
       document.getElementById('tab-visor').classList.remove('hidden');
       document.getElementById('tab-lista').classList.remove('hidden');
       
@@ -907,7 +900,6 @@
         return nombreMatch || partidaMatch || sucursalMatch;
       });
 
-      // Solo Admin ve la columna de Acciones en la tabla
       const thAcciones = document.getElementById('col-acciones');
       if(window.perfilUsuario.rol === 'SuperAdmin') {
         thAcciones.classList.remove('hidden');
@@ -976,7 +968,7 @@
       document.getElementById('edit-unidad-base').value = 'Kg';
       document.getElementById('edit-partida').value = '';
       document.getElementById('edit-tipo').value = '';
-      document.getElementById('edit-sucursal').value = window.perfilUsuario.sucursal === 'TODAS' ? 'Le Chique' : window.perfilUsuario.sucursal;
+      document.getElementById('edit-sucursal').value = window.perfilUsuario.sucursal === 'TODAS' ? 'Global' : window.perfilUsuario.sucursal;
       document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false);
       document.getElementById('contenedor-bloques-editor').innerHTML = '';
     };
@@ -988,7 +980,7 @@
     };
 
     window.eliminarReceta = async (id) => {
-      event.stopPropagation(); // Evitar que abra el visor al clickear borrar
+      event.stopPropagation();
       if (!confirm("¿Eliminar receta permanentemente?")) return;
       try {
         await deleteDoc(doc(db, "recetas", id));
