@@ -25,6 +25,7 @@
     
     .pill { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #e4e4e7; background: #ffffff; color: #52525b; margin: 2px; }
     .pill-alergeno { border-color: #fecdd3; background-color: #fff1f2; color: #881337; }
+    .pill-ceco { background-color: #18181b; color: #ffffff; border-color: #18181b; padding: 3px 12px; font-size: 0.70rem; }
   </style>
 </head>
 <body class="p-2 md:p-6 text-zinc-800">
@@ -46,14 +47,14 @@
       </div>
     </div>
 
-    <!-- ================= APLICACIÓN PRINCIPAL (Oculta sin Login) ================= -->
+    <!-- ================= APLICACIÓN PRINCIPAL ================= -->
     <div id="app-principal" class="hidden">
       
       <!-- Topbar de Usuario -->
       <div class="bg-zinc-900 text-white px-6 py-2 flex justify-between items-center text-xs tracking-wider uppercase font-semibold">
-        <div class="flex items-center gap-2">
-          <span>Usuario:</span>
+        <div class="flex items-center gap-4">
           <span id="user-email-display" class="text-rose-300"></span>
+          <span class="border-l border-zinc-700 pl-4 text-zinc-400">Rol CECO: <span id="user-role-display" class="text-white font-bold"></span></span>
         </div>
         <button onclick="cerrarSesion()" class="hover:text-rose-300 transition flex items-center gap-1">
           Salir ⎋
@@ -97,6 +98,7 @@
           <div class="flex justify-between items-center border-b-[3px] border-zinc-900 pb-6 mb-6">
             <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-16 object-contain" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
             <div class="text-center flex-1 px-4">
+              <div class="mb-2"><span id="visor-ceco" class="pill pill-ceco hidden">---</span></div>
               <h1 id="titulo-receta" class="font-serif text-3xl font-black text-zinc-900 uppercase tracking-widest leading-none">SELECCIONA UNA RECETA</h1>
               <p class="text-[11px] font-bold mt-3 text-zinc-500 tracking-widest uppercase">
                 Rendimiento: <span id="display-pax" class="text-rose-900 text-sm">0</span> <span id="display-unidad" class="text-rose-900 text-sm">Kg</span>
@@ -106,12 +108,10 @@
           </div>
 
           <div id="contenido-receta" class="hidden">
-            <!-- Trazabilidad / Auditoría -->
             <div class="bg-zinc-50 border border-zinc-200 text-[9px] uppercase tracking-widest font-semibold text-zinc-400 p-2 mb-4 text-right rounded-sm">
               Última modificación: <span id="visor-auditoria" class="text-zinc-600 font-bold">---</span>
             </div>
 
-            <!-- METADATA GRID -->
             <div class="grid grid-cols-4 gap-6 text-xs mb-8 border-b border-zinc-200 pb-6">
               <div class="col-span-1 border-r border-zinc-200 pr-2">
                 <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Partida</span>
@@ -154,6 +154,7 @@
               <thead class="bg-zinc-50 text-zinc-500 border-b border-zinc-200 text-xs uppercase tracking-wider">
                 <tr>
                   <th class="p-4 font-semibold">Platillo</th>
+                  <th class="p-4 font-semibold">Sucursal</th>
                   <th class="p-4 font-semibold">Partida</th>
                   <th class="p-4 font-semibold">Última Modificación</th>
                   <th class="p-4 font-semibold text-center">Acciones</th>
@@ -180,11 +181,24 @@
         <div class="bg-white p-6 rounded-sm shadow-sm border border-zinc-200 mb-6 relative">
           <div class="absolute top-0 left-0 w-1 h-full bg-rose-900 rounded-l-sm"></div>
           <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">1. Información Principal</h3>
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-5">
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-5">
             <div class="md:col-span-2">
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Nombre Oficial</label>
               <input type="text" id="edit-nombre" placeholder="Ej: Beurre Blanc de Tosazu" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none font-bold text-zinc-800">
             </div>
+            
+            <!-- NUEVO SELECTOR DE SUCURSAL -->
+            <div class="md:col-span-1">
+              <label class="block text-[10px] font-bold text-rose-900 uppercase tracking-wider mb-1.5">Sucursal / CECO</label>
+              <select id="edit-sucursal" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm font-semibold bg-rose-50 text-rose-900 focus:ring-1 focus:ring-rose-900">
+                <option value="Global">Global (Compartida)</option>
+                <option value="Le Chique" selected>Le Chique (Matriz)</option>
+                <option value="Xuna">Xuna (CDMX)</option>
+                <option value="Texas">Texas</option>
+                <option value="NY">NY</option>
+              </select>
+            </div>
+
             <div>
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Rend. Total</label>
               <input type="number" id="edit-pax-base" value="1" step="any" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none tabular-nums">
@@ -197,7 +211,7 @@
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Partida</label>
               <input type="text" id="edit-partida" placeholder="Ej: Cuarto Caliente" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm">
             </div>
-            <div class="md:col-span-2">
+            <div class="md:col-span-3">
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Tipo</label>
               <input type="text" id="edit-tipo" placeholder="Ej: Salsas y Vinagretas" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm">
             </div>
@@ -238,7 +252,6 @@
     </div>
   </div>
 
-  <!-- LÓGICA CORE -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
@@ -257,9 +270,22 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
+    // ==========================================
+    // 🧠 DICCIONARIO DE ROLES / SUCURSALES (CECO)
+    // Agrega aquí los correos de tus chefs y a qué restaurante pertenecen.
+    // Opciones válidas: "TODAS", "Le Chique", "Xuna", "Texas", "NY"
+    // ==========================================
+    const DICCIONARIO_USUARIOS = {
+      "admin@lechique.com": "TODAS",
+      "chef@xuna.com": "Xuna",
+      "chef@texas.com": "Texas"
+    };
+    // ==========================================
+
     window.recetasDB = []; 
     window.recetaActual = null;
     window.usuarioActual = null;
+    window.rolSucursal = null;
     let blockCounter = 0;
 
     const ALERGENOS_LISTA = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"];
@@ -273,15 +299,21 @@
     onAuthStateChanged(auth, (user) => {
       if (user) {
         window.usuarioActual = user;
+        // Asignar rol basado en el diccionario (Por defecto le damos "Le Chique" si no está en la lista)
+        window.rolSucursal = DICCIONARIO_USUARIOS[user.email] || "Le Chique";
+        
         document.getElementById('vista-login').classList.add('hidden');
         document.getElementById('app-principal').classList.remove('hidden');
         document.getElementById('user-email-display').innerText = user.email;
+        document.getElementById('user-role-display').innerText = window.rolSucursal;
+        
         window.obtenerRecetasDeFirebase();
         if(document.getElementById('contenedor-bloques-editor').children.length === 0) {
           window.agregarBloqueSubreceta();
         }
       } else {
         window.usuarioActual = null;
+        window.rolSucursal = null;
         document.getElementById('vista-login').classList.remove('hidden');
         document.getElementById('app-principal').classList.add('hidden');
       }
@@ -315,10 +347,8 @@
     window.formatearCantidadInteligente = (cantidad, unidad) => {
       let cant = parseFloat(cantidad);
       let uni = (unidad || '').trim().toLowerCase();
-
       if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } 
       else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
-
       let cantFormateada = cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
       return { cantidad: cantFormateada, unidad: uni.toUpperCase() };
     };
@@ -332,7 +362,16 @@
       try {
         const querySnapshot = await getDocs(collection(db, "recetas"));
         window.recetasDB = [];
-        querySnapshot.forEach((doc) => window.recetasDB.push(doc.data()));
+        
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const recSucursal = data.sucursal || 'Le Chique'; // Compatibilidad recetas viejas
+          
+          // FILTRO INTELIGENTE DE SUCURSALES
+          if (window.rolSucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.rolSucursal) {
+            window.recetasDB.push(data);
+          }
+        });
         
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
         selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
@@ -353,6 +392,7 @@
       const nombre = document.getElementById('edit-nombre').value.trim();
       const rendimiento_base = parseFloat(document.getElementById('edit-pax-base').value);
       const unidad_base = document.getElementById('edit-unidad-base').value.trim();
+      const sucursal = document.getElementById('edit-sucursal').value;
       
       if (!nombre || !rendimiento_base || isNaN(rendimiento_base)) {
         return window.mostrarMensaje("Falta Nombre o Rendimiento.", "text-rose-900");
@@ -388,7 +428,7 @@
       const fechaStr = `${fechaHoy.getDate().toString().padStart(2, '0')}/${(fechaHoy.getMonth()+1).toString().padStart(2, '0')}/${fechaHoy.getFullYear()} ${fechaHoy.getHours().toString().padStart(2, '0')}:${fechaHoy.getMinutes().toString().padStart(2, '0')}`;
 
       const datos = { 
-        id, nombre, rendimiento_base, unidad_base, 
+        id, nombre, rendimiento_base, unidad_base, sucursal,
         partida: document.getElementById('edit-partida').value.trim(), 
         tipo: document.getElementById('edit-tipo').value.trim(),
         alergenos, temporada, bloques,
@@ -419,6 +459,11 @@
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
         
+        // Píldora de CECO visible
+        const pillCeco = document.getElementById('visor-ceco');
+        pillCeco.classList.remove('hidden');
+        pillCeco.innerText = window.recetaActual.sucursal || 'Le Chique';
+        
         document.getElementById('input-pax').value = window.recetaActual.rendimiento_base;
         document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US');
         document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base;
@@ -439,6 +484,7 @@
         window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
       } else {
         document.getElementById('contenido-receta').classList.add('hidden');
+        document.getElementById('visor-ceco').classList.add('hidden');
       }
     };
 
@@ -583,9 +629,11 @@
       const t = document.getElementById('tabla-todas-recetas');
       t.innerHTML = window.recetasDB.map(r => {
         const modificacion = r.auditoria ? `${r.auditoria.fecha.split(' ')[0]}<br><span class="text-[9px] text-zinc-400 normal-case">${r.auditoria.modificado_por}</span>` : '---';
+        const sucursalLabel = r.sucursal || 'Le Chique';
         return `
         <tr class="border-b border-zinc-100 hover:bg-zinc-50 transition">
           <td class="p-4 font-bold text-zinc-800">${r.nombre}</td>
+          <td class="p-4"><span class="pill pill-ceco">${sucursalLabel}</span></td>
           <td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td>
           <td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${modificacion}</td>
           <td class="p-4 text-center space-x-2">
@@ -593,7 +641,7 @@
             <button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button>
           </td>
         </tr>`
-      }).join('') || '<tr><td colspan="4" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">Sin recetas registradas</td></tr>';
+      }).join('') || '<tr><td colspan="5" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">Sin recetas registradas</td></tr>';
     };
 
     window.editarReceta = (id) => {
@@ -612,6 +660,7 @@
         document.getElementById('edit-unidad-base').value = r.unidad_base || 'Kg';
         document.getElementById('edit-partida').value = r.partida || '';
         document.getElementById('edit-tipo').value = r.tipo || '';
+        document.getElementById('edit-sucursal').value = r.sucursal || 'Le Chique';
         
         document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value));
         document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
@@ -632,6 +681,7 @@
       document.getElementById('edit-unidad-base').value = 'Kg';
       document.getElementById('edit-partida').value = '';
       document.getElementById('edit-tipo').value = '';
+      document.getElementById('edit-sucursal').value = 'Le Chique';
       document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false);
       document.getElementById('contenedor-bloques-editor').innerHTML = '';
     };
