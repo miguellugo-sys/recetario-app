@@ -33,8 +33,26 @@
 </head>
 <body class="p-2 md:p-6 text-zinc-800">
 
-  <div class="max-w-5xl mx-auto bg-white rounded-sm shadow-xl border border-zinc-200 overflow-hidden min-h-[60vh]">
+  <div class="max-w-5xl mx-auto bg-white rounded-sm shadow-xl border border-zinc-200 overflow-hidden min-h-[60vh] relative">
     
+    <!-- ================= MODAL IMPORTAR BASE MAESTRA ================= -->
+    <div id="modal-importar" class="absolute inset-0 bg-zinc-900/80 hidden flex items-center justify-center z-50 backdrop-blur-sm">
+      <div class="bg-white p-8 rounded-sm shadow-2xl w-full max-w-lg border border-zinc-200">
+        <h3 class="font-serif text-2xl font-black text-zinc-900 mb-2">Importar Base Maestra</h3>
+        <p class="text-[11px] text-zinc-500 mb-6 uppercase tracking-widest font-bold">Clona sub-recetas al instante</p>
+        
+        <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Selecciona una receta de la bóveda</label>
+        <select id="selector-importar-base" class="w-full p-3 border border-zinc-300 rounded-sm focus:ring-1 focus:ring-rose-900 outline-none text-sm font-medium bg-zinc-50 mb-8">
+          <!-- Dinámico -->
+        </select>
+        
+        <div class="flex justify-end gap-4">
+          <button onclick="cerrarModalImportar()" class="px-6 py-2.5 border border-zinc-300 text-zinc-600 rounded-sm text-[10px] tracking-widest font-bold uppercase hover:bg-zinc-50 transition">Cancelar</button>
+          <button onclick="confirmarImportacionBase()" class="px-6 py-2.5 bg-zinc-900 text-white rounded-sm text-[10px] tracking-widest font-bold uppercase hover:bg-black transition shadow-md">Clonar Bloques</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ================= PANTALLA DE LOGIN / REGISTRO ================= -->
     <div id="vista-login" class="flex flex-col items-center justify-center p-12 mt-10">
       <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-20 object-contain mb-8" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
@@ -249,9 +267,17 @@
         <div class="mb-8">
           <div class="flex justify-between items-center mb-4 pl-1">
             <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">3. Sub-Recetas (Mise en Place)</h3>
-            <button onclick="agregarBloqueSubreceta()" class="bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-700 text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition">
-              + Añadir Sub-Receta
-            </button>
+            
+            <div class="flex gap-3">
+              <!-- BOTÓN NUEVO: IMPORTAR BASE -->
+              <button onclick="abrirModalImportarBase()" class="bg-zinc-800 hover:bg-black text-white text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition shadow-sm">
+                ⬇️ Importar Base
+              </button>
+              <button onclick="agregarBloqueSubreceta()" class="bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-700 text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition">
+                + Añadir Sub-Receta
+              </button>
+            </div>
+            
           </div>
           <div id="contenedor-bloques-editor" class="space-y-5"></div>
         </div>
@@ -273,8 +299,6 @@
         <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight mb-8 border-b border-zinc-300 pb-4">Panel Corporativo</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
-          <!-- COLUMNA IZQUIERDA: USUARIOS -->
           <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm h-fit">
             <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
             
@@ -285,9 +309,7 @@
             <ul id="lista-usuarios-admin" class="space-y-2"></ul>
           </div>
 
-          <!-- COLUMNA DERECHA: CECOS Y ALÉRGENOS -->
           <div class="space-y-8">
-            <!-- GESTOR SUCURSALES -->
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
               <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Sucursales (CECOs)</h3>
               <div class="flex gap-2 mb-4">
@@ -297,7 +319,6 @@
               <ul id="lista-sucursales-admin" class="space-y-2"></ul>
             </div>
 
-            <!-- GESTOR ALÉRGENOS -->
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
               <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Alérgenos</h3>
               <p class="text-[10px] text-zinc-500 mb-3 leading-relaxed">Añade aquí ingredientes o restricciones (Ej: Ajo, FODMAP) para que aparezcan en el creador de recetas.</p>
@@ -338,7 +359,6 @@
     window.usuarioActual = null;
     window.perfilUsuario = null; 
     
-    // Arrays Dinámicos de Configuración
     window.sucursalesConfig = [];
     window.alergenosConfig = [];
     
@@ -402,12 +422,8 @@
           document.getElementById('btn-backup').classList.add('hidden');
         }
 
-        // Cargar Configuración Dinámica (Sucursales y Alérgenos)
         await window.cargarConfiguracionBD();
-        
-        if(perfil.rol === 'SuperAdmin') {
-          await window.cargarUsuariosBD();
-        }
+        if(perfil.rol === 'SuperAdmin') { await window.cargarUsuariosBD(); }
         await window.obtenerRecetasDeFirebase();
         
         if(document.getElementById('contenedor-bloques-editor').children.length === 0) {
@@ -495,12 +511,10 @@
       if(snapAler.exists()) {
         window.alergenosConfig = snapAler.data().lista || [];
       } else {
-        // Lista Base Inicial si no existe
         window.alergenosConfig = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"];
         await setDoc(docRefAlergenos, { lista: window.alergenosConfig });
       }
       
-      // Renderizar los checkboxes en el Editor y la lista en el Panel Admin
       generarCheckboxes('contenedor-alergenos', window.alergenosConfig, 'alergeno');
       window.renderizarListaAlergenosAdmin();
     };
@@ -508,8 +522,6 @@
     // ==========================================
     // FUNCIONES DEL PANEL ADMIN
     // ==========================================
-
-    // ----- SUCURSALES -----
     window.renderizarListaSucursalesAdmin = () => {
       const ul = document.getElementById('lista-sucursales-admin');
       if(!ul) return;
@@ -539,7 +551,6 @@
       await window.cargarUsuariosBD();
     };
 
-    // ----- ALÉRGENOS -----
     window.renderizarListaAlergenosAdmin = () => {
       const ul = document.getElementById('lista-alergenos-admin');
       if(!ul) return;
@@ -554,12 +565,11 @@
     window.adminGuardarAlergeno = async () => {
       const n = document.getElementById('admin-new-alergeno').value.trim();
       if(!n) return;
-      // Convertir la primera letra a mayúscula
       const nombreAlergeno = n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
       if(window.alergenosConfig.includes(nombreAlergeno)) return;
       
       window.alergenosConfig.push(nombreAlergeno);
-      window.alergenosConfig.sort(); // Ordenar alfabéticamente
+      window.alergenosConfig.sort(); 
       
       await setDoc(doc(db, 'configuracion', 'alergenos'), { lista: window.alergenosConfig });
       document.getElementById('admin-new-alergeno').value = '';
@@ -573,7 +583,6 @@
       await window.cargarConfiguracionBD();
     };
 
-    // ----- USUARIOS -----
     window.cargarUsuariosBD = async () => {
       const snap = await getDocs(collection(db, 'usuarios'));
       const ulPendientes = document.getElementById('lista-pendientes-admin');
@@ -677,6 +686,8 @@
       if(!window.perfilUsuario) return;
       const selectVisor = document.getElementById('selector-receta');
       const selectEditor = document.getElementById('selector-editor');
+      const selectImportar = document.getElementById('selector-importar-base');
+      
       selectVisor.innerHTML = '<option value="">Descargando...</option>';
       
       try {
@@ -697,6 +708,7 @@
         
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
         if(selectEditor) selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
+        if(selectImportar) selectImportar.innerHTML = '<option value="">-- Selecciona receta base a importar --</option>';
 
         window.recetasDB.sort((a, b) => {
           const nombreA = a.nombre ? String(a.nombre) : '';
@@ -707,6 +719,7 @@
         window.recetasDB.forEach(receta => {
           selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`;
           if(selectEditor) selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`;
+          if(selectImportar) selectImportar.innerHTML += `<option value="${receta.id}">${receta.nombre} (${receta.rendimiento_base} ${receta.unidad_base})</option>`;
         });
         window.renderizarListaRecetas();
       } catch (error) {
@@ -943,6 +956,39 @@
       html2pdf().set(opt).from(elemento).save().then(() => {
         elemento.style.width = anchoOriginal;
       });
+    };
+
+    // ==========================================
+    // NUEVO MÓDULO: BASES MAESTRAS (IMPORTACIÓN)
+    // ==========================================
+    window.abrirModalImportarBase = () => {
+      document.getElementById('modal-importar').classList.remove('hidden');
+    };
+
+    window.cerrarModalImportar = () => {
+      document.getElementById('modal-importar').classList.add('hidden');
+      document.getElementById('selector-importar-base').value = '';
+    };
+
+    window.confirmarImportacionBase = () => {
+      const idSeleccionado = document.getElementById('selector-importar-base').value;
+      if (!idSeleccionado) {
+        return alert("Por favor, selecciona una receta de la lista.");
+      }
+      
+      const recetaBase = window.recetasDB.find(r => r.id === idSeleccionado);
+      
+      if (recetaBase && recetaBase.bloques) {
+        // Clona cada bloque de la receta seleccionada
+        recetaBase.bloques.forEach(bloque => {
+          // Si el bloque se llamaba "Base", le agregamos el nombre de la receta para claridad
+          let nombreAsignado = bloque.nombre === 'Preparación Base' ? recetaBase.nombre : bloque.nombre;
+          window.agregarBloqueSubreceta(nombreAsignado, bloque.rendimiento, bloque.unidad, bloque.procedimiento, bloque.ingredientes);
+        });
+        window.mostrarMensaje(`✅ Base importada con éxito.`, "text-green-600");
+      }
+      
+      window.cerrarModalImportar();
     };
 
     window.agregarBloqueSubreceta = (nombre = '', rend = '', uni = '', proc = '', ingredientes = []) => {
