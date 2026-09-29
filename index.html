@@ -353,7 +353,6 @@
           const snap = await getDoc(docRef);
           if(snap.exists()){
             perfil = snap.data();
-            // Validar si sigue en estado Pendiente
             if (perfil.estado === 'Pendiente') {
               await signOut(auth);
               const err = document.getElementById('login-error');
@@ -443,11 +442,8 @@
       const err = document.getElementById('login-error');
       if(p.length < 6) { err.innerText = "Contraseña min. 6 caracteres"; err.classList.replace('text-green-600', 'text-rose-600'); err.classList.remove('hidden'); return;}
       try { 
-        // 1. Crear en Auth
         await createUserWithEmailAndPassword(auth, e, p); 
-        // 2. Inyectar automáticamente en BD como Pendiente
         await setDoc(doc(db, 'usuarios', e), { email: e, rol: 'Lector', sucursal: 'Le Chique', estado: 'Pendiente' });
-        // 3. Forzar cierre para que no entre a la app aún
         await signOut(auth);
         
         err.innerText = "¡Solicitud enviada! Espera a que miguellugo@mlcocina.com apruebe tu cuenta.";
@@ -505,7 +501,7 @@
       await setDoc(doc(db, 'configuracion', 'sucursales'), { lista: window.sucursalesConfig });
       document.getElementById('admin-new-sucursal').value = '';
       await window.cargarSucursalesBD();
-      await window.cargarUsuariosBD(); // Refrescar los selects de pendientes
+      await window.cargarUsuariosBD(); 
     };
 
     window.adminBorrarSucursal = async (nombre) => {
@@ -516,7 +512,6 @@
       await window.cargarUsuariosBD();
     };
 
-    // --- NUEVA LÓGICA DE BANDEJA DE ENTRADA ADMIN ---
     window.cargarUsuariosBD = async () => {
       const snap = await getDocs(collection(db, 'usuarios'));
       const ulPendientes = document.getElementById('lista-pendientes-admin');
@@ -530,9 +525,9 @@
 
       snap.forEach(documento => {
         const d = documento.data();
+        const idSeguro = d.email.replace(/[@.]/g, '');
+        
         if(d.estado === 'Pendiente') {
-          // Bandeja de Entrada (Pendientes)
-          const idSeguro = d.email.replace(/[@.]/g, '');
           htmlPendientes += `
             <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm">
               <div class="font-bold text-zinc-800 text-xs mb-3">${d.email}</div>
@@ -552,11 +547,28 @@
             </li>
           `;
         } else {
-          // Lista de ya autorizados
+          // Generar selectores dinámicos para usuarios ya autorizados
+          let opcionesCecoAuth = `<option value="TODAS" ${d.sucursal === 'TODAS' ? 'selected' : ''}>TODAS (Global)</option>`;
+          window.sucursalesConfig.forEach(s => {
+            opcionesCecoAuth += `<option value="${s}" ${d.sucursal === s ? 'selected' : ''}>${s}</option>`;
+          });
+
           htmlAutorizados += `
-            <li class="flex justify-between items-center bg-zinc-50 p-3 border border-zinc-100 rounded-sm text-xs">
-              <div><strong class="text-zinc-800">${d.email}</strong><br><span class="text-[10px] text-zinc-500 uppercase">${d.rol} - ${d.sucursal}</span></div>
-              <button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 font-bold hover:underline px-2">Revocar</button>
+            <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm mb-2">
+              <div class="flex justify-between items-center mb-3">
+                <strong class="text-zinc-800 text-xs">${d.email}</strong>
+                <button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 text-[10px] font-bold hover:underline">Revocar Acceso</button>
+              </div>
+              <div class="flex gap-2 mb-3">
+                <select id="rol-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
+                  <option value="Lector" ${d.rol === 'Lector' ? 'selected' : ''}>Lector (Solo PDF)</option>
+                  <option value="Editor" ${d.rol === 'Editor' ? 'selected' : ''}>Admin Editor (Crea)</option>
+                </select>
+                <select id="ceco-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
+                  ${opcionesCecoAuth}
+                </select>
+              </div>
+              <button onclick="adminActualizarUsuario('${d.email}', '${idSeguro}')" class="w-full bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] tracking-widest font-bold uppercase py-1.5 rounded-sm transition">Guardar Cambios</button>
             </li>
           `;
         }
@@ -569,9 +581,20 @@
     window.adminAprobarUsuario = async (email, idSeguro) => {
       const rol = document.getElementById(`rol-${idSeguro}`).value;
       const sucursal = document.getElementById(`ceco-${idSeguro}`).value;
-      // Actualizar documento borrando la bandera "Pendiente"
       await setDoc(doc(db, 'usuarios', email), { email, rol, sucursal, estado: 'Activo' });
       await window.cargarUsuariosBD();
+    };
+
+    window.adminActualizarUsuario = async (email, idSeguro) => {
+      const rol = document.getElementById(`rol-auth-${idSeguro}`).value;
+      const sucursal = document.getElementById(`ceco-auth-${idSeguro}`).value;
+      try {
+        await setDoc(doc(db, 'usuarios', email), { email, rol, sucursal, estado: 'Activo' }, { merge: true });
+        alert(`Permisos actualizados correctamente para ${email}`);
+        await window.cargarUsuariosBD();
+      } catch(e) {
+        alert("Error al actualizar usuario");
+      }
     };
 
     window.adminRechazarUsuario = async (email) => {
@@ -900,112 +923,6 @@
       if(p === 'admin') document.getElementById(`tab-admin`).classList.add('bg-zinc-100', 'text-rose-900', 'font-black');
     };
 
-    window.renderizarListaRecetas = (textoFiltro = '') => {
-      const t = document.getElementById('tabla-todas-recetas');
-      const filtro = textoFiltro.toLowerCase();
-      
-      const filtradas = window.recetasDB.filter(r => {
-        const nombreMatch = r.nombre && r.nombre.toLowerCase().includes(filtro);
-        const partidaMatch = r.partida && r.partida.toLowerCase().includes(filtro);
-        const sucursalMatch = r.sucursal && r.sucursal.toLowerCase().includes(filtro);
-        return nombreMatch || partidaMatch || sucursalMatch;
-      });
-
-      const thAcciones = document.getElementById('col-acciones');
-      if(window.perfilUsuario.rol === 'SuperAdmin') {
-        thAcciones.classList.remove('hidden');
-      } else {
-        thAcciones.classList.add('hidden');
-      }
-
-      t.innerHTML = filtradas.map(r => {
-        const modificacion = r.auditoria ? `${r.auditoria.fecha.split(' ')[0]}<br><span class="text-[9px] text-zinc-400 normal-case">${r.auditoria.modificado_por}</span>` : '---';
-        const sucursalLabel = r.sucursal || 'Le Chique';
-        
-        let accionesHtml = '';
-        if(window.perfilUsuario.rol === 'SuperAdmin') {
-          accionesHtml = `
-            <td class="p-4 text-center space-x-2 whitespace-nowrap">
-              <button onclick="editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button>
-              <button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button>
-            </td>`;
-        }
-
-        return `
-        <tr class="border-b border-zinc-100 hover:bg-zinc-50 transition cursor-pointer" onclick="document.getElementById('selector-receta').value = '${r.id}'; cargarRecetaSeleccionada(); cambiarPestaña('visor');">
-          <td class="p-4 font-bold text-zinc-800">${r.nombre}</td>
-          <td class="p-4"><span class="pill pill-ceco">${sucursalLabel}</span></td>
-          <td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td>
-          <td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${modificacion}</td>
-          ${accionesHtml}
-        </tr>`
-      }).join('') || `<tr><td colspan="${window.perfilUsuario.rol === 'SuperAdmin' ? 5 : 4}" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">No hay recetas</td></tr>`;
-    };
-
-    window.editarReceta = (id) => {
-      document.getElementById('selector-editor').value = id;
-      window.cargarEnEditor();
-      window.cambiarPestaña('editor');
-    };
-
-    window.cargarEnEditor = () => {
-      const id = document.getElementById('selector-editor').value;
-      window.limpiarFormularioBase();
-      if (id) {
-        const r = window.recetasDB.find(x => x.id === id);
-        document.getElementById('edit-nombre').value = r.nombre;
-        document.getElementById('edit-pax-base').value = r.rendimiento_base;
-        document.getElementById('edit-unidad-base').value = r.unidad_base || 'Kg';
-        document.getElementById('edit-partida').value = r.partida || '';
-        document.getElementById('edit-tipo').value = r.tipo || '';
-        document.getElementById('edit-sucursal').value = r.sucursal || 'Le Chique';
-        
-        document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value));
-        document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
-
-        if(r.bloques && r.bloques.length > 0) {
-          r.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes));
-        } else {
-          window.agregarBloqueSubreceta('Base', r.rendimiento_base, r.unidad_base, r.procedimiento, r.ingredientes);
-        }
-      } else {
-        window.agregarBloqueSubreceta();
-      }
-    };
-
-    window.limpiarFormularioBase = () => {
-      document.getElementById('edit-nombre').value = '';
-      document.getElementById('edit-pax-base').value = '1';
-      document.getElementById('edit-unidad-base').value = 'Kg';
-      document.getElementById('edit-partida').value = '';
-      document.getElementById('edit-tipo').value = '';
-      document.getElementById('edit-sucursal').value = window.perfilUsuario.sucursal === 'TODAS' ? 'Global' : window.perfilUsuario.sucursal;
-      document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false);
-      document.getElementById('contenedor-bloques-editor').innerHTML = '';
-    };
-
-    window.limpiarEditor = () => {
-      if(document.getElementById('selector-editor')) document.getElementById('selector-editor').value = '';
-      window.limpiarFormularioBase();
-      window.agregarBloqueSubreceta();
-    };
-
-    window.eliminarReceta = async (id) => {
-      event.stopPropagation();
-      if (!confirm("¿Eliminar receta permanentemente?")) return;
-      try {
-        await deleteDoc(doc(db, "recetas", id));
-        await window.obtenerRecetasDeFirebase();
-        window.limpiarEditor();
-      } catch (e) { alert("Error al borrar."); }
-    };
-
-    window.mostrarMensaje = (texto, claseColor) => {
-      const span = document.getElementById('mensaje-estado');
-      span.innerText = texto;
-      span.className = `text-sm font-bold ${claseColor}`;
-      setTimeout(() => span.innerText = "", 5000);
-    };
   </script>
 </body>
 </html>
