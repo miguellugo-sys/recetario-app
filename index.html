@@ -106,7 +106,7 @@
           </div>
 
           <div id="contenido-receta" class="hidden">
-            <!-- Trazabilidad / Auditoría (Solo visible en pantalla, se oculta al imprimir con CSS en el futuro si se desea) -->
+            <!-- Trazabilidad / Auditoría -->
             <div class="bg-zinc-50 border border-zinc-200 text-[9px] uppercase tracking-widest font-semibold text-zinc-400 p-2 mb-4 text-right rounded-sm">
               Última modificación: <span id="visor-auditoria" class="text-zinc-600 font-bold">---</span>
             </div>
@@ -242,7 +242,6 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-    // NUEVO: Importación del módulo de Autenticación
     import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -271,7 +270,6 @@
       generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes');
     };
 
-    // --- NUEVO: SISTEMA DE AUTENTICACIÓN ---
     onAuthStateChanged(auth, (user) => {
       if (user) {
         window.usuarioActual = user;
@@ -386,7 +384,6 @@
       let id = document.getElementById('selector-editor').value;
       if (!id) id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
-      // Formatear Fecha Actual
       const fechaHoy = new Date();
       const fechaStr = `${fechaHoy.getDate().toString().padStart(2, '0')}/${(fechaHoy.getMonth()+1).toString().padStart(2, '0')}/${fechaHoy.getFullYear()} ${fechaHoy.getHours().toString().padStart(2, '0')}:${fechaHoy.getMinutes().toString().padStart(2, '0')}`;
 
@@ -395,7 +392,6 @@
         partida: document.getElementById('edit-partida').value.trim(), 
         tipo: document.getElementById('edit-tipo').value.trim(),
         alergenos, temporada, bloques,
-        // NUEVO: Sello de Auditoría
         auditoria: {
           modificado_por: window.usuarioActual.email,
           fecha: fechaStr
@@ -434,7 +430,6 @@
         document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-";
         document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
         
-        // Mostrar Auditoría
         if(window.recetaActual.auditoria) {
           document.getElementById('visor-auditoria').innerText = `${window.recetaActual.auditoria.modificado_por} (${window.recetaActual.auditoria.fecha})`;
         } else {
@@ -518,6 +513,7 @@
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const elemento = document.getElementById('zona-impresion');
+      
       const anchoOriginal = elemento.style.width;
       elemento.style.width = '800px';
 
