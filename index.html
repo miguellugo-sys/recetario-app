@@ -46,15 +46,14 @@
         <input type="email" id="login-email" placeholder="Correo electrónico" class="w-full mb-4 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
         <input type="password" id="login-password" placeholder="Contraseña" class="w-full mb-6 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
         
-        <!-- Botones de Acción -->
         <div id="box-btn-iniciar">
           <button onclick="iniciarSesion()" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Iniciar Sesión</button>
-          <p class="text-center text-xs mt-4 text-zinc-500">¿Eres nuevo? <button onclick="toggleRegistro(true)" class="text-rose-900 font-bold hover:underline">Crear cuenta nueva</button></p>
+          <p class="text-center text-xs mt-4 text-zinc-500">¿Eres nuevo empleado? <button onclick="toggleRegistro(true)" class="text-rose-900 font-bold hover:underline">Crear cuenta</button></p>
         </div>
 
         <div id="box-btn-registrar" class="hidden">
-          <button onclick="registrarCuenta()" class="w-full bg-rose-900 hover:bg-rose-800 text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Registrarme</button>
-          <p class="text-center text-xs mt-4 text-zinc-500">¿Ya tienes cuenta? <button onclick="toggleRegistro(false)" class="text-zinc-900 font-bold hover:underline">Iniciar Sesión</button></p>
+          <button onclick="registrarCuenta()" class="w-full bg-rose-900 hover:bg-rose-800 text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Enviar Solicitud</button>
+          <p class="text-center text-xs mt-4 text-zinc-500">¿Ya fuiste aprobado? <button onclick="toggleRegistro(false)" class="text-zinc-900 font-bold hover:underline">Iniciar Sesión</button></p>
         </div>
 
         <p id="login-error" class="text-rose-600 text-xs text-center mt-4 hidden font-bold"></p>
@@ -198,7 +197,6 @@
             <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight">Editor Avanzado</h2>
             <p class="text-xs text-zinc-500 uppercase tracking-widest mt-1">Gestor de Mise en Place</p>
           </div>
-          <!-- Selector visible solo para SuperAdmin. Editor crea desde 0 -->
           <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border border-zinc-300 rounded-sm font-bold outline-none bg-white text-[10px] uppercase tracking-widest">
             <option value="">+ Crear Nueva Receta</option>
           </select>
@@ -270,13 +268,28 @@
         </div>
       </div>
 
-      <!-- ================= PESTAÑA ADMIN (SÓLO MIGUEL) ================= -->
+      <!-- ================= PESTAÑA ADMIN (NUEVA INTERFAZ) ================= -->
       <div id="vista-admin" class="p-6 hidden bg-zinc-100">
         <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight mb-8 border-b border-zinc-300 pb-4">Panel Corporativo</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <!-- GESTIÓN DE SUCURSALES -->
+          <!-- GESTIÓN DE USUARIOS / BANDEJA DE ENTRADA -->
           <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
+            <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
+            
+            <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3 border-b pb-1">Solicitudes Pendientes</h4>
+            <ul id="lista-pendientes-admin" class="space-y-3 mb-8">
+              <!-- Carga dinámica -->
+            </ul>
+
+            <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
+            <ul id="lista-usuarios-admin" class="space-y-2">
+              <!-- Carga dinámica -->
+            </ul>
+          </div>
+
+          <!-- GESTIÓN DE SUCURSALES -->
+          <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm h-fit">
             <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Sucursales (CECOs)</h3>
             <div class="flex gap-2 mb-4">
               <input type="text" id="admin-new-sucursal" placeholder="Ej: Cancún Sur" class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none">
@@ -286,37 +299,6 @@
               <!-- Carga dinámica -->
             </ul>
           </div>
-
-          <!-- GESTIÓN DE USUARIOS -->
-          <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
-            <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
-            
-            <div class="bg-zinc-50 p-4 border border-zinc-200 rounded-sm mb-6">
-              <input type="email" id="admin-new-email" placeholder="Correo del empleado" class="w-full p-2 mb-3 border border-zinc-300 rounded-sm text-sm outline-none">
-              <div class="grid grid-cols-2 gap-3 mb-3">
-                <div>
-                  <label class="block text-[9px] uppercase font-bold text-zinc-500 mb-1">Rol</label>
-                  <select id="admin-new-rol" class="w-full p-2 border border-zinc-300 rounded-sm text-xs font-bold text-zinc-700 outline-none">
-                    <option value="Editor">Admin Editor (Solo crea)</option>
-                    <option value="Lector">Lector (Solo ve y PDF)</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[9px] uppercase font-bold text-zinc-500 mb-1">Sucursal Asignada</label>
-                  <select id="admin-new-ceco" class="w-full p-2 border border-zinc-300 rounded-sm text-xs font-bold text-zinc-700 outline-none">
-                    <!-- Dinámico -->
-                  </select>
-                </div>
-              </div>
-              <button onclick="adminGuardarUsuario()" class="w-full bg-rose-900 text-white py-2 text-[10px] tracking-widest font-bold uppercase rounded-sm hover:bg-rose-800 transition">Autorizar Usuario</button>
-            </div>
-
-            <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
-            <ul id="lista-usuarios-admin" class="space-y-2">
-              <!-- Carga dinámica -->
-            </ul>
-          </div>
-
         </div>
       </div>
 
@@ -344,7 +326,7 @@
     window.recetasDB = []; 
     window.recetaActual = null;
     window.usuarioActual = null;
-    window.perfilUsuario = null; // Guarda: { rol, sucursal }
+    window.perfilUsuario = null; 
     window.sucursalesConfig = [];
     
     let blockCounter = 0;
@@ -362,20 +344,26 @@
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         
-        let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna' };
+        let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna', estado: 'Pendiente' };
         
         if (user.email.toLowerCase() === 'miguellugo@mlcocina.com') {
-          perfil = { rol: 'SuperAdmin', sucursal: 'TODAS' };
+          perfil = { rol: 'SuperAdmin', sucursal: 'TODAS', estado: 'Activo' };
         } else {
           const docRef = doc(db, 'usuarios', user.email.toLowerCase());
           const snap = await getDoc(docRef);
           if(snap.exists()){
             perfil = snap.data();
+            // Validar si sigue en estado Pendiente
+            if (perfil.estado === 'Pendiente') {
+              await signOut(auth);
+              const err = document.getElementById('login-error');
+              err.innerText = "Cuenta creada. Espera la autorización de miguellugo@mlcocina.com";
+              err.classList.replace('text-rose-600', 'text-green-600');
+              err.classList.remove('hidden');
+              return;
+            }
           } else {
             await signOut(auth);
-            const err = document.getElementById('login-error');
-            err.innerText = "Cuenta creada pero NO AUTORIZADA. Contacta a miguellugo@mlcocina.com.";
-            err.classList.remove('hidden');
             return;
           }
         }
@@ -428,13 +416,13 @@
     window.toggleRegistro = (isRegistro) => {
       document.getElementById('login-error').classList.add('hidden');
       if(isRegistro){
-        document.getElementById('login-title').innerText = "Crear Nueva Cuenta";
-        document.getElementById('login-subtitle').innerText = "Necesitas autorización del Admin para entrar";
+        document.getElementById('login-title').innerText = "Solicitar Acceso";
+        document.getElementById('login-subtitle').innerText = "Crea tu cuenta para revisión corporativa";
         document.getElementById('box-btn-iniciar').classList.add('hidden');
         document.getElementById('box-btn-registrar').classList.remove('hidden');
       }else{
         document.getElementById('login-title').innerText = "Acceso Restringido";
-        document.getElementById('login-subtitle').innerText = "Gestor Multi-Sucursal";
+        document.getElementById('login-subtitle').innerText = "Inicia sesión con tu cuenta corporativa";
         document.getElementById('box-btn-iniciar').classList.remove('hidden');
         document.getElementById('box-btn-registrar').classList.add('hidden');
       }
@@ -444,20 +432,31 @@
       const e = document.getElementById('login-email').value;
       const p = document.getElementById('login-password').value;
       const err = document.getElementById('login-error');
+      err.classList.replace('text-green-600', 'text-rose-600');
       try { await signInWithEmailAndPassword(auth, e, p); err.classList.add('hidden'); } 
-      catch (error) { err.innerText = "Credenciales incorrectas."; err.classList.remove('hidden'); }
+      catch (error) { err.innerText = "Credenciales incorrectas o usuario no registrado."; err.classList.remove('hidden'); }
     };
 
     window.registrarCuenta = async () => {
-      const e = document.getElementById('login-email').value;
+      const e = document.getElementById('login-email').value.trim().toLowerCase();
       const p = document.getElementById('login-password').value;
       const err = document.getElementById('login-error');
-      if(p.length < 6) { err.innerText = "Contraseña min. 6 caracteres"; err.classList.remove('hidden'); return;}
+      if(p.length < 6) { err.innerText = "Contraseña min. 6 caracteres"; err.classList.replace('text-green-600', 'text-rose-600'); err.classList.remove('hidden'); return;}
       try { 
+        // 1. Crear en Auth
         await createUserWithEmailAndPassword(auth, e, p); 
-        err.classList.add('hidden');
+        // 2. Inyectar automáticamente en BD como Pendiente
+        await setDoc(doc(db, 'usuarios', e), { email: e, rol: 'Lector', sucursal: 'Le Chique', estado: 'Pendiente' });
+        // 3. Forzar cierre para que no entre a la app aún
+        await signOut(auth);
+        
+        err.innerText = "¡Solicitud enviada! Espera a que miguellugo@mlcocina.com apruebe tu cuenta.";
+        err.classList.replace('text-rose-600', 'text-green-600');
+        err.classList.remove('hidden');
       } catch (error) { 
-        err.innerText = "Error o cuenta ya existente."; err.classList.remove('hidden'); 
+        err.innerText = "Error o correo ya registrado."; 
+        err.classList.replace('text-green-600', 'text-rose-600');
+        err.classList.remove('hidden'); 
       }
     };
 
@@ -477,18 +476,11 @@
       }
 
       let optionsHtml = '<option value="Global">Global (Compartida)</option>';
-      
-      // PARCHE APLICADO AQUÍ: Agregada la opción TODAS para el Panel Admin
-      let optionsAdmin = '<option value="TODAS">TODAS (Acceso Global)</option>'; 
-      
       window.sucursalesConfig.forEach(s => {
         optionsHtml += `<option value="${s}">${s}</option>`;
-        optionsAdmin += `<option value="${s}">${s}</option>`;
       });
       document.getElementById('edit-sucursal').innerHTML = optionsHtml;
-      if(document.getElementById('admin-new-ceco')) {
-        document.getElementById('admin-new-ceco').innerHTML = optionsAdmin;
-      }
+      
       window.renderizarListaSucursalesAdmin();
     };
 
@@ -513,6 +505,7 @@
       await setDoc(doc(db, 'configuracion', 'sucursales'), { lista: window.sucursalesConfig });
       document.getElementById('admin-new-sucursal').value = '';
       await window.cargarSucursalesBD();
+      await window.cargarUsuariosBD(); // Refrescar los selects de pendientes
     };
 
     window.adminBorrarSucursal = async (nombre) => {
@@ -520,37 +513,75 @@
       window.sucursalesConfig = window.sucursalesConfig.filter(s => s !== nombre);
       await setDoc(doc(db, 'configuracion', 'sucursales'), { lista: window.sucursalesConfig });
       await window.cargarSucursalesBD();
+      await window.cargarUsuariosBD();
     };
 
+    // --- NUEVA LÓGICA DE BANDEJA DE ENTRADA ADMIN ---
     window.cargarUsuariosBD = async () => {
       const snap = await getDocs(collection(db, 'usuarios'));
-      const ul = document.getElementById('lista-usuarios-admin');
-      let html = '';
-      snap.forEach(doc => {
-        const d = doc.data();
-        html += `
-          <li class="flex justify-between items-center bg-zinc-50 p-3 border border-zinc-100 rounded-sm text-xs">
-            <div><strong class="text-zinc-800">${d.email}</strong><br><span class="text-[10px] text-zinc-500 uppercase">${d.rol} - ${d.sucursal}</span></div>
-            <button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 font-bold hover:underline px-2">Revocar</button>
-          </li>
-        `;
+      const ulPendientes = document.getElementById('lista-pendientes-admin');
+      const ulAutorizados = document.getElementById('lista-usuarios-admin');
+      
+      let htmlPendientes = '';
+      let htmlAutorizados = '';
+      
+      let opcionesSucursalAdmin = '<option value="TODAS">TODAS (Global)</option>';
+      window.sucursalesConfig.forEach(s => opcionesSucursalAdmin += `<option value="${s}">${s}</option>`);
+
+      snap.forEach(documento => {
+        const d = documento.data();
+        if(d.estado === 'Pendiente') {
+          // Bandeja de Entrada (Pendientes)
+          const idSeguro = d.email.replace(/[@.]/g, '');
+          htmlPendientes += `
+            <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm">
+              <div class="font-bold text-zinc-800 text-xs mb-3">${d.email}</div>
+              <div class="flex gap-2 mb-3">
+                <select id="rol-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
+                  <option value="Lector">Lector (Solo PDF)</option>
+                  <option value="Editor">Admin Editor (Crea)</option>
+                </select>
+                <select id="ceco-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
+                  ${opcionesSucursalAdmin}
+                </select>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="adminAprobarUsuario('${d.email}', '${idSeguro}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Aprobar</button>
+                <button onclick="adminRechazarUsuario('${d.email}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Rechazar</button>
+              </div>
+            </li>
+          `;
+        } else {
+          // Lista de ya autorizados
+          htmlAutorizados += `
+            <li class="flex justify-between items-center bg-zinc-50 p-3 border border-zinc-100 rounded-sm text-xs">
+              <div><strong class="text-zinc-800">${d.email}</strong><br><span class="text-[10px] text-zinc-500 uppercase">${d.rol} - ${d.sucursal}</span></div>
+              <button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 font-bold hover:underline px-2">Revocar</button>
+            </li>
+          `;
+        }
       });
-      ul.innerHTML = html;
+      
+      ulPendientes.innerHTML = htmlPendientes || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest p-2 border border-dashed border-zinc-200 text-center rounded-sm">No hay solicitudes pendientes</li>';
+      ulAutorizados.innerHTML = htmlAutorizados || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest">Ningún usuario autorizado</li>';
     };
 
-    window.adminGuardarUsuario = async () => {
-      const email = document.getElementById('admin-new-email').value.trim().toLowerCase();
-      const rol = document.getElementById('admin-new-rol').value;
-      const sucursal = document.getElementById('admin-new-ceco').value;
-      if(!email) return;
-      
-      await setDoc(doc(db, 'usuarios', email), { email, rol, sucursal });
-      document.getElementById('admin-new-email').value = '';
+    window.adminAprobarUsuario = async (email, idSeguro) => {
+      const rol = document.getElementById(`rol-${idSeguro}`).value;
+      const sucursal = document.getElementById(`ceco-${idSeguro}`).value;
+      // Actualizar documento borrando la bandera "Pendiente"
+      await setDoc(doc(db, 'usuarios', email), { email, rol, sucursal, estado: 'Activo' });
+      await window.cargarUsuariosBD();
+    };
+
+    window.adminRechazarUsuario = async (email) => {
+      if(!confirm(`¿Rechazar y borrar solicitud de ${email}?`)) return;
+      await deleteDoc(doc(db, 'usuarios', email));
       await window.cargarUsuariosBD();
     };
 
     window.adminBorrarUsuario = async (email) => {
-      if(!confirm(`¿Revocar acceso a ${email}?`)) return;
+      if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return;
       await deleteDoc(doc(db, 'usuarios', email));
       await window.cargarUsuariosBD();
     };
@@ -558,25 +589,6 @@
     // ==========================================
     // FLUJO NORMAL DE RECETAS
     // ==========================================
-    function generarCheckboxes(containerId, items, namePrefix) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = items.map(item => `
-        <label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition">
-          <input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900">
-          <span class="text-[11px] uppercase tracking-wide font-semibold text-zinc-600">${item}</span>
-        </label>
-      `).join('');
-    }
-
-    window.formatearCantidadInteligente = (cantidad, unidad) => {
-      let cant = parseFloat(cantidad);
-      let uni = (unidad || '').trim().toLowerCase();
-      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } 
-      else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
-      let cantFormateada = cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
-      return { cantidad: cantFormateada, unidad: uni.toUpperCase() };
-    };
-
     window.obtenerRecetasDeFirebase = async () => {
       if(!window.perfilUsuario) return;
       const selectVisor = document.getElementById('selector-receta');
@@ -591,20 +603,19 @@
           const data = doc.data();
           const recSucursal = data.sucursal || 'Le Chique';
           
-          // PARCHE APLICADO AQUÍ: Validar si la sucursal del usuario es "TODAS"
           if (window.perfilUsuario.rol === "SuperAdmin" || window.perfilUsuario.sucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.perfilUsuario.sucursal) {
             window.recetasDB.push(data);
           }
         });
         
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
-        selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
+        if(selectEditor) selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
 
         window.recetasDB.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         window.recetasDB.forEach(receta => {
           selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`;
-          selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`;
+          if(selectEditor) selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`;
         });
         window.renderizarListaRecetas();
       } catch (error) {
