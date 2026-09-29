@@ -240,7 +240,7 @@
         <div class="bg-white p-6 rounded-sm shadow-sm border border-zinc-200 mb-6 relative">
           <div class="absolute top-0 left-0 w-1 h-full bg-rose-900 rounded-l-sm"></div>
           <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-4">2. Clasificación y Alérgenos</h3>
-          <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Alérgenos Presentes</label>
+          <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Alérgenos / Restricciones Presentes</label>
           <div id="contenedor-alergenos" class="flex flex-wrap gap-2 mb-6"></div>
           <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Temporada Óptima</label>
           <div id="contenedor-temporada" class="flex flex-wrap gap-2"></div>
@@ -273,7 +273,9 @@
         <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight mb-8 border-b border-zinc-300 pb-4">Panel Corporativo</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
+          
+          <!-- COLUMNA IZQUIERDA: USUARIOS -->
+          <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm h-fit">
             <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
             
             <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3 border-b pb-1">Solicitudes Pendientes</h4>
@@ -283,14 +285,30 @@
             <ul id="lista-usuarios-admin" class="space-y-2"></ul>
           </div>
 
-          <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm h-fit">
-            <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Sucursales (CECOs)</h3>
-            <div class="flex gap-2 mb-4">
-              <input type="text" id="admin-new-sucursal" placeholder="Ej: Cancún Sur" class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none">
-              <button onclick="adminGuardarSucursal()" class="bg-zinc-900 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-black transition">Añadir</button>
+          <!-- COLUMNA DERECHA: CECOS Y ALÉRGENOS -->
+          <div class="space-y-8">
+            <!-- GESTOR SUCURSALES -->
+            <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
+              <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Sucursales (CECOs)</h3>
+              <div class="flex gap-2 mb-4">
+                <input type="text" id="admin-new-sucursal" placeholder="Ej: Cancún Sur" class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none">
+                <button onclick="adminGuardarSucursal()" class="bg-zinc-900 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-black transition">Añadir</button>
+              </div>
+              <ul id="lista-sucursales-admin" class="space-y-2"></ul>
             </div>
-            <ul id="lista-sucursales-admin" class="space-y-2"></ul>
+
+            <!-- GESTOR ALÉRGENOS -->
+            <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
+              <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Alérgenos</h3>
+              <p class="text-[10px] text-zinc-500 mb-3 leading-relaxed">Añade aquí ingredientes o restricciones (Ej: Ajo, FODMAP) para que aparezcan en el creador de recetas.</p>
+              <div class="flex gap-2 mb-4">
+                <input type="text" id="admin-new-alergeno" placeholder="Ej: Ajo" class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none">
+                <button onclick="adminGuardarAlergeno()" class="bg-zinc-900 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-black transition">Añadir</button>
+              </div>
+              <ul id="lista-alergenos-admin" class="space-y-2 max-h-60 overflow-y-auto"></ul>
+            </div>
           </div>
+
         </div>
       </div>
 
@@ -319,17 +337,21 @@
     window.recetaActual = null;
     window.usuarioActual = null;
     window.perfilUsuario = null; 
+    
+    // Arrays Dinámicos de Configuración
     window.sucursalesConfig = [];
+    window.alergenosConfig = [];
     
     let blockCounter = 0;
-    const ALERGENOS_LISTA = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"];
     const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
     window.onload = async () => {
-      generarCheckboxes('contenedor-alergenos', ALERGENOS_LISTA, 'alergeno');
       generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes');
     };
 
+    // ==========================================
+    // SISTEMA DE SEGURIDAD Y PERFILES
+    // ==========================================
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna', estado: 'Pendiente' };
@@ -380,7 +402,9 @@
           document.getElementById('btn-backup').classList.add('hidden');
         }
 
-        await window.cargarSucursalesBD();
+        // Cargar Configuración Dinámica (Sucursales y Alérgenos)
+        await window.cargarConfiguracionBD();
+        
         if(perfil.rol === 'SuperAdmin') {
           await window.cargarUsuariosBD();
         }
@@ -446,24 +470,46 @@
 
     window.cerrarSesion = () => { signOut(auth); };
 
-    window.cargarSucursalesBD = async () => {
-      const docRef = doc(db, 'configuracion', 'sucursales');
-      const snap = await getDoc(docRef);
-      if(snap.exists()) {
-        window.sucursalesConfig = snap.data().lista || [];
+    // ==========================================
+    // CARGA DE CONFIGURACIÓN GLOBAL (SUCURSALES Y ALÉRGENOS)
+    // ==========================================
+    window.cargarConfiguracionBD = async () => {
+      // 1. Cargar Sucursales
+      const docRefSucursales = doc(db, 'configuracion', 'sucursales');
+      const snapSuc = await getDoc(docRefSucursales);
+      if(snapSuc.exists()) {
+        window.sucursalesConfig = snapSuc.data().lista || [];
       } else {
         window.sucursalesConfig = ['Le Chique', 'Xuna', 'Texas', 'NY'];
-        await setDoc(docRef, { lista: window.sucursalesConfig });
+        await setDoc(docRefSucursales, { lista: window.sucursalesConfig });
       }
 
       let optionsHtml = '<option value="Global">Global (Compartida)</option>';
-      window.sucursalesConfig.forEach(s => {
-        optionsHtml += `<option value="${s}">${s}</option>`;
-      });
+      window.sucursalesConfig.forEach(s => { optionsHtml += `<option value="${s}">${s}</option>`; });
       document.getElementById('edit-sucursal').innerHTML = optionsHtml;
       window.renderizarListaSucursalesAdmin();
+
+      // 2. Cargar Alérgenos Dinámicos
+      const docRefAlergenos = doc(db, 'configuracion', 'alergenos');
+      const snapAler = await getDoc(docRefAlergenos);
+      if(snapAler.exists()) {
+        window.alergenosConfig = snapAler.data().lista || [];
+      } else {
+        // Lista Base Inicial si no existe
+        window.alergenosConfig = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"];
+        await setDoc(docRefAlergenos, { lista: window.alergenosConfig });
+      }
+      
+      // Renderizar los checkboxes en el Editor y la lista en el Panel Admin
+      generarCheckboxes('contenedor-alergenos', window.alergenosConfig, 'alergeno');
+      window.renderizarListaAlergenosAdmin();
     };
 
+    // ==========================================
+    // FUNCIONES DEL PANEL ADMIN
+    // ==========================================
+
+    // ----- SUCURSALES -----
     window.renderizarListaSucursalesAdmin = () => {
       const ul = document.getElementById('lista-sucursales-admin');
       if(!ul) return;
@@ -481,7 +527,7 @@
       window.sucursalesConfig.push(n);
       await setDoc(doc(db, 'configuracion', 'sucursales'), { lista: window.sucursalesConfig });
       document.getElementById('admin-new-sucursal').value = '';
-      await window.cargarSucursalesBD();
+      await window.cargarConfiguracionBD();
       await window.cargarUsuariosBD(); 
     };
 
@@ -489,10 +535,45 @@
       if(!confirm(`¿Borrar sucursal ${nombre}?`)) return;
       window.sucursalesConfig = window.sucursalesConfig.filter(s => s !== nombre);
       await setDoc(doc(db, 'configuracion', 'sucursales'), { lista: window.sucursalesConfig });
-      await window.cargarSucursalesBD();
+      await window.cargarConfiguracionBD();
       await window.cargarUsuariosBD();
     };
 
+    // ----- ALÉRGENOS -----
+    window.renderizarListaAlergenosAdmin = () => {
+      const ul = document.getElementById('lista-alergenos-admin');
+      if(!ul) return;
+      ul.innerHTML = window.alergenosConfig.map(a => `
+        <li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-[10px] font-bold text-zinc-700 uppercase">
+          ${a}
+          <button onclick="adminBorrarAlergeno('${a}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button>
+        </li>
+      `).join('');
+    };
+
+    window.adminGuardarAlergeno = async () => {
+      const n = document.getElementById('admin-new-alergeno').value.trim();
+      if(!n) return;
+      // Convertir la primera letra a mayúscula
+      const nombreAlergeno = n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
+      if(window.alergenosConfig.includes(nombreAlergeno)) return;
+      
+      window.alergenosConfig.push(nombreAlergeno);
+      window.alergenosConfig.sort(); // Ordenar alfabéticamente
+      
+      await setDoc(doc(db, 'configuracion', 'alergenos'), { lista: window.alergenosConfig });
+      document.getElementById('admin-new-alergeno').value = '';
+      await window.cargarConfiguracionBD();
+    };
+
+    window.adminBorrarAlergeno = async (nombre) => {
+      if(!confirm(`¿Borrar alérgeno/restricción: ${nombre}?`)) return;
+      window.alergenosConfig = window.alergenosConfig.filter(a => a !== nombre);
+      await setDoc(doc(db, 'configuracion', 'alergenos'), { lista: window.alergenosConfig });
+      await window.cargarConfiguracionBD();
+    };
+
+    // ----- USUARIOS -----
     window.cargarUsuariosBD = async () => {
       const snap = await getDocs(collection(db, 'usuarios'));
       const ulPendientes = document.getElementById('lista-pendientes-admin');
@@ -590,7 +671,7 @@
     };
 
     // ==========================================
-    // CARGA DE RECETAS - PROTEGIDA CONTRA RECETAS SIN DATOS
+    // FLUJO NORMAL DE RECETAS 
     // ==========================================
     window.obtenerRecetasDeFirebase = async () => {
       if(!window.perfilUsuario) return;
@@ -604,8 +685,6 @@
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          
-          // PARCHE SEGURO: Si la receta vieja no tiene nombre, se le asigna uno por defecto
           if (!data.nombre) data.nombre = 'Receta sin nombre';
           if (!data.id) data.id = doc.id;
 
@@ -619,7 +698,6 @@
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
         if(selectEditor) selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
 
-        // ORDENAMIENTO SEGURO: Previene colapso si un nombre viene en formato numérico o raro
         window.recetasDB.sort((a, b) => {
           const nombreA = a.nombre ? String(a.nombre) : '';
           const nombreB = b.nombre ? String(b.nombre) : '';
@@ -639,6 +717,7 @@
 
     function generarCheckboxes(containerId, items, namePrefix) {
       const container = document.getElementById(containerId);
+      if(!container) return;
       container.innerHTML = items.map(item => `
         <label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition">
           <input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900">
@@ -656,7 +735,6 @@
       return { cantidad: cantFormateada, unidad: uni.toUpperCase() };
     };
 
-    // --- FILTRADO SEGURO ---
     window.filtrarRecetas = () => {
       const texto = document.getElementById('input-buscador').value;
       window.renderizarListaRecetas(texto);
@@ -934,7 +1012,6 @@
       if(p === 'admin') document.getElementById(`tab-admin`).classList.add('bg-zinc-100', 'text-rose-900', 'font-black');
     };
 
-    // --- RENDERIZADO SEGURO ---
     window.renderizarListaRecetas = (textoFiltro = '') => {
       const t = document.getElementById('tabla-todas-recetas');
       const filtro = textoFiltro.toLowerCase();
