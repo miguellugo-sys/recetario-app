@@ -268,36 +268,28 @@
         </div>
       </div>
 
-      <!-- ================= PESTAÑA ADMIN (NUEVA INTERFAZ) ================= -->
+      <!-- ================= PESTAÑA ADMIN ================= -->
       <div id="vista-admin" class="p-6 hidden bg-zinc-100">
         <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight mb-8 border-b border-zinc-300 pb-4">Panel Corporativo</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <!-- GESTIÓN DE USUARIOS / BANDEJA DE ENTRADA -->
           <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
             <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
             
             <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3 border-b pb-1">Solicitudes Pendientes</h4>
-            <ul id="lista-pendientes-admin" class="space-y-3 mb-8">
-              <!-- Carga dinámica -->
-            </ul>
+            <ul id="lista-pendientes-admin" class="space-y-3 mb-8"></ul>
 
             <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
-            <ul id="lista-usuarios-admin" class="space-y-2">
-              <!-- Carga dinámica -->
-            </ul>
+            <ul id="lista-usuarios-admin" class="space-y-2"></ul>
           </div>
 
-          <!-- GESTIÓN DE SUCURSALES -->
           <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm h-fit">
             <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Sucursales (CECOs)</h3>
             <div class="flex gap-2 mb-4">
               <input type="text" id="admin-new-sucursal" placeholder="Ej: Cancún Sur" class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none">
               <button onclick="adminGuardarSucursal()" class="bg-zinc-900 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-black transition">Añadir</button>
             </div>
-            <ul id="lista-sucursales-admin" class="space-y-2">
-              <!-- Carga dinámica -->
-            </ul>
+            <ul id="lista-sucursales-admin" class="space-y-2"></ul>
           </div>
         </div>
       </div>
@@ -338,12 +330,8 @@
       generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes');
     };
 
-    // ==========================================
-    // SISTEMA DE SEGURIDAD Y PERFILES
-    // ==========================================
     onAuthStateChanged(auth, async (user) => {
       if (user) {
-        
         let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna', estado: 'Pendiente' };
         
         if (user.email.toLowerCase() === 'miguellugo@mlcocina.com') {
@@ -458,9 +446,6 @@
 
     window.cerrarSesion = () => { signOut(auth); };
 
-    // ==========================================
-    // CARGA DE SUCURSALES (GLOBALES)
-    // ==========================================
     window.cargarSucursalesBD = async () => {
       const docRef = doc(db, 'configuracion', 'sucursales');
       const snap = await getDoc(docRef);
@@ -476,13 +461,9 @@
         optionsHtml += `<option value="${s}">${s}</option>`;
       });
       document.getElementById('edit-sucursal').innerHTML = optionsHtml;
-      
       window.renderizarListaSucursalesAdmin();
     };
 
-    // ==========================================
-    // FUNCIONES DEL PANEL ADMIN
-    // ==========================================
     window.renderizarListaSucursalesAdmin = () => {
       const ul = document.getElementById('lista-sucursales-admin');
       if(!ul) return;
@@ -547,7 +528,6 @@
             </li>
           `;
         } else {
-          // Generar selectores dinámicos para usuarios ya autorizados
           let opcionesCecoAuth = `<option value="TODAS" ${d.sucursal === 'TODAS' ? 'selected' : ''}>TODAS (Global)</option>`;
           window.sucursalesConfig.forEach(s => {
             opcionesCecoAuth += `<option value="${s}" ${d.sucursal === s ? 'selected' : ''}>${s}</option>`;
@@ -575,7 +555,7 @@
       });
       
       ulPendientes.innerHTML = htmlPendientes || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest p-2 border border-dashed border-zinc-200 text-center rounded-sm">No hay solicitudes pendientes</li>';
-      ulAutorizados.innerHTML = htmlAutorizados || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest">Ningún usuario autorizado</li>';
+      ulAutorizados.innerHTML = htmlAutorizados || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest p-2 border border-dashed border-zinc-200 text-center rounded-sm">Ningún usuario autorizado</li>';
     };
 
     window.adminAprobarUsuario = async (email, idSeguro) => {
@@ -610,7 +590,7 @@
     };
 
     // ==========================================
-    // FLUJO NORMAL DE RECETAS
+    // FLUJO NORMAL DE RECETAS CON PROTECCIÓN DE CRASH
     // ==========================================
     window.obtenerRecetasDeFirebase = async () => {
       if(!window.perfilUsuario) return;
@@ -624,6 +604,11 @@
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
+          
+          // PARCHE ANTI-CRASH: Si hay una receta fantasma antigua sin nombre o sin ID, le asignamos valores seguros
+          if (!data.nombre) data.nombre = 'Receta sin nombre';
+          if (!data.id) data.id = doc.id;
+          
           const recSucursal = data.sucursal || 'Le Chique';
           
           if (window.perfilUsuario.rol === "SuperAdmin" || window.perfilUsuario.sucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.perfilUsuario.sucursal) {
@@ -634,6 +619,7 @@
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
         if(selectEditor) selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
 
+        // ORDENAMIENTO SEGURO: Evita el error "Cannot read properties of undefined"
         window.recetasDB.sort((a, b) => a.nombre.localeCompare(b.nombre));
 
         window.recetasDB.forEach(receta => {
@@ -642,8 +628,29 @@
         });
         window.renderizarListaRecetas();
       } catch (error) {
-        selectVisor.innerHTML = '<option value="">❌ Error</option>';
+        console.error(error);
+        // Ahora si vuelve a fallar, te dirá el motivo exacto en la misma barra
+        selectVisor.innerHTML = `<option value="">❌ Error: ${error.code || 'Desconocido'}</option>`;
       }
+    };
+
+    function generarCheckboxes(containerId, items, namePrefix) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.map(item => `
+        <label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition">
+          <input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900">
+          <span class="text-[11px] uppercase tracking-wide font-semibold text-zinc-600">${item}</span>
+        </label>
+      `).join('');
+    }
+
+    window.formatearCantidadInteligente = (cantidad, unidad) => {
+      let cant = parseFloat(cantidad);
+      let uni = (unidad || '').trim().toLowerCase();
+      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } 
+      else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
+      let cantFormateada = cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
+      return { cantidad: cantFormateada, unidad: uni.toUpperCase() };
     };
 
     window.filtrarRecetas = () => {
@@ -922,7 +929,6 @@
       document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs";
       if(p === 'admin') document.getElementById(`tab-admin`).classList.add('bg-zinc-100', 'text-rose-900', 'font-black');
     };
-
   </script>
 </body>
 </html>
