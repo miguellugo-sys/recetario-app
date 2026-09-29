@@ -29,6 +29,13 @@
     
     .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
     tr { page-break-inside: avoid; break-inside: avoid; }
+
+    /* Estilos fijos para la zona de impresión del PDF */
+    #zona-impresion {
+      box-sizing: border-box;
+      width: 100%;
+      max-width: 100%;
+    }
   </style>
 </head>
 <body class="p-2 md:p-6 text-zinc-800">
@@ -43,7 +50,6 @@
         
         <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2">Selecciona una receta de la bóveda</label>
         <select id="selector-importar-base" class="w-full p-3 border border-zinc-300 rounded-sm focus:ring-1 focus:ring-rose-900 outline-none text-sm font-medium bg-zinc-50 mb-8">
-          <!-- Dinámico -->
         </select>
         
         <div class="flex justify-end gap-4">
@@ -125,51 +131,54 @@
           </div>
         </div>
 
-        <div id="zona-impresion" class="bg-white p-10 border border-zinc-100 shadow-sm relative">
-          <div class="flex justify-between items-center border-b-[3px] border-zinc-900 pb-6 mb-6">
-            <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-16 object-contain" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
+        <!-- ZONA PDF DISEÑADA PARA FORMATO CARTA (AUSTERA Y RECTANGULAR) -->
+        <div id="zona-impresion" class="bg-white p-8 border border-zinc-200 shadow-sm relative">
+          <!-- HEADER -->
+          <div class="flex justify-between items-center border-b-2 border-zinc-900 pb-4 mb-6">
+            <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-14 object-contain" onerror="this.src='https://placehold.co/140x55?text=Le+Chique'">
             <div class="text-center flex-1 px-4">
-              <div class="mb-2"><span id="visor-ceco" class="pill pill-ceco hidden">---</span></div>
-              <h1 id="titulo-receta" class="font-serif text-3xl font-black text-zinc-900 uppercase tracking-widest leading-none">SELECCIONA UNA RECETA</h1>
-              <p class="text-[11px] font-bold mt-3 text-zinc-500 tracking-widest uppercase">
-                Rendimiento: <span id="display-pax" class="text-rose-900 text-sm">0</span> <span id="display-unidad" class="text-rose-900 text-sm">Kg</span>
+              <div class="mb-1"><span id="visor-ceco" class="pill pill-ceco hidden">---</span></div>
+              <h1 id="titulo-receta" class="font-serif text-2xl font-black text-zinc-900 uppercase tracking-widest leading-tight">SELECCIONA UNA RECETA</h1>
+              <p class="text-[10px] font-bold mt-2 text-zinc-500 tracking-widest uppercase">
+                Rendimiento: <span id="display-pax" class="text-rose-900 text-xs">0</span> <span id="display-unidad" class="text-rose-900 text-xs">Kg</span>
               </p>
             </div>
-            <img src="./assets/logo_michelin.png" alt="Michelin" class="h-16 object-contain" onerror="this.src='https://placehold.co/80x80?text=Michelin'">
+            <img src="./assets/logo_michelin.png" alt="Michelin" class="h-14 object-contain" onerror="this.src='https://placehold.co/70x70?text=Michelin'">
           </div>
 
           <div id="contenido-receta" class="hidden">
-            <div class="bg-zinc-50 border border-zinc-200 text-[9px] uppercase tracking-widest font-semibold text-zinc-400 p-2 mb-4 text-right rounded-sm">
+            <div class="bg-zinc-50 border border-zinc-200 text-[8px] uppercase tracking-widest font-semibold text-zinc-400 p-1.5 mb-4 text-right rounded-sm">
               Última modificación: <span id="visor-auditoria" class="text-zinc-600 font-bold">---</span>
             </div>
 
-            <div class="grid grid-cols-4 gap-6 text-xs mb-8 border-b border-zinc-200 pb-6">
+            <!-- METADATA GRID -->
+            <div class="grid grid-cols-4 gap-4 text-xs mb-6 border-b border-zinc-200 pb-4">
               <div class="col-span-1 border-r border-zinc-200 pr-2">
-                <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Partida</span>
-                <span id="visor-partida" class="font-bold text-zinc-800 uppercase tracking-wide">---</span>
+                <span class="block text-[9px] tracking-widest text-zinc-400 font-bold uppercase mb-1">Partida</span>
+                <span id="visor-partida" class="font-bold text-zinc-800 uppercase tracking-wide text-xs">---</span>
               </div>
               <div class="col-span-1 border-r border-zinc-200 px-2">
-                <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Tipo</span>
-                <span id="visor-tipo" class="font-bold text-zinc-800 uppercase tracking-wide">---</span>
+                <span class="block text-[9px] tracking-widest text-zinc-400 font-bold uppercase mb-1">Tipo</span>
+                <span id="visor-tipo" class="font-bold text-zinc-800 uppercase tracking-wide text-xs">---</span>
               </div>
               <div class="col-span-1 border-r border-zinc-200 px-2">
-                <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Alérgenos</span>
+                <span class="block text-[9px] tracking-widest text-zinc-400 font-bold uppercase mb-1">Alérgenos</span>
                 <div id="visor-alergenos" class="flex flex-wrap gap-1"></div>
               </div>
               <div class="col-span-1 pl-2">
-                <span class="block text-[10px] tracking-widest text-zinc-400 font-bold uppercase mb-1.5">Temporada</span>
-                <div id="visor-temporada" class="flex flex-wrap gap-1 text-zinc-600 font-semibold text-[10px]"></div>
+                <span class="block text-[9px] tracking-widest text-zinc-400 font-bold uppercase mb-1">Temporada</span>
+                <div id="visor-temporada" class="flex flex-wrap gap-1 text-zinc-600 font-semibold text-[9px]"></div>
               </div>
             </div>
 
-            <div id="contenedor-bloques-visor" class="space-y-8"></div>
+            <div id="contenedor-bloques-visor" class="space-y-6"></div>
           </div>
           
-          <div class="mt-12 pt-6 border-t border-zinc-200 flex justify-between items-center text-[9px] text-zinc-400 uppercase tracking-widest font-semibold">
+          <div class="mt-8 pt-4 border-t border-zinc-200 flex justify-between items-center text-[8px] text-zinc-400 uppercase tracking-widest font-semibold">
             <p>Documento técnico confidencial</p>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
               <span>Tech by:</span>
-              <img src="./assets/mi_logo.png" alt="Mi Logo" class="h-6 object-contain grayscale opacity-70" onerror="this.src='https://placehold.co/40x40?text=Logo'">
+              <img src="./assets/mi_logo.png" alt="Mi Logo" class="h-5 object-contain grayscale opacity-70" onerror="this.src='https://placehold.co/35x35?text=Logo'">
             </div>
           </div>
         </div>
@@ -232,7 +241,6 @@
             <div class="md:col-span-1">
               <label class="block text-[10px] font-bold text-rose-900 uppercase tracking-wider mb-1.5">Sucursal / CECO</label>
               <select id="edit-sucursal" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm font-semibold bg-rose-50 text-rose-900 focus:ring-1 focus:ring-rose-900">
-                <!-- Se llena dinámicamente -->
               </select>
             </div>
 
@@ -269,7 +277,6 @@
             <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">3. Sub-Recetas (Mise en Place)</h3>
             
             <div class="flex gap-3">
-              <!-- BOTÓN NUEVO: IMPORTAR BASE -->
               <button onclick="abrirModalImportarBase()" class="bg-zinc-800 hover:bg-black text-white text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition shadow-sm">
                 ⬇️ Importar Base
               </button>
@@ -321,7 +328,7 @@
 
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
               <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Alérgenos</h3>
-              <p class="text-[10px] text-zinc-500 mb-3 leading-relaxed">Añade aquí ingredientes o restricciones (Ej: Ajo, FODMAP) para que aparezcan en el creador de recetas.</p>
+              <p class="text-[10px] text-zinc-500 mb-3 leading-relaxed">Añade aquí ingredientes o restricciones para el creador de recetas.</p>
               <div class="flex gap-2 mb-4">
                 <input type="text" id="admin-new-alergeno" placeholder="Ej: Ajo" class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none">
                 <button onclick="adminGuardarAlergeno()" class="bg-zinc-900 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-black transition">Añadir</button>
@@ -369,9 +376,6 @@
       generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes');
     };
 
-    // ==========================================
-    // SISTEMA DE SEGURIDAD Y PERFILES
-    // ==========================================
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna', estado: 'Pendiente' };
@@ -486,11 +490,7 @@
 
     window.cerrarSesion = () => { signOut(auth); };
 
-    // ==========================================
-    // CARGA DE CONFIGURACIÓN GLOBAL (SUCURSALES Y ALÉRGENOS)
-    // ==========================================
     window.cargarConfiguracionBD = async () => {
-      // 1. Cargar Sucursales
       const docRefSucursales = doc(db, 'configuracion', 'sucursales');
       const snapSuc = await getDoc(docRefSucursales);
       if(snapSuc.exists()) {
@@ -505,7 +505,6 @@
       document.getElementById('edit-sucursal').innerHTML = optionsHtml;
       window.renderizarListaSucursalesAdmin();
 
-      // 2. Cargar Alérgenos Dinámicos
       const docRefAlergenos = doc(db, 'configuracion', 'alergenos');
       const snapAler = await getDoc(docRefAlergenos);
       if(snapAler.exists()) {
@@ -519,9 +518,6 @@
       window.renderizarListaAlergenosAdmin();
     };
 
-    // ==========================================
-    // FUNCIONES DEL PANEL ADMIN
-    // ==========================================
     window.renderizarListaSucursalesAdmin = () => {
       const ul = document.getElementById('lista-sucursales-admin');
       if(!ul) return;
@@ -680,7 +676,7 @@
     };
 
     // ==========================================
-    // FLUJO NORMAL DE RECETAS 
+    // CARGA DE RECETAS - PROTEGIDA Y OPTIMIZADA
     // ==========================================
     window.obtenerRecetasDeFirebase = async () => {
       if(!window.perfilUsuario) return;
@@ -876,6 +872,7 @@
       window.renderizarBloquesVisor(paxDeseado);
     };
 
+    // RENDERIZADO VISOR AJUSTADO EN TABLA PARA EVITAR ENPALMES
     window.renderizarBloquesVisor = (paxDeseado) => {
       const contenedor = document.getElementById('contenedor-bloques-visor');
       contenedor.innerHTML = '';
@@ -904,8 +901,8 @@
           
           return `
             <tr class="border-b border-zinc-100 break-inside-avoid">
-              <td class="py-1.5 text-zinc-900 tabular-nums font-medium text-sm w-24">${ingFormat.cantidad} <span class="text-[10px] text-zinc-400 ml-1 uppercase">${ingFormat.unidad}</span></td>
-              <td class="py-1.5 text-zinc-700 uppercase tracking-wide text-[11px] font-semibold">${ing.nombre}</td>
+              <td class="py-1 text-zinc-900 tabular-nums font-semibold text-xs w-[35%] align-top">${ingFormat.cantidad} <span class="text-[9px] text-zinc-400 font-normal uppercase">${ingFormat.unidad}</span></td>
+              <td class="py-1 text-zinc-700 uppercase tracking-wide text-[10px] font-semibold w-[65%] align-top">${ing.nombre}</td>
             </tr>`;
         }).join('');
 
@@ -913,22 +910,22 @@
         const totalFormat = window.formatearCantidadInteligente(sumaTotalGramos, unidadBaseTotal);
         
         tablaIng += `
-          <tr class="border-t-2 border-zinc-200 bg-zinc-50/50 break-inside-avoid">
-            <td class="py-2 text-rose-900 tabular-nums font-bold text-sm w-24">${totalFormat.cantidad} <span class="text-[10px] text-rose-900/60 ml-1 uppercase">${totalFormat.unidad}</span></td>
-            <td class="py-2 text-zinc-900 uppercase tracking-widest text-[10px] font-black">PESO TOTAL ESTIMADO</td>
+          <tr class="border-t-2 border-zinc-300 bg-zinc-50/50 break-inside-avoid">
+            <td class="py-1.5 text-rose-900 tabular-nums font-bold text-xs w-[35%] align-top">${totalFormat.cantidad} <span class="text-[9px] text-rose-900/60 uppercase">${totalFormat.unidad}</span></td>
+            <td class="py-1.5 text-zinc-900 uppercase tracking-widest text-[9px] font-black w-[65%] align-top">PESO ESTIMADO</td>
           </tr>
         `;
 
         contenedor.innerHTML += `
-          <div class="mb-6 break-inside-avoid">
-            <h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1.5 uppercase tracking-widest flex justify-between items-end mb-3">
+          <div class="mb-5 break-inside-avoid border-b border-zinc-100 pb-4">
+            <h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1 uppercase tracking-widest flex justify-between items-end mb-2">
               <span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span>
             </h3>
-            <div class="flex flex-col md:flex-row gap-6 mt-2">
-              <div class="md:w-[45%]">
-                <table class="w-full text-left"><tbody>${tablaIng}</tbody></table>
+            <div class="flex flex-col md:flex-row gap-4 mt-2">
+              <div class="md:w-[48%]">
+                <table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table>
               </div>
-              <div class="md:w-[55%] bg-zinc-50 p-4 rounded-sm border border-zinc-100 text-xs text-zinc-700 whitespace-pre-wrap leading-relaxed">
+              <div class="md:w-[52%] bg-zinc-50/80 p-3 rounded-sm border border-zinc-200 text-[11px] text-zinc-700 whitespace-pre-wrap leading-relaxed">
                 ${bloque.procedimiento}
               </div>
             </div>
@@ -937,18 +934,19 @@
       });
     };
 
+    // DESCARGA PDF CONFIGURADA CON MÁRGENES ESTÁNDAR A4/LETTER DENTRO DE LOS DÍGITOS DERECHOS
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const elemento = document.getElementById('zona-impresion');
       const anchoOriginal = elemento.style.width;
-      elemento.style.width = '800px';
+      elemento.style.width = '750px';
 
       const filename = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('input-pax').value}${window.recetaActual.unidad_base}.pdf`;
       const opt = { 
-        margin: 0.4, 
+        margin: [0.3, 0.4, 0.3, 0.4], 
         filename, 
         image: { type: 'jpeg', quality: 0.98 }, 
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 800 }, 
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 750 }, 
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
         pagebreak: { mode: 'css', avoid: ['.break-inside-avoid', 'tr'] }
       };
@@ -958,9 +956,6 @@
       });
     };
 
-    // ==========================================
-    // NUEVO MÓDULO: BASES MAESTRAS (IMPORTACIÓN)
-    // ==========================================
     window.abrirModalImportarBase = () => {
       document.getElementById('modal-importar').classList.remove('hidden');
     };
@@ -979,9 +974,7 @@
       const recetaBase = window.recetasDB.find(r => r.id === idSeleccionado);
       
       if (recetaBase && recetaBase.bloques) {
-        // Clona cada bloque de la receta seleccionada
         recetaBase.bloques.forEach(bloque => {
-          // Si el bloque se llamaba "Base", le agregamos el nombre de la receta para claridad
           let nombreAsignado = bloque.nombre === 'Preparación Base' ? recetaBase.nombre : bloque.nombre;
           window.agregarBloqueSubreceta(nombreAsignado, bloque.rendimiento, bloque.unidad, bloque.procedimiento, bloque.ingredientes);
         });
