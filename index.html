@@ -26,6 +26,10 @@
     .pill { display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; border: 1px solid #e4e4e7; background: #ffffff; color: #52525b; margin: 2px; }
     .pill-alergeno { border-color: #fecdd3; background-color: #fff1f2; color: #881337; }
     .pill-ceco { background-color: #18181b; color: #ffffff; border-color: #18181b; padding: 3px 12px; font-size: 0.70rem; }
+    
+    /* Reglas estrictas de paginación para el PDF */
+    .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
+    tr { page-break-inside: avoid; break-inside: avoid; }
   </style>
 </head>
 <body class="p-2 md:p-6 text-zinc-800">
@@ -131,6 +135,7 @@
               </div>
             </div>
 
+            <!-- BLOQUES DE SUB-RECETAS -->
             <div id="contenedor-bloques-visor" class="space-y-8"></div>
           </div>
           
@@ -144,18 +149,16 @@
         </div>
       </div>
 
-      <!-- ================= PESTAÑA LISTA (NUEVO BUSCADOR Y BACKUP) ================= -->
+      <!-- ================= PESTAÑA LISTA ================= -->
       <div id="vista-lista" class="p-6 hidden">
         <div class="bg-white p-6 rounded-sm border border-zinc-200">
           
-          <!-- Encabezado con Buscador y Botón de Backup -->
           <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-zinc-200 pb-4 gap-4">
             <h2 class="font-serif text-2xl font-black text-zinc-900">Base de Datos de Recetas</h2>
             
             <div class="flex w-full md:w-auto items-center gap-3">
               <input type="text" id="input-buscador" onkeyup="filtrarRecetas()" placeholder="🔍 Buscar por nombre, partida o sucursal..." class="w-full md:w-72 p-2.5 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900 bg-zinc-50">
               
-              <!-- Botón oculto por defecto, se activa solo para el Admin -->
               <button id="btn-backup" onclick="descargarBackup()" class="hidden bg-zinc-800 hover:bg-black text-white px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition shadow-sm">
                 💾 Backup JSON
               </button>
@@ -282,7 +285,6 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    // DICCIONARIO DE ROLES / SUCURSALES (CECO)
     const DICCIONARIO_USUARIOS = {
       "admin@lechique.com": "TODAS",
       "chef@xuna.com": "Xuna",
@@ -313,7 +315,6 @@
         document.getElementById('user-email-display').innerText = user.email;
         document.getElementById('user-role-display').innerText = window.rolSucursal;
         
-        // Habilitar botón de Backup solo si es Admin ("TODAS")
         if(window.rolSucursal === "TODAS") {
           document.getElementById('btn-backup').classList.remove('hidden');
         } else {
@@ -400,27 +401,22 @@
       }
     };
 
-    // --- NUEVO: FUNCIÓN DE FILTRADO (BUSCADOR) ---
     window.filtrarRecetas = () => {
       const texto = document.getElementById('input-buscador').value;
       window.renderizarListaRecetas(texto);
     };
 
-    // --- NUEVO: FUNCIÓN DE EXPORTACIÓN (BACKUP) ---
     window.descargarBackup = () => {
       if (!window.recetasDB || window.recetasDB.length === 0) {
         return alert("No hay recetas disponibles para respaldar.");
       }
-      
       const jsonString = JSON.stringify(window.recetasDB, null, 2);
       const blob = new Blob([jsonString], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-      
-      const fecha = new Date().toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      const fecha = new Date().toISOString().split('T')[0];
       const a = document.createElement('a');
       a.href = url;
       a.download = `Backup_LeChique_${fecha}.json`;
-      
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -560,7 +556,7 @@
           const ingFormat = window.formatearCantidadInteligente(cantCalculada, ing.unidad);
           
           return `
-            <tr class="border-b border-zinc-100">
+            <tr class="border-b border-zinc-100 break-inside-avoid">
               <td class="py-1.5 text-zinc-900 tabular-nums font-medium text-sm w-24">${ingFormat.cantidad} <span class="text-[10px] text-zinc-400 ml-1 uppercase">${ingFormat.unidad}</span></td>
               <td class="py-1.5 text-zinc-700 uppercase tracking-wide text-[11px] font-semibold">${ing.nombre}</td>
             </tr>`;
@@ -570,7 +566,7 @@
         const totalFormat = window.formatearCantidadInteligente(sumaTotalGramos, unidadBaseTotal);
         
         tablaIng += `
-          <tr class="border-t-2 border-zinc-200 bg-zinc-50/50">
+          <tr class="border-t-2 border-zinc-200 bg-zinc-50/50 break-inside-avoid">
             <td class="py-2 text-rose-900 tabular-nums font-bold text-sm w-24">${totalFormat.cantidad} <span class="text-[10px] text-rose-900/60 ml-1 uppercase">${totalFormat.unidad}</span></td>
             <td class="py-2 text-zinc-900 uppercase tracking-widest text-[10px] font-black">PESO TOTAL ESTIMADO</td>
           </tr>
@@ -594,6 +590,7 @@
       });
     };
 
+    // --- NUEVO: MOTOR DE PAGINACIÓN PDF ---
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const elemento = document.getElementById('zona-impresion');
@@ -602,7 +599,16 @@
       elemento.style.width = '800px';
 
       const filename = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('input-pax').value}${window.recetaActual.unidad_base}.pdf`;
-      const opt = { margin: 0.4, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, windowWidth: 800 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
+      
+      // Configuración estricta de saltos de página (pagebreak)
+      const opt = { 
+        margin: 0.4, 
+        filename, 
+        image: { type: 'jpeg', quality: 0.98 }, 
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 800 }, 
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: 'css', avoid: ['.break-inside-avoid', 'tr'] }
+      };
       
       html2pdf().set(opt).from(elemento).save().then(() => {
         elemento.style.width = anchoOriginal;
@@ -663,7 +669,6 @@
       document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs";
     };
 
-    // --- ACTUALIZADO: La tabla ahora respeta el texto de búsqueda (filtro) ---
     window.renderizarListaRecetas = (textoFiltro = '') => {
       const t = document.getElementById('tabla-todas-recetas');
       const filtro = textoFiltro.toLowerCase();
