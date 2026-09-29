@@ -254,6 +254,32 @@
       `).join('');
     }
 
+    // --- NUEVO: CEREBRO MATEMÁTICO INTELIGENTE ---
+    window.formatearCantidadInteligente = (cantidad, unidad) => {
+      let cant = parseFloat(cantidad);
+      let uni = (unidad || '').trim().toLowerCase();
+
+      // Conversión inteligente de gramos a Kilogramos
+      if ((uni === 'gr' || uni === 'g') && cant >= 1000) {
+        cant = cant / 1000;
+        uni = 'kg';
+      } 
+      // Conversión inteligente de mililitros a Litros
+      else if (uni === 'ml' && cant >= 1000) {
+        cant = cant / 1000;
+        uni = 'l';
+      }
+
+      // Formatear con comas para miles y máximo 3 decimales
+      let cantFormateada = cant.toLocaleString('en-US', {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 3
+      });
+
+      return { cantidad: cantFormateada, unidad: uni.toUpperCase() };
+    };
+    // ---------------------------------------------
+
     window.obtenerRecetasDeFirebase = async () => {
       const selectVisor = document.getElementById('selector-receta');
       const selectEditor = document.getElementById('selector-editor');
@@ -344,7 +370,8 @@
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
         
         document.getElementById('input-pax').value = window.recetaActual.rendimiento_base;
-        document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base;
+        // Aplicamos el formato al encabezado principal también
+        document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US');
         document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base;
         document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
         
@@ -363,7 +390,7 @@
     window.recalcularPax = () => {
       if (!window.recetaActual) return;
       const paxDeseado = parseFloat(document.getElementById('input-pax').value) || 0.1;
-      document.getElementById('display-pax').innerText = paxDeseado;
+      document.getElementById('display-pax').innerText = paxDeseado.toLocaleString('en-US');
       window.renderizarBloquesVisor(paxDeseado);
     };
 
@@ -375,14 +402,15 @@
 
       (window.recetaActual.bloques || []).forEach(bloque => {
         const rendCalculado = bloque.rendimiento * factorGlobal;
-        const rendDisplay = rendCalculado % 1 === 0 ? rendCalculado : rendCalculado.toFixed(3);
+        const rendFormat = window.formatearCantidadInteligente(rendCalculado, bloque.unidad);
 
         let tablaIng = bloque.ingredientes.map(ing => {
           const cantCalculada = ing.cantidad * factorGlobal;
-          const cantDisp = cantCalculada % 1 === 0 ? cantCalculada : cantCalculada.toFixed(3);
+          const ingFormat = window.formatearCantidadInteligente(cantCalculada, ing.unidad);
+          
           return `
             <tr class="border-b border-zinc-100">
-              <td class="py-1.5 text-zinc-900 tabular-nums font-medium text-sm w-24">${cantDisp} <span class="text-[10px] text-zinc-400 ml-1 uppercase">${ing.unidad}</span></td>
+              <td class="py-1.5 text-zinc-900 tabular-nums font-medium text-sm w-24">${ingFormat.cantidad} <span class="text-[10px] text-zinc-400 ml-1 uppercase">${ingFormat.unidad}</span></td>
               <td class="py-1.5 text-zinc-700 uppercase tracking-wide text-[11px] font-semibold">${ing.nombre}</td>
             </tr>`;
         }).join('');
@@ -390,7 +418,7 @@
         contenedor.innerHTML += `
           <div class="mb-6 break-inside-avoid">
             <h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1.5 uppercase tracking-widest flex justify-between items-end mb-3">
-              <span>Para ${rendDisplay} ${bloque.unidad} de ${bloque.nombre}</span>
+              <span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span>
             </h3>
             <div class="flex flex-col md:flex-row gap-6 mt-2">
               <div class="md:w-[45%]">
@@ -410,7 +438,7 @@
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const elemento = document.getElementById('zona-impresion');
-      const filename = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('display-pax').innerText}${window.recetaActual.unidad_base}.pdf`;
+      const filename = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('input-pax').value}${window.recetaActual.unidad_base}.pdf`;
       const opt = { margin: 0.4, filename, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' } };
       html2pdf().set(opt).from(elemento).save();
     };
