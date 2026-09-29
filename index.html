@@ -254,7 +254,7 @@
       `).join('');
     }
 
-    // --- NUEVO: CEREBRO MATEMÁTICO INTELIGENTE ---
+    // --- CEREBRO MATEMÁTICO INTELIGENTE ---
     window.formatearCantidadInteligente = (cantidad, unidad) => {
       let cant = parseFloat(cantidad);
       let uni = (unidad || '').trim().toLowerCase();
@@ -370,7 +370,6 @@
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
         
         document.getElementById('input-pax').value = window.recetaActual.rendimiento_base;
-        // Aplicamos el formato al encabezado principal también
         document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US');
         document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base;
         document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
@@ -404,8 +403,22 @@
         const rendCalculado = bloque.rendimiento * factorGlobal;
         const rendFormat = window.formatearCantidadInteligente(rendCalculado, bloque.unidad);
 
+        let sumaTotalGramos = 0;
+        let liquidosCount = 0;
+        let solidosCount = 0;
+
         let tablaIng = bloque.ingredientes.map(ing => {
           const cantCalculada = ing.cantidad * factorGlobal;
+          const u = (ing.unidad || '').trim().toLowerCase();
+          
+          // Lógica para el Peso Total Estimado
+          let cantParaSumar = cantCalculada;
+          if (u === 'kg' || u === 'l') cantParaSumar *= 1000;
+          sumaTotalGramos += cantParaSumar;
+
+          if (u === 'ml' || u === 'l') liquidosCount++;
+          else if (u === 'gr' || u === 'g' || u === 'kg') solidosCount++;
+          
           const ingFormat = window.formatearCantidadInteligente(cantCalculada, ing.unidad);
           
           return `
@@ -414,6 +427,17 @@
               <td class="py-1.5 text-zinc-700 uppercase tracking-wide text-[11px] font-semibold">${ing.nombre}</td>
             </tr>`;
         }).join('');
+
+        // Determinar unidad base para la suma y generar la fila final
+        let unidadBaseTotal = (liquidosCount > solidosCount) ? 'ml' : 'gr';
+        const totalFormat = window.formatearCantidadInteligente(sumaTotalGramos, unidadBaseTotal);
+        
+        tablaIng += `
+          <tr class="border-t-2 border-zinc-200 bg-zinc-50/50">
+            <td class="py-2 text-rose-900 tabular-nums font-bold text-sm w-24">${totalFormat.cantidad} <span class="text-[10px] text-rose-900/60 ml-1 uppercase">${totalFormat.unidad}</span></td>
+            <td class="py-2 text-zinc-900 uppercase tracking-widest text-[10px] font-black">PESO TOTAL ESTIMADO</td>
+          </tr>
+        `;
 
         contenedor.innerHTML += `
           <div class="mb-6 break-inside-avoid">
