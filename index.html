@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Recetario Pro - Le Chique</title>
+  <title>Recetario Corporate - Le Chique</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
@@ -27,7 +27,6 @@
     .pill-alergeno { border-color: #fecdd3; background-color: #fff1f2; color: #881337; }
     .pill-ceco { background-color: #18181b; color: #ffffff; border-color: #18181b; padding: 3px 12px; font-size: 0.70rem; }
     
-    /* Reglas estrictas de paginación para el PDF */
     .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
     tr { page-break-inside: avoid; break-inside: avoid; }
   </style>
@@ -36,17 +35,28 @@
 
   <div class="max-w-5xl mx-auto bg-white rounded-sm shadow-xl border border-zinc-200 overflow-hidden min-h-[60vh]">
     
-    <!-- ================= PANTALLA DE LOGIN ================= -->
+    <!-- ================= PANTALLA DE LOGIN / REGISTRO ================= -->
     <div id="vista-login" class="flex flex-col items-center justify-center p-12 mt-10">
       <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-20 object-contain mb-8" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
-      <div class="w-full max-w-sm border border-zinc-200 p-8 rounded-sm bg-zinc-50 shadow-sm">
-        <h2 class="font-serif text-2xl font-black text-zinc-900 mb-2 text-center uppercase tracking-widest">Acceso Restringido</h2>
-        <p class="text-xs text-center text-zinc-500 mb-6 uppercase tracking-wider">Gestor Multi-Sucursal</p>
+      <div class="w-full max-w-sm border border-zinc-200 p-8 rounded-sm bg-zinc-50 shadow-sm relative">
+        
+        <h2 id="login-title" class="font-serif text-2xl font-black text-zinc-900 mb-2 text-center uppercase tracking-widest">Acceso Restringido</h2>
+        <p id="login-subtitle" class="text-[10px] text-center text-zinc-500 mb-6 uppercase tracking-wider font-bold">Inicia sesión con tu cuenta corporativa</p>
         
         <input type="email" id="login-email" placeholder="Correo electrónico" class="w-full mb-4 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
         <input type="password" id="login-password" placeholder="Contraseña" class="w-full mb-6 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
         
-        <button onclick="iniciarSesion()" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Iniciar Sesión</button>
+        <!-- Botones de Acción -->
+        <div id="box-btn-iniciar">
+          <button onclick="iniciarSesion()" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Iniciar Sesión</button>
+          <p class="text-center text-xs mt-4 text-zinc-500">¿Eres nuevo? <button onclick="toggleRegistro(true)" class="text-rose-900 font-bold hover:underline">Crear cuenta nueva</button></p>
+        </div>
+
+        <div id="box-btn-registrar" class="hidden">
+          <button onclick="registrarCuenta()" class="w-full bg-rose-900 hover:bg-rose-800 text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Registrarme</button>
+          <p class="text-center text-xs mt-4 text-zinc-500">¿Ya tienes cuenta? <button onclick="toggleRegistro(false)" class="text-zinc-900 font-bold hover:underline">Iniciar Sesión</button></p>
+        </div>
+
         <p id="login-error" class="text-rose-600 text-xs text-center mt-4 hidden font-bold"></p>
       </div>
     </div>
@@ -55,12 +65,13 @@
     <div id="app-principal" class="hidden">
       
       <!-- Topbar de Usuario -->
-      <div class="bg-zinc-900 text-white px-6 py-2 flex justify-between items-center text-xs tracking-wider uppercase font-semibold">
+      <div class="bg-zinc-900 text-white px-6 py-2 flex justify-between items-center text-[10px] tracking-widest uppercase font-semibold">
         <div class="flex items-center gap-4">
           <span id="user-email-display" class="text-rose-300"></span>
-          <span class="border-l border-zinc-700 pl-4 text-zinc-400">Rol CECO: <span id="user-role-display" class="text-white font-bold"></span></span>
+          <span class="border-l border-zinc-700 pl-4 text-zinc-400">CECO: <span id="user-ceco-display" class="text-white font-bold"></span></span>
+          <span class="border-l border-zinc-700 pl-4 text-zinc-400">Rol: <span id="user-role-display" class="text-white font-bold"></span></span>
         </div>
-        <button onclick="cerrarSesion()" class="hover:text-rose-300 transition flex items-center gap-1">
+        <button onclick="cerrarSesion()" class="hover:text-rose-300 transition flex items-center gap-1 font-bold">
           Salir ⎋
         </button>
       </div>
@@ -69,36 +80,35 @@
       <div class="flex border-b border-zinc-200 text-sm">
         <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs">📖 Visor y PDF</button>
         <button id="tab-lista" onclick="cambiarPestaña('lista')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs">📋 Mis Recetas</button>
-        <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs">✏️ Editor Avanzado</button>
+        <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden">✏️ Editor</button>
+        <button id="tab-admin" onclick="cambiarPestaña('admin')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden bg-zinc-100 text-rose-900 font-black">⚙️ Panel Admin</button>
       </div>
 
       <!-- ================= PESTAÑA VISOR ================= -->
       <div id="vista-visor" class="p-6">
         <div id="controles-impresion" class="bg-zinc-50 p-5 rounded-sm mb-8 flex flex-wrap gap-4 items-end border border-zinc-200">
           <div class="flex-1 min-w-[200px]">
-            <label class="block text-xs font-bold tracking-wider text-zinc-500 uppercase mb-2">Seleccionar Receta</label>
+            <label class="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Seleccionar Receta</label>
             <select id="selector-receta" onchange="cargarRecetaSeleccionada()" class="w-full p-2.5 border border-zinc-300 rounded-sm focus:ring-1 focus:ring-rose-900 outline-none text-sm font-medium bg-white">
               <option value="">Cargando base de datos...</option>
             </select>
           </div>
           <div class="w-28">
-            <label class="block text-xs font-bold tracking-wider text-zinc-500 uppercase mb-2">Deseado</label>
+            <label class="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Deseado</label>
             <input type="number" id="input-pax" oninput="recalcularPax()" value="1" step="any" min="0.1" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm text-center tabular-nums font-medium">
           </div>
           <div class="w-24">
-            <label class="block text-xs font-bold tracking-wider text-zinc-500 uppercase mb-2">Unidad</label>
-            <input type="text" id="display-unidad-input" readonly class="w-full p-2.5 border border-zinc-200 bg-zinc-100 rounded-sm outline-none text-zinc-400 text-center text-sm uppercase">
+            <label class="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Unidad</label>
+            <input type="text" id="display-unidad-input" readonly class="w-full p-2.5 border border-zinc-200 bg-zinc-100 rounded-sm outline-none text-zinc-400 text-center text-sm uppercase font-bold">
           </div>
           <div>
-            <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-xs uppercase tracking-wider font-bold py-3 px-6 rounded-sm shadow transition flex items-center gap-2">
+            <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] uppercase tracking-widest font-bold py-3.5 px-6 rounded-sm shadow transition flex items-center gap-2">
               📄 Generar PDF
             </button>
           </div>
         </div>
 
-        <!-- PDF ZONE -->
         <div id="zona-impresion" class="bg-white p-10 border border-zinc-100 shadow-sm relative">
-          <!-- HEADER -->
           <div class="flex justify-between items-center border-b-[3px] border-zinc-900 pb-6 mb-6">
             <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-16 object-contain" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
             <div class="text-center flex-1 px-4">
@@ -135,7 +145,6 @@
               </div>
             </div>
 
-            <!-- BLOQUES DE SUB-RECETAS -->
             <div id="contenedor-bloques-visor" class="space-y-8"></div>
           </div>
           
@@ -157,23 +166,24 @@
             <h2 class="font-serif text-2xl font-black text-zinc-900">Base de Datos de Recetas</h2>
             
             <div class="flex w-full md:w-auto items-center gap-3">
-              <input type="text" id="input-buscador" onkeyup="filtrarRecetas()" placeholder="🔍 Buscar por nombre, partida o sucursal..." class="w-full md:w-72 p-2.5 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900 bg-zinc-50">
+              <input type="text" id="input-buscador" onkeyup="filtrarRecetas()" placeholder="🔍 Buscar receta..." class="w-full md:w-72 p-2.5 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900 bg-zinc-50">
               
+              <!-- Solo Admin ve Backup -->
               <button id="btn-backup" onclick="descargarBackup()" class="hidden bg-zinc-800 hover:bg-black text-white px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition shadow-sm">
-                💾 Backup JSON
+                💾 Backup
               </button>
             </div>
           </div>
 
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
-              <thead class="bg-zinc-50 text-zinc-500 border-b border-zinc-200 text-xs uppercase tracking-wider">
+              <thead class="bg-zinc-50 text-zinc-500 border-b border-zinc-200 text-[10px] uppercase tracking-widest">
                 <tr>
-                  <th class="p-4 font-semibold">Platillo</th>
-                  <th class="p-4 font-semibold">Sucursal</th>
-                  <th class="p-4 font-semibold">Partida</th>
-                  <th class="p-4 font-semibold">Última Modificación</th>
-                  <th class="p-4 font-semibold text-center">Acciones</th>
+                  <th class="p-4 font-bold">Platillo</th>
+                  <th class="p-4 font-bold">Sucursal</th>
+                  <th class="p-4 font-bold">Partida</th>
+                  <th class="p-4 font-bold">Última Modificación</th>
+                  <th class="p-4 font-bold text-center" id="col-acciones">Acciones</th>
                 </tr>
               </thead>
               <tbody id="tabla-todas-recetas" class="text-zinc-700 text-sm"></tbody>
@@ -189,7 +199,8 @@
             <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight">Editor Avanzado</h2>
             <p class="text-xs text-zinc-500 uppercase tracking-widest mt-1">Gestor de Mise en Place</p>
           </div>
-          <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border border-zinc-300 rounded-sm font-bold outline-none bg-white text-xs uppercase tracking-wide">
+          <!-- Selector visible solo para SuperAdmin. Editor crea desde 0 -->
+          <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border border-zinc-300 rounded-sm font-bold outline-none bg-white text-[10px] uppercase tracking-widest">
             <option value="">+ Crear Nueva Receta</option>
           </select>
         </div>
@@ -206,11 +217,7 @@
             <div class="md:col-span-1">
               <label class="block text-[10px] font-bold text-rose-900 uppercase tracking-wider mb-1.5">Sucursal / CECO</label>
               <select id="edit-sucursal" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm font-semibold bg-rose-50 text-rose-900 focus:ring-1 focus:ring-rose-900">
-                <option value="Global">Global (Compartida)</option>
-                <option value="Le Chique" selected>Le Chique (Matriz)</option>
-                <option value="Xuna">Xuna (CDMX)</option>
-                <option value="Texas">Texas</option>
-                <option value="NY">NY</option>
+                <!-- Se llena dinámicamente -->
               </select>
             </div>
 
@@ -264,13 +271,63 @@
         </div>
       </div>
 
+      <!-- ================= PESTAÑA ADMIN (SÓLO MIGUEL) ================= -->
+      <div id="vista-admin" class="p-6 hidden bg-zinc-100">
+        <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight mb-8 border-b border-zinc-300 pb-4">Panel Corporativo</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <!-- GESTIÓN DE SUCURSALES -->
+          <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
+            <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Sucursales (CECOs)</h3>
+            <div class="flex gap-2 mb-4">
+              <input type="text" id="admin-new-sucursal" placeholder="Ej: Cancún Sur" class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none">
+              <button onclick="adminGuardarSucursal()" class="bg-zinc-900 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-black transition">Añadir</button>
+            </div>
+            <ul id="lista-sucursales-admin" class="space-y-2">
+              <!-- Carga dinámica -->
+            </ul>
+          </div>
+
+          <!-- GESTIÓN DE USUARIOS -->
+          <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
+            <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
+            
+            <div class="bg-zinc-50 p-4 border border-zinc-200 rounded-sm mb-6">
+              <input type="email" id="admin-new-email" placeholder="Correo del empleado" class="w-full p-2 mb-3 border border-zinc-300 rounded-sm text-sm outline-none">
+              <div class="grid grid-cols-2 gap-3 mb-3">
+                <div>
+                  <label class="block text-[9px] uppercase font-bold text-zinc-500 mb-1">Rol</label>
+                  <select id="admin-new-rol" class="w-full p-2 border border-zinc-300 rounded-sm text-xs font-bold text-zinc-700 outline-none">
+                    <option value="Editor">Admin Editor (Solo crea)</option>
+                    <option value="Lector">Lector (Solo ve y PDF)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="block text-[9px] uppercase font-bold text-zinc-500 mb-1">Sucursal Asignada</label>
+                  <select id="admin-new-ceco" class="w-full p-2 border border-zinc-300 rounded-sm text-xs font-bold text-zinc-700 outline-none">
+                    <!-- Dinámico -->
+                  </select>
+                </div>
+              </div>
+              <button onclick="adminGuardarUsuario()" class="w-full bg-rose-900 text-white py-2 text-[10px] tracking-widest font-bold uppercase rounded-sm hover:bg-rose-800 transition">Autorizar Usuario</button>
+            </div>
+
+            <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
+            <ul id="lista-usuarios-admin" class="space-y-2">
+              <!-- Carga dinámica -->
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
     </div>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBJs05is5zZ25rteHveq0ubaXtX1Xw1K_8",
@@ -285,69 +342,227 @@
     const db = getFirestore(app);
     const auth = getAuth(app);
 
-    const DICCIONARIO_USUARIOS = {
-      "admin@lechique.com": "TODAS",
-      "chef@xuna.com": "Xuna",
-      "chef@texas.com": "Texas"
-    };
-
     window.recetasDB = []; 
     window.recetaActual = null;
     window.usuarioActual = null;
-    window.rolSucursal = null;
+    window.perfilUsuario = null; // Guarda: { rol, sucursal }
+    window.sucursalesConfig = [];
+    
     let blockCounter = 0;
-
     const ALERGENOS_LISTA = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"];
     const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
-    window.onload = () => {
+    window.onload = async () => {
       generarCheckboxes('contenedor-alergenos', ALERGENOS_LISTA, 'alergeno');
       generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes');
     };
 
-    onAuthStateChanged(auth, (user) => {
+    // ==========================================
+    // SISTEMA DE SEGURIDAD Y PERFILES
+    // ==========================================
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
-        window.usuarioActual = user;
-        window.rolSucursal = DICCIONARIO_USUARIOS[user.email] || "Le Chique";
         
+        // 1. Obtener perfil de BD
+        let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna' };
+        
+        if (user.email.toLowerCase() === 'miguellugo@mlcocina.com') {
+          perfil = { rol: 'SuperAdmin', sucursal: 'TODAS' };
+        } else {
+          const docRef = doc(db, 'usuarios', user.email.toLowerCase());
+          const snap = await getDoc(docRef);
+          if(snap.exists()){
+            perfil = snap.data();
+          } else {
+            // Usuario creó cuenta pero no ha sido autorizado por Miguel
+            await signOut(auth);
+            const err = document.getElementById('login-error');
+            err.innerText = "Cuenta creada pero NO AUTORIZADA. Contacta a miguellugo@mlcocina.com.";
+            err.classList.remove('hidden');
+            return;
+          }
+        }
+
+        window.usuarioActual = user;
+        window.perfilUsuario = perfil;
+        
+        // Setup UI
         document.getElementById('vista-login').classList.add('hidden');
         document.getElementById('app-principal').classList.remove('hidden');
         document.getElementById('user-email-display').innerText = user.email;
-        document.getElementById('user-role-display').innerText = window.rolSucursal;
+        document.getElementById('user-ceco-display').innerText = perfil.sucursal;
+        document.getElementById('user-role-display').innerText = perfil.rol;
         
-        if(window.rolSucursal === "TODAS") {
+        // Permisos de Pestañas
+        if(perfil.rol === 'SuperAdmin') {
+          document.getElementById('tab-editor').classList.remove('hidden');
+          document.getElementById('tab-admin').classList.remove('hidden');
+          document.getElementById('selector-editor').classList.remove('hidden');
           document.getElementById('btn-backup').classList.remove('hidden');
+        } else if(perfil.rol === 'Editor') {
+          document.getElementById('tab-editor').classList.remove('hidden');
+          document.getElementById('tab-admin').classList.add('hidden');
+          document.getElementById('selector-editor').classList.add('hidden'); // Solo crea, no modifica
+          document.getElementById('btn-backup').classList.add('hidden');
         } else {
+          // Lector
+          document.getElementById('tab-editor').classList.add('hidden');
+          document.getElementById('tab-admin').classList.add('hidden');
           document.getElementById('btn-backup').classList.add('hidden');
         }
 
-        window.obtenerRecetasDeFirebase();
+        // Cargar Base de datos base
+        await window.cargarSucursalesBD();
+        if(perfil.rol === 'SuperAdmin') {
+          await window.cargarUsuariosBD();
+        }
+        await window.obtenerRecetasDeFirebase();
+        
         if(document.getElementById('contenedor-bloques-editor').children.length === 0) {
           window.agregarBloqueSubreceta();
         }
+
+        window.cambiarPestaña('visor');
+
       } else {
         window.usuarioActual = null;
-        window.rolSucursal = null;
+        window.perfilUsuario = null;
         document.getElementById('vista-login').classList.remove('hidden');
         document.getElementById('app-principal').classList.add('hidden');
       }
     });
 
+    window.toggleRegistro = (isRegistro) => {
+      document.getElementById('login-error').classList.add('hidden');
+      if(isRegistro){
+        document.getElementById('login-title').innerText = "Crear Nueva Cuenta";
+        document.getElementById('login-subtitle').innerText = "Necesitas autorización del Admin para entrar";
+        document.getElementById('box-btn-iniciar').classList.add('hidden');
+        document.getElementById('box-btn-registrar').classList.remove('hidden');
+      }else{
+        document.getElementById('login-title').innerText = "Acceso Restringido";
+        document.getElementById('login-subtitle').innerText = "Gestor Multi-Sucursal";
+        document.getElementById('box-btn-iniciar').classList.remove('hidden');
+        document.getElementById('box-btn-registrar').classList.add('hidden');
+      }
+    };
+
     window.iniciarSesion = async () => {
-      const email = document.getElementById('login-email').value;
-      const pass = document.getElementById('login-password').value;
-      const errorLabel = document.getElementById('login-error');
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-        errorLabel.classList.add('hidden');
-      } catch (error) {
-        errorLabel.innerText = "Credenciales incorrectas o usuario inexistente.";
-        errorLabel.classList.remove('hidden');
+      const e = document.getElementById('login-email').value;
+      const p = document.getElementById('login-password').value;
+      const err = document.getElementById('login-error');
+      try { await signInWithEmailAndPassword(auth, e, p); err.classList.add('hidden'); } 
+      catch (error) { err.innerText = "Credenciales incorrectas."; err.classList.remove('hidden'); }
+    };
+
+    window.registrarCuenta = async () => {
+      const e = document.getElementById('login-email').value;
+      const p = document.getElementById('login-password').value;
+      const err = document.getElementById('login-error');
+      if(p.length < 6) { err.innerText = "Contraseña min. 6 caracteres"; err.classList.remove('hidden'); return;}
+      try { 
+        await createUserWithEmailAndPassword(auth, e, p); 
+        err.classList.add('hidden');
+      } catch (error) { 
+        err.innerText = "Error o cuenta ya existente."; err.classList.remove('hidden'); 
       }
     };
 
     window.cerrarSesion = () => { signOut(auth); };
 
+    // ==========================================
+    // CARGA DE SUCURSALES (GLOBALES)
+    // ==========================================
+    window.cargarSucursalesBD = async () => {
+      const docRef = doc(db, 'configuracion', 'sucursales');
+      const snap = await getDoc(docRef);
+      if(snap.exists()) {
+        window.sucursalesConfig = snap.data().lista || [];
+      } else {
+        window.sucursalesConfig = ['Le Chique', 'Xuna', 'Texas', 'NY'];
+        await setDoc(docRef, { lista: window.sucursalesConfig });
+      }
+
+      // Actualizar selectores
+      let optionsHtml = '<option value="Global">Global (Compartida)</option>';
+      let optionsAdmin = '';
+      window.sucursalesConfig.forEach(s => {
+        optionsHtml += `<option value="${s}">${s}</option>`;
+        optionsAdmin += `<option value="${s}">${s}</option>`;
+      });
+      document.getElementById('edit-sucursal').innerHTML = optionsHtml;
+      if(document.getElementById('admin-new-ceco')) {
+        document.getElementById('admin-new-ceco').innerHTML = optionsAdmin;
+      }
+      window.renderizarListaSucursalesAdmin();
+    };
+
+    // ==========================================
+    // FUNCIONES DEL PANEL ADMIN
+    // ==========================================
+    window.renderizarListaSucursalesAdmin = () => {
+      const ul = document.getElementById('lista-sucursales-admin');
+      if(!ul) return;
+      ul.innerHTML = window.sucursalesConfig.map(s => `
+        <li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-xs font-bold text-zinc-700 uppercase">
+          ${s}
+          <button onclick="adminBorrarSucursal('${s}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button>
+        </li>
+      `).join('');
+    };
+
+    window.adminGuardarSucursal = async () => {
+      const n = document.getElementById('admin-new-sucursal').value.trim();
+      if(!n || window.sucursalesConfig.includes(n)) return;
+      window.sucursalesConfig.push(n);
+      await setDoc(doc(db, 'configuracion', 'sucursales'), { lista: window.sucursalesConfig });
+      document.getElementById('admin-new-sucursal').value = '';
+      await window.cargarSucursalesBD();
+    };
+
+    window.adminBorrarSucursal = async (nombre) => {
+      if(!confirm(`¿Borrar sucursal ${nombre}?`)) return;
+      window.sucursalesConfig = window.sucursalesConfig.filter(s => s !== nombre);
+      await setDoc(doc(db, 'configuracion', 'sucursales'), { lista: window.sucursalesConfig });
+      await window.cargarSucursalesBD();
+    };
+
+    window.cargarUsuariosBD = async () => {
+      const snap = await getDocs(collection(db, 'usuarios'));
+      const ul = document.getElementById('lista-usuarios-admin');
+      let html = '';
+      snap.forEach(doc => {
+        const d = doc.data();
+        html += `
+          <li class="flex justify-between items-center bg-zinc-50 p-3 border border-zinc-100 rounded-sm text-xs">
+            <div><strong class="text-zinc-800">${d.email}</strong><br><span class="text-[10px] text-zinc-500 uppercase">${d.rol} - ${d.sucursal}</span></div>
+            <button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 font-bold hover:underline px-2">Revocar</button>
+          </li>
+        `;
+      });
+      ul.innerHTML = html;
+    };
+
+    window.adminGuardarUsuario = async () => {
+      const email = document.getElementById('admin-new-email').value.trim().toLowerCase();
+      const rol = document.getElementById('admin-new-rol').value;
+      const sucursal = document.getElementById('admin-new-ceco').value;
+      if(!email) return;
+      
+      await setDoc(doc(db, 'usuarios', email), { email, rol, sucursal });
+      document.getElementById('admin-new-email').value = '';
+      await window.cargarUsuariosBD();
+    };
+
+    window.adminBorrarUsuario = async (email) => {
+      if(!confirm(`¿Revocar acceso a ${email}?`)) return;
+      await deleteDoc(doc(db, 'usuarios', email));
+      await window.cargarUsuariosBD();
+    };
+
+    // ==========================================
+    // FLUJO NORMAL DE RECETAS
+    // ==========================================
     function generarCheckboxes(containerId, items, namePrefix) {
       const container = document.getElementById(containerId);
       container.innerHTML = items.map(item => `
@@ -368,10 +583,10 @@
     };
 
     window.obtenerRecetasDeFirebase = async () => {
-      if(!window.usuarioActual) return;
+      if(!window.perfilUsuario) return;
       const selectVisor = document.getElementById('selector-receta');
       const selectEditor = document.getElementById('selector-editor');
-      selectVisor.innerHTML = '<option value="">Descargando desde la nube...</option>';
+      selectVisor.innerHTML = '<option value="">Descargando...</option>';
       
       try {
         const querySnapshot = await getDocs(collection(db, "recetas"));
@@ -381,7 +596,7 @@
           const data = doc.data();
           const recSucursal = data.sucursal || 'Le Chique';
           
-          if (window.rolSucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.rolSucursal) {
+          if (window.perfilUsuario.rol === "SuperAdmin" || recSucursal === "Global" || recSucursal === window.perfilUsuario.sucursal) {
             window.recetasDB.push(data);
           }
         });
@@ -397,7 +612,7 @@
         });
         window.renderizarListaRecetas();
       } catch (error) {
-        selectVisor.innerHTML = '<option value="">❌ Error de conexión</option>';
+        selectVisor.innerHTML = '<option value="">❌ Error</option>';
       }
     };
 
@@ -407,9 +622,7 @@
     };
 
     window.descargarBackup = () => {
-      if (!window.recetasDB || window.recetasDB.length === 0) {
-        return alert("No hay recetas disponibles para respaldar.");
-      }
+      if (!window.recetasDB || window.recetasDB.length === 0) return alert("Nada que respaldar.");
       const jsonString = JSON.stringify(window.recetasDB, null, 2);
       const blob = new Blob([jsonString], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -456,8 +669,11 @@
         bloques.push({ nombre: nombreBloque, rendimiento: rendBloque, unidad: uniBloque, ingredientes, procedimiento });
       });
 
+      // Si es Editor, forzar a crear ID nuevo SIEMPRE para no sobreescribir.
       let id = document.getElementById('selector-editor').value;
-      if (!id) id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      if (!id || window.perfilUsuario.rol === 'Editor') {
+        id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
+      }
 
       const fechaHoy = new Date();
       const fechaStr = `${fechaHoy.getDate().toString().padStart(2, '0')}/${(fechaHoy.getMonth()+1).toString().padStart(2, '0')}/${fechaHoy.getFullYear()} ${fechaHoy.getHours().toString().padStart(2, '0')}:${fechaHoy.getMinutes().toString().padStart(2, '0')}`;
@@ -479,7 +695,7 @@
         window.mostrarMensaje("✅ Receta guardada", "text-green-600");
         document.getElementById('loader-guardar').style.display = 'none';
         await window.obtenerRecetasDeFirebase();
-        if(!document.getElementById('selector-editor').value) window.limpiarEditor();
+        window.limpiarEditor(); // Siempre limpia al guardar para evitar dobles
       } catch (error) {
         window.mostrarMensaje("❌ Error al guardar.", "text-rose-900");
         document.getElementById('loader-guardar').style.display = 'none';
@@ -590,17 +806,13 @@
       });
     };
 
-    // --- NUEVO: MOTOR DE PAGINACIÓN PDF ---
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const elemento = document.getElementById('zona-impresion');
-      
       const anchoOriginal = elemento.style.width;
       elemento.style.width = '800px';
 
       const filename = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('input-pax').value}${window.recetaActual.unidad_base}.pdf`;
-      
-      // Configuración estricta de saltos de página (pagebreak)
       const opt = { 
         margin: 0.4, 
         filename, 
@@ -661,12 +873,27 @@
     };
 
     window.cambiarPestaña = (p) => {
-      ['visor', 'lista', 'editor'].forEach(id => {
+      ['visor', 'lista', 'editor', 'admin'].forEach(id => {
         document.getElementById(`vista-${id}`).classList.add('hidden');
-        document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs";
+        document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden";
       });
+      
+      // Mostrar pestaña solicitada
       document.getElementById(`vista-${p}`).classList.remove('hidden');
+      
+      // Mostrar botones de navegación según permisos
+      document.getElementById('tab-visor').classList.remove('hidden');
+      document.getElementById('tab-lista').classList.remove('hidden');
+      
+      if(window.perfilUsuario.rol === 'SuperAdmin') {
+        document.getElementById('tab-editor').classList.remove('hidden');
+        document.getElementById('tab-admin').classList.remove('hidden');
+      } else if (window.perfilUsuario.rol === 'Editor') {
+        document.getElementById('tab-editor').classList.remove('hidden');
+      }
+
       document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs";
+      if(p === 'admin') document.getElementById(`tab-admin`).classList.add('bg-zinc-100', 'text-rose-900', 'font-black');
     };
 
     window.renderizarListaRecetas = (textoFiltro = '') => {
@@ -680,21 +907,36 @@
         return nombreMatch || partidaMatch || sucursalMatch;
       });
 
+      // Solo Admin ve la columna de Acciones en la tabla
+      const thAcciones = document.getElementById('col-acciones');
+      if(window.perfilUsuario.rol === 'SuperAdmin') {
+        thAcciones.classList.remove('hidden');
+      } else {
+        thAcciones.classList.add('hidden');
+      }
+
       t.innerHTML = filtradas.map(r => {
         const modificacion = r.auditoria ? `${r.auditoria.fecha.split(' ')[0]}<br><span class="text-[9px] text-zinc-400 normal-case">${r.auditoria.modificado_por}</span>` : '---';
         const sucursalLabel = r.sucursal || 'Le Chique';
+        
+        let accionesHtml = '';
+        if(window.perfilUsuario.rol === 'SuperAdmin') {
+          accionesHtml = `
+            <td class="p-4 text-center space-x-2 whitespace-nowrap">
+              <button onclick="editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button>
+              <button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button>
+            </td>`;
+        }
+
         return `
-        <tr class="border-b border-zinc-100 hover:bg-zinc-50 transition">
+        <tr class="border-b border-zinc-100 hover:bg-zinc-50 transition cursor-pointer" onclick="document.getElementById('selector-receta').value = '${r.id}'; cargarRecetaSeleccionada(); cambiarPestaña('visor');">
           <td class="p-4 font-bold text-zinc-800">${r.nombre}</td>
           <td class="p-4"><span class="pill pill-ceco">${sucursalLabel}</span></td>
           <td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td>
           <td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${modificacion}</td>
-          <td class="p-4 text-center space-x-2 whitespace-nowrap">
-            <button onclick="editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button>
-            <button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button>
-          </td>
+          ${accionesHtml}
         </tr>`
-      }).join('') || '<tr><td colspan="5" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">No se encontraron recetas</td></tr>';
+      }).join('') || `<tr><td colspan="${window.perfilUsuario.rol === 'SuperAdmin' ? 5 : 4}" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">No hay recetas</td></tr>`;
     };
 
     window.editarReceta = (id) => {
@@ -734,18 +976,19 @@
       document.getElementById('edit-unidad-base').value = 'Kg';
       document.getElementById('edit-partida').value = '';
       document.getElementById('edit-tipo').value = '';
-      document.getElementById('edit-sucursal').value = 'Le Chique';
+      document.getElementById('edit-sucursal').value = window.perfilUsuario.sucursal === 'TODAS' ? 'Le Chique' : window.perfilUsuario.sucursal;
       document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false);
       document.getElementById('contenedor-bloques-editor').innerHTML = '';
     };
 
     window.limpiarEditor = () => {
-      document.getElementById('selector-editor').value = '';
+      if(document.getElementById('selector-editor')) document.getElementById('selector-editor').value = '';
       window.limpiarFormularioBase();
       window.agregarBloqueSubreceta();
     };
 
     window.eliminarReceta = async (id) => {
+      event.stopPropagation(); // Evitar que abra el visor al clickear borrar
       if (!confirm("¿Eliminar receta permanentemente?")) return;
       try {
         await deleteDoc(doc(db, "recetas", id));
