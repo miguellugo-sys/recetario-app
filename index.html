@@ -58,16 +58,21 @@
       <div class="w-full max-w-sm border border-zinc-200 p-8 rounded-sm bg-zinc-50 shadow-sm relative">
         <h2 id="login-title" class="font-serif text-2xl font-black text-zinc-900 mb-2 text-center uppercase tracking-widest">Acceso Restringido</h2>
         <p id="login-subtitle" class="text-[10px] text-center text-zinc-500 mb-6 uppercase tracking-wider font-bold">Inicia sesión con tu cuenta corporativa</p>
+        
         <input type="email" id="login-email" placeholder="Correo electrónico" class="w-full mb-4 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
-        <input type="password" id="login-password" placeholder="Contraseña" class="w-full mb-6 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
+        <!-- Evento agregado para detectar tecla Enter -->
+        <input type="password" id="login-password" placeholder="Contraseña" class="w-full mb-6 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900" onkeypress="if(event.key === 'Enter') iniciarSesion()">
+        
         <div id="box-btn-iniciar">
           <button onclick="iniciarSesion()" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Iniciar Sesión</button>
           <p class="text-center text-xs mt-4 text-zinc-500">¿Eres nuevo empleado? <button onclick="toggleRegistro(true)" class="text-rose-900 font-bold hover:underline">Crear cuenta</button></p>
         </div>
+
         <div id="box-btn-registrar" class="hidden">
           <button onclick="registrarCuenta()" class="w-full bg-rose-900 hover:bg-rose-800 text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Enviar Solicitud</button>
           <p class="text-center text-xs mt-4 text-zinc-500">¿Ya fuiste aprobado? <button onclick="toggleRegistro(false)" class="text-zinc-900 font-bold hover:underline">Iniciar Sesión</button></p>
         </div>
+
         <p id="login-error" class="text-rose-600 text-xs text-center mt-4 hidden font-bold"></p>
       </div>
     </div>
@@ -174,12 +179,9 @@
             <h2 class="font-serif text-2xl font-black text-zinc-900">Base de Datos de Recetas</h2>
             <div class="flex w-full md:w-auto items-center gap-3">
               <input type="text" id="input-buscador" onkeyup="filtrarRecetas()" placeholder="🔍 Buscar receta..." class="w-full md:w-72 p-2.5 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900 bg-zinc-50">
-              <button id="btn-backup" onclick="descargarBackup()" class="hidden bg-zinc-800 hover:bg-black text-white px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition shadow-sm">
-                💾 Backup
-              </button>
+              <button id="btn-backup" onclick="descargarBackup()" class="hidden bg-zinc-800 hover:bg-black text-white px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition shadow-sm">💾 Backup</button>
             </div>
           </div>
-
           <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
               <thead class="bg-zinc-50 text-zinc-500 border-b border-zinc-200 text-[10px] uppercase tracking-widest">
@@ -231,13 +233,10 @@
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Nombre Oficial</label>
               <input type="text" id="edit-nombre" placeholder="Ej: Beurre Blanc de Tosazu" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none font-bold text-zinc-800">
             </div>
-            
             <div class="md:col-span-1">
               <label class="block text-[10px] font-bold text-rose-900 uppercase tracking-wider mb-1.5">Sucursal / CECO</label>
-              <select id="edit-sucursal" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm font-semibold bg-rose-50 text-rose-900 focus:ring-1 focus:ring-rose-900">
-              </select>
+              <select id="edit-sucursal" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm font-semibold bg-rose-50 text-rose-900 focus:ring-1 focus:ring-rose-900"></select>
             </div>
-
             <div>
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Rend. Total</label>
               <input type="number" id="edit-pax-base" value="1" step="any" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none tabular-nums">
@@ -269,16 +268,10 @@
         <div class="mb-8">
           <div class="flex justify-between items-center mb-4 pl-1">
             <h3 class="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">3. Sub-Recetas (Mise en Place)</h3>
-            
             <div class="flex gap-3">
-              <button onclick="abrirModalImportarBase()" class="bg-zinc-800 hover:bg-black text-white text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition shadow-sm">
-                ⬇️ Importar Base
-              </button>
-              <button onclick="agregarBloqueSubreceta()" class="bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-700 text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition">
-                + Añadir Sub-Receta
-              </button>
+              <button onclick="abrirModalImportarBase()" class="bg-zinc-800 hover:bg-black text-white text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition shadow-sm">⬇️️ Importar Base</button>
+              <button onclick="agregarBloqueSubreceta()" class="bg-zinc-100 hover:bg-zinc-200 border border-zinc-300 text-zinc-700 text-[10px] uppercase tracking-widest font-bold py-1.5 px-4 rounded-sm transition">+ Añadir Sub-Receta</button>
             </div>
-            
           </div>
           <div id="contenedor-bloques-editor" class="space-y-5"></div>
         </div>
@@ -286,21 +279,15 @@
         <div class="flex items-center justify-end gap-4 border-t border-zinc-300 pt-6 mt-8">
           <span id="mensaje-estado" class="text-sm font-bold"></span>
           <div id="loader-guardar" class="loader"></div>
-          <button onclick="limpiarEditor()" class="bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-600 text-xs tracking-wider uppercase font-bold py-2.5 px-6 rounded-sm transition">
-            Limpiar Editor
-          </button>
-          <button onclick="guardarReceta()" class="bg-rose-900 hover:bg-rose-800 text-white text-xs tracking-wider uppercase font-bold py-2.5 px-8 rounded-sm shadow-md transition">
-            💾 Guardar Receta
-          </button>
+          <button onclick="limpiarEditor()" class="bg-white border border-zinc-300 hover:bg-zinc-50 text-zinc-600 text-xs tracking-wider uppercase font-bold py-2.5 px-6 rounded-sm transition">Limpiar Editor</button>
+          <button onclick="guardarReceta()" class="bg-rose-900 hover:bg-rose-800 text-white text-xs tracking-wider uppercase font-bold py-2.5 px-8 rounded-sm shadow-md transition">💾 Guardar Receta</button>
         </div>
       </div>
 
       <!-- ================= PESTAÑA ADMIN ================= -->
       <div id="vista-admin" class="p-6 hidden bg-zinc-100">
         <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight mb-8 border-b border-zinc-300 pb-4">Panel Corporativo</h2>
-        
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          
           <div class="space-y-8">
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm h-fit">
               <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
@@ -309,18 +296,15 @@
               <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
               <ul id="lista-usuarios-admin" class="space-y-2"></ul>
             </div>
-
-            <!-- NUEVO GESTOR DE API KEY -->
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm border-l-4 border-l-indigo-600">
               <h3 class="text-[10px] font-bold text-indigo-900 uppercase tracking-widest mb-2">Configuración de Inteligencia Artificial</h3>
-              <p class="text-[10px] text-zinc-500 mb-4 leading-relaxed">Pega aquí tu clave de <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 underline font-bold">Google Gemini API</a> para habilitar el auto-completado de recetas por foto.</p>
+              <p class="text-[10px] text-zinc-500 mb-4 leading-relaxed">Pega aquí tu clave de Google Gemini API para habilitar el auto-completado por foto.</p>
               <div class="flex gap-2">
                 <input type="password" id="admin-api-key" placeholder="AIzaSyBJs0..." class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none focus:border-indigo-600">
                 <button onclick="adminGuardarApiKey()" class="bg-indigo-600 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-indigo-700 transition">Guardar</button>
               </div>
             </div>
           </div>
-
           <div class="space-y-8">
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
               <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Sucursales (CECOs)</h3>
@@ -330,7 +314,6 @@
               </div>
               <ul id="lista-sucursales-admin" class="space-y-2"></ul>
             </div>
-
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
               <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Alérgenos</h3>
               <div class="flex gap-2 mb-4">
@@ -340,10 +323,8 @@
               <ul id="lista-alergenos-admin" class="space-y-2 max-h-60 overflow-y-auto"></ul>
             </div>
           </div>
-
         </div>
       </div>
-
     </div>
   </div>
 
@@ -369,11 +350,9 @@
     window.recetaActual = null;
     window.usuarioActual = null;
     window.perfilUsuario = null; 
-    
     window.sucursalesConfig = [];
     window.alergenosConfig = [];
-    window.apiKeyIA = ''; // Variable Global para la API de IA
-    
+    window.apiKeyIA = ''; 
     let blockCounter = 0;
     const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
@@ -482,7 +461,6 @@
         await createUserWithEmailAndPassword(auth, e, p); 
         await setDoc(doc(db, 'usuarios', e), { email: e, rol: 'Lector', sucursal: 'Le Chique', estado: 'Pendiente' });
         await signOut(auth);
-        
         err.innerText = "¡Solicitud enviada! Espera a que miguellugo@mlcocina.com apruebe tu cuenta.";
         err.classList.replace('text-rose-600', 'text-green-600');
         err.classList.remove('hidden');
@@ -495,9 +473,6 @@
 
     window.cerrarSesion = () => { signOut(auth); };
 
-    // ==========================================
-    // CARGA DE CONFIGURACIÓN GLOBAL
-    // ==========================================
     window.cargarConfiguracionBD = async () => {
       const docRefSucursales = doc(db, 'configuracion', 'sucursales');
       const snapSuc = await getDoc(docRefSucursales);
@@ -516,7 +491,6 @@
       generarCheckboxes('contenedor-alergenos', window.alergenosConfig, 'alergeno');
       window.renderizarListaAlergenosAdmin();
 
-      // Cargar Clave de API IA
       const docRefApi = doc(db, 'configuracion', 'api');
       const snapApi = await getDoc(docRefApi);
       if(snapApi.exists() && snapApi.data().gemini) {
@@ -533,7 +507,6 @@
       alert("Llave de IA guardada y activada.");
     };
 
-    // ----- SUCURSALES & ALERGENOS & USUARIOS ADMIN -----
     window.renderizarListaSucursalesAdmin = () => {
       const ul = document.getElementById('lista-sucursales-admin');
       if(!ul) return;
@@ -577,7 +550,7 @@
     };
 
     window.adminBorrarAlergeno = async (nombre) => {
-      if(!confirm(`¿Borrar alérgeno: ${nombre}?`)) return;
+      if(!confirm(`¿Borrar alérgeno/restricción: ${nombre}?`)) return;
       window.alergenosConfig = window.alergenosConfig.filter(a => a !== nombre);
       await setDoc(doc(db, 'configuracion', 'alergenos'), { lista: window.alergenosConfig });
       await window.cargarConfiguracionBD();
@@ -599,18 +572,10 @@
             <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm">
               <div class="font-bold text-zinc-800 text-xs mb-3">${d.email}</div>
               <div class="flex gap-2 mb-3">
-                <select id="rol-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
-                  <option value="Lector">Lector (Solo PDF)</option>
-                  <option value="Editor">Admin Editor (Crea)</option>
-                </select>
-                <select id="ceco-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
-                  ${opcionesSucursalAdmin}
-                </select>
+                <select id="rol-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white"><option value="Lector">Lector (Solo PDF)</option><option value="Editor">Admin Editor (Crea)</option></select>
+                <select id="ceco-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">${opcionesSucursalAdmin}</select>
               </div>
-              <div class="flex gap-2">
-                <button onclick="adminAprobarUsuario('${d.email}', '${idSeguro}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Aprobar</button>
-                <button onclick="adminRechazarUsuario('${d.email}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Rechazar</button>
-              </div>
+              <div class="flex gap-2"><button onclick="adminAprobarUsuario('${d.email}', '${idSeguro}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Aprobar</button><button onclick="adminRechazarUsuario('${d.email}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Rechazar</button></div>
             </li>`;
         } else {
           let opcionesCecoAuth = `<option value="TODAS" ${d.sucursal === 'TODAS' ? 'selected' : ''}>TODAS (Global)</option>`;
@@ -636,7 +601,7 @@
     window.adminBorrarUsuario = async (email) => { if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
 
     // ==========================================
-    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL (GEMINI VISION)
+    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL
     // ==========================================
     window.procesarFotoIA = async (event) => {
       const file = event.target.files[0];
@@ -656,8 +621,7 @@
         const base64String = reader.result.split(',')[1];
         const mimeType = file.type;
 
-        // Prompt estricto para forzar la salida en JSON perfecto
-        const promptText = `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. No agregues comillas invertidas, ni la palabra 'json', ni texto adicional. Solo el JSON puro:
+        const promptText = `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. No agregues texto extra.
         {
           "nombre": "Nombre de la receta",
           "rendimiento_base": 1,
@@ -677,26 +641,15 @@
           ]
         }`;
 
-        const payload = {
-          contents: [{
-            parts: [
-              { text: promptText },
-              { inline_data: { mime_type: mimeType, data: base64String } }
-            ]
-          }]
-        };
+        const payload = { contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: mimeType, data: base64String } }] }] };
 
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${window.apiKeyIA}`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
+            method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload)
           });
           
-          if (!res.ok) throw new Error("Error en la conexión con la IA.");
+          if (!res.ok) throw new Error("Error IA");
           
           const data = await res.json();
           let textResult = data.candidates[0].content.parts[0].text;
-          
-          // Limpiar markdown residual si la IA es terca
           textResult = textResult.replace(/```json/g, '').replace(/
