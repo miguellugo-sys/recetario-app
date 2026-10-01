@@ -29,13 +29,6 @@
     
     .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
     tr { page-break-inside: avoid; break-inside: avoid; }
-
-    /* Estilos fijos para la zona de impresión del PDF */
-    #zona-impresion {
-      box-sizing: border-box;
-      width: 100%;
-      max-width: 100%;
-    }
   </style>
 </head>
 <body class="p-2 md:p-6 text-zinc-800">
@@ -63,23 +56,18 @@
     <div id="vista-login" class="flex flex-col items-center justify-center p-12 mt-10">
       <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-20 object-contain mb-8" onerror="this.src='https://placehold.co/150x60?text=Le+Chique'">
       <div class="w-full max-w-sm border border-zinc-200 p-8 rounded-sm bg-zinc-50 shadow-sm relative">
-        
         <h2 id="login-title" class="font-serif text-2xl font-black text-zinc-900 mb-2 text-center uppercase tracking-widest">Acceso Restringido</h2>
         <p id="login-subtitle" class="text-[10px] text-center text-zinc-500 mb-6 uppercase tracking-wider font-bold">Inicia sesión con tu cuenta corporativa</p>
-        
         <input type="email" id="login-email" placeholder="Correo electrónico" class="w-full mb-4 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
         <input type="password" id="login-password" placeholder="Contraseña" class="w-full mb-6 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
-        
         <div id="box-btn-iniciar">
           <button onclick="iniciarSesion()" class="w-full bg-zinc-900 hover:bg-black text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Iniciar Sesión</button>
           <p class="text-center text-xs mt-4 text-zinc-500">¿Eres nuevo empleado? <button onclick="toggleRegistro(true)" class="text-rose-900 font-bold hover:underline">Crear cuenta</button></p>
         </div>
-
         <div id="box-btn-registrar" class="hidden">
           <button onclick="registrarCuenta()" class="w-full bg-rose-900 hover:bg-rose-800 text-white font-bold py-3 rounded-sm text-xs uppercase tracking-widest transition shadow-md">Enviar Solicitud</button>
           <p class="text-center text-xs mt-4 text-zinc-500">¿Ya fuiste aprobado? <button onclick="toggleRegistro(false)" class="text-zinc-900 font-bold hover:underline">Iniciar Sesión</button></p>
         </div>
-
         <p id="login-error" class="text-rose-600 text-xs text-center mt-4 hidden font-bold"></p>
       </div>
     </div>
@@ -94,9 +82,7 @@
           <span class="border-l border-zinc-700 pl-4 text-zinc-400">CECO: <span id="user-ceco-display" class="text-white font-bold"></span></span>
           <span class="border-l border-zinc-700 pl-4 text-zinc-400">Rol: <span id="user-role-display" class="text-white font-bold"></span></span>
         </div>
-        <button onclick="cerrarSesion()" class="hover:text-rose-300 transition flex items-center gap-1 font-bold">
-          Salir ⎋
-        </button>
+        <button onclick="cerrarSesion()" class="hover:text-rose-300 transition flex items-center gap-1 font-bold">Salir ⎋</button>
       </div>
 
       <!-- Navegación -->
@@ -131,9 +117,7 @@
           </div>
         </div>
 
-        <!-- ZONA PDF DISEÑADA PARA FORMATO CARTA (AUSTERA Y RECTANGULAR) -->
         <div id="zona-impresion" class="bg-white p-8 border border-zinc-200 shadow-sm relative">
-          <!-- HEADER -->
           <div class="flex justify-between items-center border-b-2 border-zinc-900 pb-4 mb-6">
             <img src="./assets/logo_lechique.png" alt="Le Chique" class="h-14 object-contain" onerror="this.src='https://placehold.co/140x55?text=Le+Chique'">
             <div class="text-center flex-1 px-4">
@@ -151,7 +135,6 @@
               Última modificación: <span id="visor-auditoria" class="text-zinc-600 font-bold">---</span>
             </div>
 
-            <!-- METADATA GRID -->
             <div class="grid grid-cols-4 gap-4 text-xs mb-6 border-b border-zinc-200 pb-4">
               <div class="col-span-1 border-r border-zinc-200 pr-2">
                 <span class="block text-[9px] tracking-widest text-zinc-400 font-bold uppercase mb-1">Partida</span>
@@ -187,13 +170,10 @@
       <!-- ================= PESTAÑA LISTA ================= -->
       <div id="vista-lista" class="p-6 hidden">
         <div class="bg-white p-6 rounded-sm border border-zinc-200">
-          
           <div class="flex flex-col md:flex-row justify-between items-center mb-6 border-b border-zinc-200 pb-4 gap-4">
             <h2 class="font-serif text-2xl font-black text-zinc-900">Base de Datos de Recetas</h2>
-            
             <div class="flex w-full md:w-auto items-center gap-3">
               <input type="text" id="input-buscador" onkeyup="filtrarRecetas()" placeholder="🔍 Buscar receta..." class="w-full md:w-72 p-2.5 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900 bg-zinc-50">
-              
               <button id="btn-backup" onclick="descargarBackup()" class="hidden bg-zinc-800 hover:bg-black text-white px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition shadow-sm">
                 💾 Backup
               </button>
@@ -227,6 +207,20 @@
           <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border border-zinc-300 rounded-sm font-bold outline-none bg-white text-[10px] uppercase tracking-widest">
             <option value="">+ Crear Nueva Receta</option>
           </select>
+        </div>
+
+        <!-- MÓDULO INTELIGENCIA ARTIFICIAL -->
+        <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+          <div>
+            <h3 class="text-indigo-900 font-bold text-sm">✨ Asistente IA (Auto-Completado)</h3>
+            <p class="text-[10px] text-indigo-700 uppercase tracking-widest">Sube la foto de una receta física y la IA la transcribirá por ti.</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <input type="file" id="input-foto-ia" accept="image/*" class="hidden" onchange="procesarFotoIA(event)">
+            <button onclick="document.getElementById('input-foto-ia').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] uppercase tracking-widest font-bold py-2.5 px-6 rounded-sm transition shadow-sm flex items-center gap-2">
+              📸 Escanear Receta
+            </button>
+          </div>
         </div>
 
         <div class="bg-white p-6 rounded-sm shadow-sm border border-zinc-200 mb-6 relative">
@@ -306,14 +300,25 @@
         <h2 class="font-serif text-3xl font-black text-zinc-900 tracking-tight mb-8 border-b border-zinc-300 pb-4">Panel Corporativo</h2>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm h-fit">
-            <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
-            
-            <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3 border-b pb-1">Solicitudes Pendientes</h4>
-            <ul id="lista-pendientes-admin" class="space-y-3 mb-8"></ul>
+          
+          <div class="space-y-8">
+            <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm h-fit">
+              <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Autorización de Empleados</h3>
+              <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-3 border-b pb-1">Solicitudes Pendientes</h4>
+              <ul id="lista-pendientes-admin" class="space-y-3 mb-8"></ul>
+              <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
+              <ul id="lista-usuarios-admin" class="space-y-2"></ul>
+            </div>
 
-            <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
-            <ul id="lista-usuarios-admin" class="space-y-2"></ul>
+            <!-- NUEVO GESTOR DE API KEY -->
+            <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm border-l-4 border-l-indigo-600">
+              <h3 class="text-[10px] font-bold text-indigo-900 uppercase tracking-widest mb-2">Configuración de Inteligencia Artificial</h3>
+              <p class="text-[10px] text-zinc-500 mb-4 leading-relaxed">Pega aquí tu clave de <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-indigo-600 underline font-bold">Google Gemini API</a> para habilitar el auto-completado de recetas por foto.</p>
+              <div class="flex gap-2">
+                <input type="password" id="admin-api-key" placeholder="AIzaSyBJs0..." class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none focus:border-indigo-600">
+                <button onclick="adminGuardarApiKey()" class="bg-indigo-600 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-indigo-700 transition">Guardar</button>
+              </div>
+            </div>
           </div>
 
           <div class="space-y-8">
@@ -328,7 +333,6 @@
 
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
               <h3 class="text-[10px] font-bold text-rose-900 uppercase tracking-widest mb-4">Gestor de Alérgenos</h3>
-              <p class="text-[10px] text-zinc-500 mb-3 leading-relaxed">Añade aquí ingredientes o restricciones para el creador de recetas.</p>
               <div class="flex gap-2 mb-4">
                 <input type="text" id="admin-new-alergeno" placeholder="Ej: Ajo" class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none">
                 <button onclick="adminGuardarAlergeno()" class="bg-zinc-900 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-black transition">Añadir</button>
@@ -368,6 +372,7 @@
     
     window.sucursalesConfig = [];
     window.alergenosConfig = [];
+    window.apiKeyIA = ''; // Variable Global para la API de IA
     
     let blockCounter = 0;
     const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
@@ -490,15 +495,14 @@
 
     window.cerrarSesion = () => { signOut(auth); };
 
+    // ==========================================
+    // CARGA DE CONFIGURACIÓN GLOBAL
+    // ==========================================
     window.cargarConfiguracionBD = async () => {
       const docRefSucursales = doc(db, 'configuracion', 'sucursales');
       const snapSuc = await getDoc(docRefSucursales);
-      if(snapSuc.exists()) {
-        window.sucursalesConfig = snapSuc.data().lista || [];
-      } else {
-        window.sucursalesConfig = ['Le Chique', 'Xuna', 'Texas', 'NY'];
-        await setDoc(docRefSucursales, { lista: window.sucursalesConfig });
-      }
+      if(snapSuc.exists()) { window.sucursalesConfig = snapSuc.data().lista || []; } 
+      else { window.sucursalesConfig = ['Le Chique', 'Xuna', 'Texas', 'NY']; await setDoc(docRefSucursales, { lista: window.sucursalesConfig }); }
 
       let optionsHtml = '<option value="Global">Global (Compartida)</option>';
       window.sucursalesConfig.forEach(s => { optionsHtml += `<option value="${s}">${s}</option>`; });
@@ -507,26 +511,33 @@
 
       const docRefAlergenos = doc(db, 'configuracion', 'alergenos');
       const snapAler = await getDoc(docRefAlergenos);
-      if(snapAler.exists()) {
-        window.alergenosConfig = snapAler.data().lista || [];
-      } else {
-        window.alergenosConfig = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"];
-        await setDoc(docRefAlergenos, { lista: window.alergenosConfig });
-      }
-      
+      if(snapAler.exists()) { window.alergenosConfig = snapAler.data().lista || []; } 
+      else { window.alergenosConfig = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"]; await setDoc(docRefAlergenos, { lista: window.alergenosConfig }); }
       generarCheckboxes('contenedor-alergenos', window.alergenosConfig, 'alergeno');
       window.renderizarListaAlergenosAdmin();
+
+      // Cargar Clave de API IA
+      const docRefApi = doc(db, 'configuracion', 'api');
+      const snapApi = await getDoc(docRefApi);
+      if(snapApi.exists() && snapApi.data().gemini) {
+        window.apiKeyIA = snapApi.data().gemini;
+        document.getElementById('admin-api-key').value = window.apiKeyIA;
+      }
     };
 
+    window.adminGuardarApiKey = async () => {
+      const key = document.getElementById('admin-api-key').value.trim();
+      if(!key) return;
+      await setDoc(doc(db, 'configuracion', 'api'), { gemini: key }, {merge: true});
+      window.apiKeyIA = key;
+      alert("Llave de IA guardada y activada.");
+    };
+
+    // ----- SUCURSALES & ALERGENOS & USUARIOS ADMIN -----
     window.renderizarListaSucursalesAdmin = () => {
       const ul = document.getElementById('lista-sucursales-admin');
       if(!ul) return;
-      ul.innerHTML = window.sucursalesConfig.map(s => `
-        <li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-xs font-bold text-zinc-700 uppercase">
-          ${s}
-          <button onclick="adminBorrarSucursal('${s}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button>
-        </li>
-      `).join('');
+      ul.innerHTML = window.sucursalesConfig.map(s => `<li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-xs font-bold text-zinc-700 uppercase">${s} <button onclick="adminBorrarSucursal('${s}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button></li>`).join('');
     };
 
     window.adminGuardarSucursal = async () => {
@@ -550,12 +561,7 @@
     window.renderizarListaAlergenosAdmin = () => {
       const ul = document.getElementById('lista-alergenos-admin');
       if(!ul) return;
-      ul.innerHTML = window.alergenosConfig.map(a => `
-        <li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-[10px] font-bold text-zinc-700 uppercase">
-          ${a}
-          <button onclick="adminBorrarAlergeno('${a}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button>
-        </li>
-      `).join('');
+      ul.innerHTML = window.alergenosConfig.map(a => `<li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-[10px] font-bold text-zinc-700 uppercase">${a} <button onclick="adminBorrarAlergeno('${a}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button></li>`).join('');
     };
 
     window.adminGuardarAlergeno = async () => {
@@ -563,17 +569,15 @@
       if(!n) return;
       const nombreAlergeno = n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
       if(window.alergenosConfig.includes(nombreAlergeno)) return;
-      
       window.alergenosConfig.push(nombreAlergeno);
       window.alergenosConfig.sort(); 
-      
       await setDoc(doc(db, 'configuracion', 'alergenos'), { lista: window.alergenosConfig });
       document.getElementById('admin-new-alergeno').value = '';
       await window.cargarConfiguracionBD();
     };
 
     window.adminBorrarAlergeno = async (nombre) => {
-      if(!confirm(`¿Borrar alérgeno/restricción: ${nombre}?`)) return;
+      if(!confirm(`¿Borrar alérgeno: ${nombre}?`)) return;
       window.alergenosConfig = window.alergenosConfig.filter(a => a !== nombre);
       await setDoc(doc(db, 'configuracion', 'alergenos'), { lista: window.alergenosConfig });
       await window.cargarConfiguracionBD();
@@ -583,17 +587,13 @@
       const snap = await getDocs(collection(db, 'usuarios'));
       const ulPendientes = document.getElementById('lista-pendientes-admin');
       const ulAutorizados = document.getElementById('lista-usuarios-admin');
-      
-      let htmlPendientes = '';
-      let htmlAutorizados = '';
-      
+      let htmlPendientes = ''; let htmlAutorizados = '';
       let opcionesSucursalAdmin = '<option value="TODAS">TODAS (Global)</option>';
       window.sucursalesConfig.forEach(s => opcionesSucursalAdmin += `<option value="${s}">${s}</option>`);
 
       snap.forEach(documento => {
         const d = documento.data();
         const idSeguro = d.email.replace(/[@.]/g, '');
-        
         if(d.estado === 'Pendiente') {
           htmlPendientes += `
             <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm">
@@ -611,553 +611,92 @@
                 <button onclick="adminAprobarUsuario('${d.email}', '${idSeguro}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Aprobar</button>
                 <button onclick="adminRechazarUsuario('${d.email}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Rechazar</button>
               </div>
-            </li>
-          `;
+            </li>`;
         } else {
           let opcionesCecoAuth = `<option value="TODAS" ${d.sucursal === 'TODAS' ? 'selected' : ''}>TODAS (Global)</option>`;
-          window.sucursalesConfig.forEach(s => {
-            opcionesCecoAuth += `<option value="${s}" ${d.sucursal === s ? 'selected' : ''}>${s}</option>`;
-          });
-
+          window.sucursalesConfig.forEach(s => { opcionesCecoAuth += `<option value="${s}" ${d.sucursal === s ? 'selected' : ''}>${s}</option>`; });
           htmlAutorizados += `
             <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm mb-2">
-              <div class="flex justify-between items-center mb-3">
-                <strong class="text-zinc-800 text-xs">${d.email}</strong>
-                <button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 text-[10px] font-bold hover:underline">Revocar Acceso</button>
-              </div>
+              <div class="flex justify-between items-center mb-3"><strong class="text-zinc-800 text-xs">${d.email}</strong><button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 text-[10px] font-bold hover:underline">Revocar Acceso</button></div>
               <div class="flex gap-2 mb-3">
-                <select id="rol-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
-                  <option value="Lector" ${d.rol === 'Lector' ? 'selected' : ''}>Lector (Solo PDF)</option>
-                  <option value="Editor" ${d.rol === 'Editor' ? 'selected' : ''}>Admin Editor (Crea)</option>
-                </select>
-                <select id="ceco-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
-                  ${opcionesCecoAuth}
-                </select>
+                <select id="rol-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white"><option value="Lector" ${d.rol === 'Lector' ? 'selected' : ''}>Lector (Solo PDF)</option><option value="Editor" ${d.rol === 'Editor' ? 'selected' : ''}>Admin Editor (Crea)</option></select>
+                <select id="ceco-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">${opcionesCecoAuth}</select>
               </div>
               <button onclick="adminActualizarUsuario('${d.email}', '${idSeguro}')" class="w-full bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] tracking-widest font-bold uppercase py-1.5 rounded-sm transition">Guardar Cambios</button>
-            </li>
-          `;
+            </li>`;
         }
       });
-      
       ulPendientes.innerHTML = htmlPendientes || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest p-2 border border-dashed border-zinc-200 text-center rounded-sm">No hay solicitudes pendientes</li>';
       ulAutorizados.innerHTML = htmlAutorizados || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest p-2 border border-dashed border-zinc-200 text-center rounded-sm">Ningún usuario autorizado</li>';
     };
 
-    window.adminAprobarUsuario = async (email, idSeguro) => {
-      const rol = document.getElementById(`rol-${idSeguro}`).value;
-      const sucursal = document.getElementById(`ceco-${idSeguro}`).value;
-      await setDoc(doc(db, 'usuarios', email), { email, rol, sucursal, estado: 'Activo' });
-      await window.cargarUsuariosBD();
-    };
-
-    window.adminActualizarUsuario = async (email, idSeguro) => {
-      const rol = document.getElementById(`rol-auth-${idSeguro}`).value;
-      const sucursal = document.getElementById(`ceco-auth-${idSeguro}`).value;
-      try {
-        await setDoc(doc(db, 'usuarios', email), { email, rol, sucursal, estado: 'Activo' }, { merge: true });
-        alert(`Permisos actualizados correctamente para ${email}`);
-        await window.cargarUsuariosBD();
-      } catch(e) {
-        alert("Error al actualizar usuario");
-      }
-    };
-
-    window.adminRechazarUsuario = async (email) => {
-      if(!confirm(`¿Rechazar y borrar solicitud de ${email}?`)) return;
-      await deleteDoc(doc(db, 'usuarios', email));
-      await window.cargarUsuariosBD();
-    };
-
-    window.adminBorrarUsuario = async (email) => {
-      if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return;
-      await deleteDoc(doc(db, 'usuarios', email));
-      await window.cargarUsuariosBD();
-    };
+    window.adminAprobarUsuario = async (email, idSeguro) => { await setDoc(doc(db, 'usuarios', email), { email, rol: document.getElementById(`rol-${idSeguro}`).value, sucursal: document.getElementById(`ceco-${idSeguro}`).value, estado: 'Activo' }); await window.cargarUsuariosBD(); };
+    window.adminActualizarUsuario = async (email, idSeguro) => { try { await setDoc(doc(db, 'usuarios', email), { email, rol: document.getElementById(`rol-auth-${idSeguro}`).value, sucursal: document.getElementById(`ceco-auth-${idSeguro}`).value, estado: 'Activo' }, { merge: true }); alert(`Permisos actualizados para ${email}`); await window.cargarUsuariosBD(); } catch(e) { alert("Error al actualizar"); } };
+    window.adminRechazarUsuario = async (email) => { if(!confirm(`¿Rechazar solicitud de ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
+    window.adminBorrarUsuario = async (email) => { if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
 
     // ==========================================
-    // CARGA DE RECETAS - PROTEGIDA Y OPTIMIZADA
+    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL (GEMINI VISION)
     // ==========================================
-    window.obtenerRecetasDeFirebase = async () => {
-      if(!window.perfilUsuario) return;
-      const selectVisor = document.getElementById('selector-receta');
-      const selectEditor = document.getElementById('selector-editor');
-      const selectImportar = document.getElementById('selector-importar-base');
-      
-      selectVisor.innerHTML = '<option value="">Descargando...</option>';
-      
-      try {
-        const querySnapshot = await getDocs(collection(db, "recetas"));
-        window.recetasDB = [];
-        
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          if (!data.nombre) data.nombre = 'Receta sin nombre';
-          if (!data.id) data.id = doc.id;
+    window.procesarFotoIA = async (event) => {
+      const file = event.target.files[0];
+      if(!file) return;
+      if(!window.apiKeyIA) return alert("Falta configurar la llave de API de Google Gemini en el Panel Admin.");
 
-          const recSucursal = data.sucursal || 'Le Chique';
+      const msgEstado = document.getElementById('mensaje-estado');
+      const loader = document.getElementById('loader-guardar');
+      
+      msgEstado.innerText = "🤖 Analizando imagen con IA, por favor espera...";
+      msgEstado.className = "text-indigo-600 font-bold text-sm";
+      loader.style.display = 'block';
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64String = reader.result.split(',')[1];
+        const mimeType = file.type;
+
+        // Prompt estricto para forzar la salida en JSON perfecto
+        const promptText = `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. No agregues comillas invertidas, ni la palabra 'json', ni texto adicional. Solo el JSON puro:
+        {
+          "nombre": "Nombre de la receta",
+          "rendimiento_base": 1,
+          "unidad_base": "Kg",
+          "partida": "Partida si la dice",
+          "tipo": "Tipo si lo dice",
+          "bloques": [
+            {
+              "nombre": "Nombre de la preparación o Base",
+              "rendimiento": 1,
+              "unidad": "Kg",
+              "procedimiento": "Instrucciones de preparación...",
+              "ingredientes": [
+                {"nombre": "Ingrediente 1", "cantidad": 100, "unidad": "gr"}
+              ]
+            }
+          ]
+        }`;
+
+        const payload = {
+          contents: [{
+            parts: [
+              { text: promptText },
+              { inline_data: { mime_type: mimeType, data: base64String } }
+            ]
+          }]
+        };
+
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${window.apiKeyIA}`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+          });
           
-          if (window.perfilUsuario.rol === "SuperAdmin" || window.perfilUsuario.sucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.perfilUsuario.sucursal) {
-            window.recetasDB.push(data);
-          }
-        });
-        
-        selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
-        if(selectEditor) selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
-        if(selectImportar) selectImportar.innerHTML = '<option value="">-- Selecciona receta base a importar --</option>';
-
-        window.recetasDB.sort((a, b) => {
-          const nombreA = a.nombre ? String(a.nombre) : '';
-          const nombreB = b.nombre ? String(b.nombre) : '';
-          return nombreA.localeCompare(nombreB);
-        });
-
-        window.recetasDB.forEach(receta => {
-          selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`;
-          if(selectEditor) selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`;
-          if(selectImportar) selectImportar.innerHTML += `<option value="${receta.id}">${receta.nombre} (${receta.rendimiento_base} ${receta.unidad_base})</option>`;
-        });
-        window.renderizarListaRecetas();
-      } catch (error) {
-        console.error(error);
-        selectVisor.innerHTML = `<option value="">❌ Error: ${error.code || 'Desconocido'}</option>`;
-      }
-    };
-
-    function generarCheckboxes(containerId, items, namePrefix) {
-      const container = document.getElementById(containerId);
-      if(!container) return;
-      container.innerHTML = items.map(item => `
-        <label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition">
-          <input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900">
-          <span class="text-[11px] uppercase tracking-wide font-semibold text-zinc-600">${item}</span>
-        </label>
-      `).join('');
-    }
-
-    window.formatearCantidadInteligente = (cantidad, unidad) => {
-      let cant = parseFloat(cantidad);
-      let uni = (unidad || '').trim().toLowerCase();
-      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } 
-      else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
-      let cantFormateada = cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 });
-      return { cantidad: cantFormateada, unidad: uni.toUpperCase() };
-    };
-
-    window.filtrarRecetas = () => {
-      const texto = document.getElementById('input-buscador').value;
-      window.renderizarListaRecetas(texto);
-    };
-
-    window.descargarBackup = () => {
-      if (!window.recetasDB || window.recetasDB.length === 0) return alert("Nada que respaldar.");
-      const jsonString = JSON.stringify(window.recetasDB, null, 2);
-      const blob = new Blob([jsonString], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const fecha = new Date().toISOString().split('T')[0];
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `Backup_LeChique_${fecha}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    };
-
-    window.guardarReceta = async () => {
-      const nombre = document.getElementById('edit-nombre').value.trim();
-      const rendimiento_base = parseFloat(document.getElementById('edit-pax-base').value);
-      const unidad_base = document.getElementById('edit-unidad-base').value.trim();
-      const sucursal = document.getElementById('edit-sucursal').value;
-      
-      if (!nombre || !rendimiento_base || isNaN(rendimiento_base)) {
-        return window.mostrarMensaje("Falta Nombre o Rendimiento.", "text-rose-900");
-      }
-
-      const alergenos = Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value);
-      const temporada = Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value);
-      
-      const bloques = [];
-      const domBloques = document.querySelectorAll('.bloque-receta');
-      domBloques.forEach(b => {
-        const nombreBloque = b.querySelector('.b-nombre').value.trim() || "Preparación Base";
-        const rendBloque = parseFloat(b.querySelector('.b-rend').value) || rendimiento_base;
-        const uniBloque = b.querySelector('.b-uni').value.trim() || unidad_base;
-        const procedimiento = b.querySelector('.b-proc').value.trim();
-        
-        const ingredientes = [];
-        b.querySelectorAll('.fila-ingrediente').forEach(fila => {
-          const ingNombre = fila.querySelector('.ing-nombre').value.trim();
-          const ingCant = parseFloat(fila.querySelector('.ing-cant').value);
-          const ingUnidad = fila.querySelector('.ing-unidad').value.trim();
-          if (ingNombre && !isNaN(ingCant)) {
-            ingredientes.push({ nombre: ingNombre, cantidad: ingCant, unidad: ingUnidad });
-          }
-        });
-        bloques.push({ nombre: nombreBloque, rendimiento: rendBloque, unidad: uniBloque, ingredientes, procedimiento });
-      });
-
-      let id = document.getElementById('selector-editor').value;
-      if (!id || window.perfilUsuario.rol === 'Editor') {
-        id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
-      }
-
-      const fechaHoy = new Date();
-      const fechaStr = `${fechaHoy.getDate().toString().padStart(2, '0')}/${(fechaHoy.getMonth()+1).toString().padStart(2, '0')}/${fechaHoy.getFullYear()} ${fechaHoy.getHours().toString().padStart(2, '0')}:${fechaHoy.getMinutes().toString().padStart(2, '0')}`;
-
-      const datos = { 
-        id, nombre, rendimiento_base, unidad_base, sucursal,
-        partida: document.getElementById('edit-partida').value.trim(), 
-        tipo: document.getElementById('edit-tipo').value.trim(),
-        alergenos, temporada, bloques,
-        auditoria: {
-          modificado_por: window.usuarioActual.email,
-          fecha: fechaStr
-        }
-      };
-
-      document.getElementById('loader-guardar').style.display = 'block';
-      try {
-        await setDoc(doc(db, "recetas", id), datos);
-        window.mostrarMensaje("✅ Receta guardada", "text-green-600");
-        document.getElementById('loader-guardar').style.display = 'none';
-        await window.obtenerRecetasDeFirebase();
-        window.limpiarEditor(); 
-      } catch (error) {
-        window.mostrarMensaje("❌ Error al guardar.", "text-rose-900");
-        document.getElementById('loader-guardar').style.display = 'none';
-      }
-    };
-
-    window.cargarRecetaSeleccionada = () => {
-      const id = document.getElementById('selector-receta').value;
-      window.recetaActual = window.recetasDB.find(r => r.id === id);
-      
-      if (window.recetaActual) {
-        document.getElementById('contenido-receta').classList.remove('hidden');
-        document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
-        
-        const pillCeco = document.getElementById('visor-ceco');
-        pillCeco.classList.remove('hidden');
-        pillCeco.innerText = window.recetaActual.sucursal || 'Le Chique';
-        
-        document.getElementById('input-pax').value = window.recetaActual.rendimiento_base;
-        document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US');
-        document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base;
-        document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
-        
-        document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---";
-        document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
-        
-        document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-";
-        document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
-        
-        if(window.recetaActual.auditoria) {
-          document.getElementById('visor-auditoria').innerText = `${window.recetaActual.auditoria.modificado_por} (${window.recetaActual.auditoria.fecha})`;
-        } else {
-          document.getElementById('visor-auditoria').innerText = "Sistema Antiguo";
-        }
-
-        window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
-      } else {
-        document.getElementById('contenido-receta').classList.add('hidden');
-        document.getElementById('visor-ceco').classList.add('hidden');
-      }
-    };
-
-    window.recalcularPax = () => {
-      if (!window.recetaActual) return;
-      const paxDeseado = parseFloat(document.getElementById('input-pax').value) || 0.1;
-      document.getElementById('display-pax').innerText = paxDeseado.toLocaleString('en-US');
-      window.renderizarBloquesVisor(paxDeseado);
-    };
-
-    // RENDERIZADO VISOR AJUSTADO EN TABLA PARA EVITAR ENPALMES
-    window.renderizarBloquesVisor = (paxDeseado) => {
-      const contenedor = document.getElementById('contenedor-bloques-visor');
-      contenedor.innerHTML = '';
-      const factorGlobal = paxDeseado / window.recetaActual.rendimiento_base;
-
-      (window.recetaActual.bloques || []).forEach(bloque => {
-        const rendCalculado = bloque.rendimiento * factorGlobal;
-        const rendFormat = window.formatearCantidadInteligente(rendCalculado, bloque.unidad);
-
-        let sumaTotalGramos = 0;
-        let liquidosCount = 0;
-        let solidosCount = 0;
-
-        let tablaIng = bloque.ingredientes.map(ing => {
-          const cantCalculada = ing.cantidad * factorGlobal;
-          const u = (ing.unidad || '').trim().toLowerCase();
+          if (!res.ok) throw new Error("Error en la conexión con la IA.");
           
-          let cantParaSumar = cantCalculada;
-          if (u === 'kg' || u === 'l') cantParaSumar *= 1000;
-          sumaTotalGramos += cantParaSumar;
-
-          if (u === 'ml' || u === 'l') liquidosCount++;
-          else if (u === 'gr' || u === 'g' || u === 'kg') solidosCount++;
+          const data = await res.json();
+          let textResult = data.candidates[0].content.parts[0].text;
           
-          const ingFormat = window.formatearCantidadInteligente(cantCalculada, ing.unidad);
-          
-          return `
-            <tr class="border-b border-zinc-100 break-inside-avoid">
-              <td class="py-1 text-zinc-900 tabular-nums font-semibold text-xs w-[35%] align-top">${ingFormat.cantidad} <span class="text-[9px] text-zinc-400 font-normal uppercase">${ingFormat.unidad}</span></td>
-              <td class="py-1 text-zinc-700 uppercase tracking-wide text-[10px] font-semibold w-[65%] align-top">${ing.nombre}</td>
-            </tr>`;
-        }).join('');
-
-        let unidadBaseTotal = (liquidosCount > solidosCount) ? 'ml' : 'gr';
-        const totalFormat = window.formatearCantidadInteligente(sumaTotalGramos, unidadBaseTotal);
-        
-        tablaIng += `
-          <tr class="border-t-2 border-zinc-300 bg-zinc-50/50 break-inside-avoid">
-            <td class="py-1.5 text-rose-900 tabular-nums font-bold text-xs w-[35%] align-top">${totalFormat.cantidad} <span class="text-[9px] text-rose-900/60 uppercase">${totalFormat.unidad}</span></td>
-            <td class="py-1.5 text-zinc-900 uppercase tracking-widest text-[9px] font-black w-[65%] align-top">PESO ESTIMADO</td>
-          </tr>
-        `;
-
-        contenedor.innerHTML += `
-          <div class="mb-5 break-inside-avoid border-b border-zinc-100 pb-4">
-            <h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1 uppercase tracking-widest flex justify-between items-end mb-2">
-              <span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span>
-            </h3>
-            <div class="flex flex-col md:flex-row gap-4 mt-2">
-              <div class="md:w-[48%]">
-                <table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table>
-              </div>
-              <div class="md:w-[52%] bg-zinc-50/80 p-3 rounded-sm border border-zinc-200 text-[11px] text-zinc-700 whitespace-pre-wrap leading-relaxed">
-                ${bloque.procedimiento}
-              </div>
-            </div>
-          </div>
-        `;
-      });
-    };
-
-    // DESCARGA PDF CONFIGURADA CON MÁRGENES ESTÁNDAR A4/LETTER DENTRO DE LOS DÍGITOS DERECHOS
-    window.descargarPDF = () => {
-      if (!window.recetaActual) return alert("Selecciona una receta.");
-      const elemento = document.getElementById('zona-impresion');
-      const anchoOriginal = elemento.style.width;
-      elemento.style.width = '750px';
-
-      const filename = `${window.recetaActual.nombre.replace(/\s+/g, '_')}_${document.getElementById('input-pax').value}${window.recetaActual.unidad_base}.pdf`;
-      const opt = { 
-        margin: [0.3, 0.4, 0.3, 0.4], 
-        filename, 
-        image: { type: 'jpeg', quality: 0.98 }, 
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 750 }, 
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-        pagebreak: { mode: 'css', avoid: ['.break-inside-avoid', 'tr'] }
-      };
-      
-      html2pdf().set(opt).from(elemento).save().then(() => {
-        elemento.style.width = anchoOriginal;
-      });
-    };
-
-    window.abrirModalImportarBase = () => {
-      document.getElementById('modal-importar').classList.remove('hidden');
-    };
-
-    window.cerrarModalImportar = () => {
-      document.getElementById('modal-importar').classList.add('hidden');
-      document.getElementById('selector-importar-base').value = '';
-    };
-
-    window.confirmarImportacionBase = () => {
-      const idSeleccionado = document.getElementById('selector-importar-base').value;
-      if (!idSeleccionado) {
-        return alert("Por favor, selecciona una receta de la lista.");
-      }
-      
-      const recetaBase = window.recetasDB.find(r => r.id === idSeleccionado);
-      
-      if (recetaBase && recetaBase.bloques) {
-        recetaBase.bloques.forEach(bloque => {
-          let nombreAsignado = bloque.nombre === 'Preparación Base' ? recetaBase.nombre : bloque.nombre;
-          window.agregarBloqueSubreceta(nombreAsignado, bloque.rendimiento, bloque.unidad, bloque.procedimiento, bloque.ingredientes);
-        });
-        window.mostrarMensaje(`✅ Base importada con éxito.`, "text-green-600");
-      }
-      
-      window.cerrarModalImportar();
-    };
-
-    window.agregarBloqueSubreceta = (nombre = '', rend = '', uni = '', proc = '', ingredientes = []) => {
-      const bId = `bloque-${blockCounter++}`;
-      const div = document.createElement('div');
-      div.className = 'bloque-receta bg-white border border-zinc-200 rounded-sm p-5 relative shadow-sm';
-      div.id = bId;
-      div.innerHTML = `
-        <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16">
-          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" placeholder="Ej: Vinagre Tosazu" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div>
-          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div>
-          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad (Kg, L)</label><input type="text" value="${uni}" class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm uppercase"></div>
-        </div>
-        <div class="flex flex-col md:flex-row gap-6">
-          <div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6">
-            <div class="flex justify-between items-center mb-3">
-              <label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label>
-              <button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button>
-            </div>
-            <div class="c-ingredientes space-y-2"></div>
-          </div>
-          <div class="md:w-1/2">
-            <label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-3">Procedimiento Técnico</label>
-            <textarea class="b-proc w-full border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition h-28 leading-relaxed" placeholder="1. Calentar...\n2. Reducir...">${proc}</textarea>
-          </div>
-        </div>
-      `;
-      document.getElementById('contenedor-bloques-editor').appendChild(div);
-      
-      if(ingredientes.length === 0) window.agregarIngrediente(bId);
-      else ingredientes.forEach(ing => window.agregarIngrediente(bId, ing.nombre, ing.cantidad, ing.unidad));
-    };
-
-    window.agregarIngrediente = (bloqueId, nombre = '', cant = '', unidad = '') => {
-      const b = document.getElementById(bloqueId).querySelector('.c-ingredientes');
-      const div = document.createElement('div');
-      div.className = 'fila-ingrediente flex gap-2 items-center';
-      div.innerHTML = `
-        <input type="text" placeholder="Ingrediente" value="${nombre}" class="ing-nombre flex-1 border border-zinc-200 p-2 text-xs outline-none rounded-sm">
-        <input type="number" placeholder="0.00" value="${cant}" step="any" class="ing-cant w-20 border border-zinc-200 p-2 text-xs outline-none rounded-sm tabular-nums text-center">
-        <input type="text" placeholder="Unid" value="${unidad}" class="ing-unidad w-14 border border-zinc-200 p-2 text-xs outline-none rounded-sm text-center uppercase">
-        <button onclick="this.parentElement.remove()" class="text-zinc-300 hover:text-rose-900 font-bold px-1 transition text-sm">✕</button>
-      `;
-      b.appendChild(div);
-    };
-
-    window.cambiarPestaña = (p) => {
-      ['visor', 'lista', 'editor', 'admin'].forEach(id => {
-        document.getElementById(`vista-${id}`).classList.add('hidden');
-        document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden";
-      });
-      
-      document.getElementById(`vista-${p}`).classList.remove('hidden');
-      
-      document.getElementById('tab-visor').classList.remove('hidden');
-      document.getElementById('tab-lista').classList.remove('hidden');
-      
-      if(window.perfilUsuario.rol === 'SuperAdmin') {
-        document.getElementById('tab-editor').classList.remove('hidden');
-        document.getElementById('tab-admin').classList.remove('hidden');
-      } else if (window.perfilUsuario.rol === 'Editor') {
-        document.getElementById('tab-editor').classList.remove('hidden');
-      }
-
-      document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs";
-      if(p === 'admin') document.getElementById(`tab-admin`).classList.add('bg-zinc-100', 'text-rose-900', 'font-black');
-    };
-
-    window.renderizarListaRecetas = (textoFiltro = '') => {
-      const t = document.getElementById('tabla-todas-recetas');
-      const filtro = textoFiltro.toLowerCase();
-      
-      const filtradas = window.recetasDB.filter(r => {
-        const nombreString = r.nombre ? String(r.nombre).toLowerCase() : '';
-        const partidaString = r.partida ? String(r.partida).toLowerCase() : '';
-        const sucursalString = r.sucursal ? String(r.sucursal).toLowerCase() : '';
-        
-        return nombreString.includes(filtro) || partidaString.includes(filtro) || sucursalString.includes(filtro);
-      });
-
-      const thAcciones = document.getElementById('col-acciones');
-      if(window.perfilUsuario.rol === 'SuperAdmin') {
-        thAcciones.classList.remove('hidden');
-      } else {
-        thAcciones.classList.add('hidden');
-      }
-
-      t.innerHTML = filtradas.map(r => {
-        const modificacion = r.auditoria ? `${r.auditoria.fecha.split(' ')[0]}<br><span class="text-[9px] text-zinc-400 normal-case">${r.auditoria.modificado_por}</span>` : '---';
-        const sucursalLabel = r.sucursal || 'Le Chique';
-        
-        let accionesHtml = '';
-        if(window.perfilUsuario.rol === 'SuperAdmin') {
-          accionesHtml = `
-            <td class="p-4 text-center space-x-2 whitespace-nowrap">
-              <button onclick="editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button>
-              <button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button>
-            </td>`;
-        }
-
-        return `
-        <tr class="border-b border-zinc-100 hover:bg-zinc-50 transition cursor-pointer" onclick="document.getElementById('selector-receta').value = '${r.id}'; cargarRecetaSeleccionada(); cambiarPestaña('visor');">
-          <td class="p-4 font-bold text-zinc-800">${r.nombre}</td>
-          <td class="p-4"><span class="pill pill-ceco">${sucursalLabel}</span></td>
-          <td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td>
-          <td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${modificacion}</td>
-          ${accionesHtml}
-        </tr>`
-      }).join('') || `<tr><td colspan="${window.perfilUsuario.rol === 'SuperAdmin' ? 5 : 4}" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">No hay recetas</td></tr>`;
-    };
-
-    window.editarReceta = (id) => {
-      document.getElementById('selector-editor').value = id;
-      window.cargarEnEditor();
-      window.cambiarPestaña('editor');
-    };
-
-    window.cargarEnEditor = () => {
-      const id = document.getElementById('selector-editor').value;
-      window.limpiarFormularioBase();
-      if (id) {
-        const r = window.recetasDB.find(x => x.id === id);
-        document.getElementById('edit-nombre').value = r.nombre;
-        document.getElementById('edit-pax-base').value = r.rendimiento_base;
-        document.getElementById('edit-unidad-base').value = r.unidad_base || 'Kg';
-        document.getElementById('edit-partida').value = r.partida || '';
-        document.getElementById('edit-tipo').value = r.tipo || '';
-        document.getElementById('edit-sucursal').value = r.sucursal || 'Le Chique';
-        
-        document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value));
-        document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
-
-        if(r.bloques && r.bloques.length > 0) {
-          r.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes));
-        } else {
-          window.agregarBloqueSubreceta('Base', r.rendimiento_base, r.unidad_base, r.procedimiento, r.ingredientes);
-        }
-      } else {
-        window.agregarBloqueSubreceta();
-      }
-    };
-
-    window.limpiarFormularioBase = () => {
-      document.getElementById('edit-nombre').value = '';
-      document.getElementById('edit-pax-base').value = '1';
-      document.getElementById('edit-unidad-base').value = 'Kg';
-      document.getElementById('edit-partida').value = '';
-      document.getElementById('edit-tipo').value = '';
-      document.getElementById('edit-sucursal').value = window.perfilUsuario.sucursal === 'TODAS' ? 'Global' : window.perfilUsuario.sucursal;
-      document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false);
-      document.getElementById('contenedor-bloques-editor').innerHTML = '';
-    };
-
-    window.limpiarEditor = () => {
-      if(document.getElementById('selector-editor')) document.getElementById('selector-editor').value = '';
-      window.limpiarFormularioBase();
-      window.agregarBloqueSubreceta();
-    };
-
-    window.eliminarReceta = async (id) => {
-      event.stopPropagation();
-      if (!confirm("¿Eliminar receta permanentemente?")) return;
-      try {
-        await deleteDoc(doc(db, "recetas", id));
-        await window.obtenerRecetasDeFirebase();
-        window.limpiarEditor();
-      } catch (e) { alert("Error al borrar."); }
-    };
-
-    window.mostrarMensaje = (texto, claseColor) => {
-      const span = document.getElementById('mensaje-estado');
-      span.innerText = texto;
-      span.className = `text-sm font-bold ${claseColor}`;
-      setTimeout(() => span.innerText = "", 5000);
-    };
-  </script>
-</body>
-</html>
+          // Limpiar markdown residual si la IA es terca
+          textResult = textResult.replace(/```json/g, '').replace(/
