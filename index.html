@@ -324,8 +324,6 @@
   </div>
 
   <script type="module">
-    console.log("Sistema cargando correctamente...");
-
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
@@ -360,7 +358,6 @@
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna', estado: 'Pendiente' };
-        
         if (user.email.toLowerCase() === 'miguellugo@mlcocina.com') {
           perfil = { rol: 'SuperAdmin', sucursal: 'TODAS', estado: 'Activo' };
         } else {
@@ -370,10 +367,6 @@
             perfil = snap.data();
             if (perfil.estado === 'Pendiente') {
               await signOut(auth);
-              const err = document.getElementById('login-error');
-              err.innerText = "Cuenta creada. Espera la autorización del Admin.";
-              err.classList.replace('text-rose-600', 'text-green-600');
-              err.classList.remove('hidden');
               return;
             }
           } else {
@@ -381,7 +374,6 @@
             return;
           }
         }
-
         window.usuarioActual = user;
         window.perfilUsuario = perfil;
         
@@ -395,30 +387,23 @@
           document.getElementById('tab-editor').classList.remove('hidden');
           document.getElementById('tab-admin').classList.remove('hidden');
           document.getElementById('selector-editor').classList.remove('hidden');
-          document.getElementById('btn-backup').classList.remove('hidden');
         } else if (perfil.rol === 'Editor') {
           document.getElementById('tab-editor').classList.remove('hidden');
           document.getElementById('tab-admin').classList.add('hidden');
           document.getElementById('selector-editor').classList.add('hidden');
-          document.getElementById('btn-backup').classList.add('hidden');
         } else {
           document.getElementById('tab-editor').classList.add('hidden');
           document.getElementById('tab-admin').classList.add('hidden');
-          document.getElementById('btn-backup').classList.add('hidden');
         }
 
         await window.cargarConfiguracionBD();
-        if (perfil.rol === 'SuperAdmin') { 
-            await window.cargarUsuariosBD(); 
-        }
+        if (perfil.rol === 'SuperAdmin') { await window.cargarUsuariosBD(); }
         await window.obtenerRecetasDeFirebase();
         
         if (document.getElementById('contenedor-bloques-editor').children.length === 0) {
           window.agregarBloqueSubreceta();
         }
-
         window.cambiarPestaña('visor');
-
       } else {
         window.usuarioActual = null;
         window.perfilUsuario = null;
@@ -453,7 +438,6 @@
       } catch (error) { 
         err.innerText = "Credenciales incorrectas o usuario no registrado."; 
         err.classList.remove('hidden'); 
-        console.error("Error al iniciar sesión:", error);
       }
     };
 
@@ -461,21 +445,10 @@
       const e = document.getElementById('login-email').value.trim().toLowerCase();
       const p = document.getElementById('login-password').value;
       const err = document.getElementById('login-error');
-      
-      if(p.length < 6) { 
-          err.innerText = "Contraseña min. 6 caracteres"; 
-          err.classList.replace('text-green-600', 'text-rose-600'); 
-          err.classList.remove('hidden'); 
-          return;
-      }
+      if(p.length < 6) { err.innerText = "Contraseña min. 6 caracteres"; err.classList.replace('text-green-600', 'text-rose-600'); err.classList.remove('hidden'); return;}
       try { 
         await createUserWithEmailAndPassword(auth, e, p); 
-        await setDoc(doc(db, 'usuarios', e), { 
-            email: e, 
-            rol: 'Lector', 
-            sucursal: 'Le Chique', 
-            estado: 'Pendiente' 
-        });
+        await setDoc(doc(db, 'usuarios', e), { email: e, rol: 'Lector', sucursal: 'Le Chique', estado: 'Pendiente' });
         await signOut(auth);
         err.innerText = "¡Solicitud enviada! Espera la aprobación del Admin.";
         err.classList.replace('text-rose-600', 'text-green-600');
@@ -484,7 +457,6 @@
         err.innerText = "Error o correo ya registrado."; 
         err.classList.replace('text-green-600', 'text-rose-600');
         err.classList.remove('hidden'); 
-        console.error("Error al registrar:", error);
       }
     };
 
@@ -493,12 +465,8 @@
     window.cargarConfiguracionBD = async () => {
       const docRefSucursales = doc(db, 'configuracion', 'sucursales');
       const snapSuc = await getDoc(docRefSucursales);
-      if(snapSuc.exists()) { 
-          window.sucursalesConfig = snapSuc.data().lista || []; 
-      } else { 
-          window.sucursalesConfig = ['Le Chique', 'Xuna', 'Texas', 'NY']; 
-          await setDoc(docRefSucursales, { lista: window.sucursalesConfig }); 
-      }
+      if(snapSuc.exists()) { window.sucursalesConfig = snapSuc.data().lista || []; } 
+      else { window.sucursalesConfig = ['Le Chique', 'Xuna', 'Texas', 'NY']; await setDoc(docRefSucursales, { lista: window.sucursalesConfig }); }
 
       let optionsHtml = '<option value="Global">Global (Compartida)</option>';
       window.sucursalesConfig.forEach(s => { optionsHtml += `<option value="${s}">${s}</option>`; });
@@ -507,12 +475,8 @@
 
       const docRefAlergenos = doc(db, 'configuracion', 'alergenos');
       const snapAler = await getDoc(docRefAlergenos);
-      if(snapAler.exists()) { 
-          window.alergenosConfig = snapAler.data().lista || []; 
-      } else { 
-          window.alergenosConfig = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"]; 
-          await setDoc(docRefAlergenos, { lista: window.alergenosConfig }); 
-      }
+      if(snapAler.exists()) { window.alergenosConfig = snapAler.data().lista || []; } 
+      else { window.alergenosConfig = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"]; await setDoc(docRefAlergenos, { lista: window.alergenosConfig }); }
       generarCheckboxes('contenedor-alergenos', window.alergenosConfig, 'alergeno');
       window.renderizarListaAlergenosAdmin();
 
@@ -535,11 +499,7 @@
     window.renderizarListaSucursalesAdmin = () => {
       const ul = document.getElementById('lista-sucursales-admin');
       if(!ul) return;
-      ul.innerHTML = window.sucursalesConfig.map(s => `
-        <li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-xs font-bold text-zinc-700 uppercase">
-          ${s} <button onclick="adminBorrarSucursal('${s}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button>
-        </li>
-      `).join('');
+      ul.innerHTML = window.sucursalesConfig.map(s => `<li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-xs font-bold text-zinc-700 uppercase">${s} <button onclick="adminBorrarSucursal('${s}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button></li>`).join('');
     };
 
     window.adminGuardarSucursal = async () => {
@@ -563,11 +523,7 @@
     window.renderizarListaAlergenosAdmin = () => {
       const ul = document.getElementById('lista-alergenos-admin');
       if(!ul) return;
-      ul.innerHTML = window.alergenosConfig.map(a => `
-        <li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-[10px] font-bold text-zinc-700 uppercase">
-          ${a} <button onclick="adminBorrarAlergeno('${a}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button>
-        </li>
-      `).join('');
+      ul.innerHTML = window.alergenosConfig.map(a => `<li class="flex justify-between items-center bg-zinc-50 p-2 border border-zinc-100 rounded-sm text-[10px] font-bold text-zinc-700 uppercase">${a} <button onclick="adminBorrarAlergeno('${a}')" class="text-rose-600 hover:bg-rose-100 px-2 py-1 rounded">X</button></li>`).join('');
     };
 
     window.adminGuardarAlergeno = async () => {
@@ -608,38 +564,20 @@
             <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm">
               <div class="font-bold text-zinc-800 text-xs mb-3">${d.email}</div>
               <div class="flex gap-2 mb-3">
-                <select id="rol-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
-                  <option value="Lector">Lector (Solo PDF)</option>
-                  <option value="Editor">Admin Editor (Crea)</option>
-                </select>
-                <select id="ceco-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
-                  ${opcionesSucursalAdmin}
-                </select>
+                <select id="rol-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white"><option value="Lector">Lector (Solo PDF)</option><option value="Editor">Admin Editor (Crea)</option></select>
+                <select id="ceco-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">${opcionesSucursalAdmin}</select>
               </div>
-              <div class="flex gap-2">
-                <button onclick="adminAprobarUsuario('${d.email}', '${idSeguro}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Aprobar</button>
-                <button onclick="adminRechazarUsuario('${d.email}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Rechazar</button>
-              </div>
+              <div class="flex gap-2"><button onclick="adminAprobarUsuario('${d.email}', '${idSeguro}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Aprobar</button><button onclick="adminRechazarUsuario('${d.email}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Rechazar</button></div>
             </li>`;
         } else {
           let opcionesCecoAuth = `<option value="TODAS" ${d.sucursal === 'TODAS' ? 'selected' : ''}>TODAS (Global)</option>`;
-          window.sucursalesConfig.forEach(s => { 
-              opcionesCecoAuth += `<option value="${s}" ${d.sucursal === s ? 'selected' : ''}>${s}</option>`; 
-          });
+          window.sucursalesConfig.forEach(s => { opcionesCecoAuth += `<option value="${s}" ${d.sucursal === s ? 'selected' : ''}>${s}</option>`; });
           htmlAutorizados += `
             <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm mb-2">
-              <div class="flex justify-between items-center mb-3">
-                <strong class="text-zinc-800 text-xs">${d.email}</strong>
-                <button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 text-[10px] font-bold hover:underline">Revocar Acceso</button>
-              </div>
+              <div class="flex justify-between items-center mb-3"><strong class="text-zinc-800 text-xs">${d.email}</strong><button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 text-[10px] font-bold hover:underline">Revocar Acceso</button></div>
               <div class="flex gap-2 mb-3">
-                <select id="rol-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
-                  <option value="Lector" ${d.rol === 'Lector' ? 'selected' : ''}>Lector (Solo PDF)</option>
-                  <option value="Editor" ${d.rol === 'Editor' ? 'selected' : ''}>Admin Editor (Crea)</option>
-                </select>
-                <select id="ceco-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">
-                  ${opcionesCecoAuth}
-                </select>
+                <select id="rol-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white"><option value="Lector" ${d.rol === 'Lector' ? 'selected' : ''}>Lector (Solo PDF)</option><option value="Editor" ${d.rol === 'Editor' ? 'selected' : ''}>Admin Editor (Crea)</option></select>
+                <select id="ceco-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">${opcionesCecoAuth}</select>
               </div>
               <button onclick="adminActualizarUsuario('${d.email}', '${idSeguro}')" class="w-full bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-[10px] tracking-widest font-bold uppercase py-1.5 rounded-sm transition">Guardar Cambios</button>
             </li>`;
@@ -649,45 +587,13 @@
       ulAutorizados.innerHTML = htmlAutorizados || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest p-2 border border-dashed border-zinc-200 text-center rounded-sm">Ningún usuario autorizado</li>';
     };
 
-    window.adminAprobarUsuario = async (email, idSeguro) => { 
-        await setDoc(doc(db, 'usuarios', email), { 
-            email, 
-            rol: document.getElementById(`rol-${idSeguro}`).value, 
-            sucursal: document.getElementById(`ceco-${idSeguro}`).value, 
-            estado: 'Activo' 
-        }); 
-        await window.cargarUsuariosBD(); 
-    };
-    
-    window.adminActualizarUsuario = async (email, idSeguro) => { 
-        try { 
-            await setDoc(doc(db, 'usuarios', email), { 
-                email, 
-                rol: document.getElementById(`rol-auth-${idSeguro}`).value, 
-                sucursal: document.getElementById(`ceco-auth-${idSeguro}`).value, 
-                estado: 'Activo' 
-            }, { merge: true }); 
-            alert(`Permisos actualizados para ${email}`); 
-            await window.cargarUsuariosBD(); 
-        } catch(e) { 
-            alert("Error al actualizar"); 
-        } 
-    };
-    
-    window.adminRechazarUsuario = async (email) => { 
-        if(!confirm(`¿Rechazar solicitud de ${email}?`)) return; 
-        await deleteDoc(doc(db, 'usuarios', email)); 
-        await window.cargarUsuariosBD(); 
-    };
-    
-    window.adminBorrarUsuario = async (email) => { 
-        if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; 
-        await deleteDoc(doc(db, 'usuarios', email)); 
-        await window.cargarUsuariosBD(); 
-    };
+    window.adminAprobarUsuario = async (email, idSeguro) => { await setDoc(doc(db, 'usuarios', email), { email, rol: document.getElementById(`rol-${idSeguro}`).value, sucursal: document.getElementById(`ceco-${idSeguro}`).value, estado: 'Activo' }); await window.cargarUsuariosBD(); };
+    window.adminActualizarUsuario = async (email, idSeguro) => { try { await setDoc(doc(db, 'usuarios', email), { email, rol: document.getElementById(`rol-auth-${idSeguro}`).value, sucursal: document.getElementById(`ceco-auth-${idSeguro}`).value, estado: 'Activo' }, { merge: true }); alert(`Permisos actualizados para ${email}`); await window.cargarUsuariosBD(); } catch(e) { alert("Error al actualizar"); } };
+    window.adminRechazarUsuario = async (email) => { if(!confirm(`¿Rechazar solicitud de ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
+    window.adminBorrarUsuario = async (email) => { if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
 
     // ==========================================
-    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL
+    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL MODO ESTRICTO
     // ==========================================
     window.procesarFotoIA = async (event) => {
       const file = event.target.files[0];
@@ -707,7 +613,7 @@
         const base64String = reader.result.split(',')[1];
         const mimeType = file.type;
 
-        const promptText = `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. No agregues texto extra.
+        const promptText = `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON.
         {
           "nombre": "Nombre de la receta",
           "rendimiento_base": 1,
@@ -733,7 +639,11 @@
                     { text: promptText }, 
                     { inline_data: { mime_type: mimeType, data: base64String } }
                 ] 
-            }] 
+            }],
+            // NUEVO: ESTO OBLIGA A LA IA A DEVOLVER SOLO JSON PERFECTO
+            generationConfig: {
+                response_mime_type: "application/json"
+            }
         };
 
         try {
@@ -743,11 +653,14 @@
             body: JSON.stringify(payload)
           });
           
-          if (!res.ok) throw new Error("Error IA");
+          if (!res.ok) {
+              const errDetails = await res.text();
+              console.error("Detalle del Error de API:", errDetails);
+              throw new Error("Llave rechazada, API deshabilitada o imagen pesada.");
+          }
           
           const data = await res.json();
           let textResult = data.candidates[0].content.parts[0].text;
-          textResult = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
           const recetaExtraida = JSON.parse(textResult);
 
           document.getElementById('edit-nombre').value = recetaExtraida.nombre || '';
@@ -768,9 +681,9 @@
           setTimeout(() => msgEstado.innerText = "", 6000);
           
         } catch(e) {
-          console.error(e);
-          msgEstado.innerText = "❌ No se pudo extraer el texto o formato incorrecto.";
-          msgEstado.className = "text-rose-900 font-bold text-sm";
+          console.error("Fallo IA Completo:", e);
+          msgEstado.innerText = `❌ Falló la IA: ${e.message}`;
+          msgEstado.className = "text-rose-900 font-bold text-[10px]";
         } finally {
           loader.style.display = 'none';
           document.getElementById('input-foto-ia').value = '';
@@ -803,9 +716,7 @@
         if(selectEditor) selectEditor.innerHTML = '<option value="">+ CREAR NUEVA RECETA</option>';
         if(selectImportar) selectImportar.innerHTML = '<option value="">-- Selecciona receta base --</option>';
 
-        window.recetasDB.sort((a, b) => { 
-            return (a.nombre ? String(a.nombre) : '').localeCompare(b.nombre ? String(b.nombre) : ''); 
-        });
+        window.recetasDB.sort((a, b) => { return (a.nombre ? String(a.nombre) : '').localeCompare(b.nombre ? String(b.nombre) : ''); });
         
         window.recetasDB.forEach(receta => {
           selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`;
@@ -815,7 +726,6 @@
         window.renderizarListaRecetas();
       } catch (error) { 
           selectVisor.innerHTML = `<option value="">❌ Error al cargar recetas</option>`; 
-          console.error(error);
       }
     };
 
@@ -833,42 +743,27 @@
     window.formatearCantidadInteligente = (cantidad, unidad) => {
       let cant = parseFloat(cantidad); 
       let uni = (unidad || '').trim().toLowerCase();
-      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { 
-          cant = cant / 1000; uni = 'kg'; 
-      } else if (uni === 'ml' && cant >= 1000) { 
-          cant = cant / 1000; uni = 'l'; 
-      }
-      return { 
-          cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), 
-          unidad: uni.toUpperCase() 
-      };
+      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } 
+      else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
+      return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
     };
 
-    window.filtrarRecetas = () => { 
-        window.renderizarListaRecetas(document.getElementById('input-buscador').value); 
-    };
+    window.filtrarRecetas = () => { window.renderizarListaRecetas(document.getElementById('input-buscador').value); };
 
     window.descargarBackup = () => {
       if (!window.recetasDB || window.recetasDB.length === 0) return alert("Nada que respaldar.");
       const a = document.createElement('a'); 
       const jsonStr = JSON.stringify(window.recetasDB, null, 2);
       const urlObject = URL.createObjectURL(new Blob([jsonStr], { type: "application/json" }));
-      
       a.href = urlObject;
       a.download = `Backup_LeChique_${new Date().toISOString().split('T')[0]}.json`; 
-      document.body.appendChild(a); 
-      a.click(); 
-      document.body.removeChild(a); 
-      URL.revokeObjectURL(urlObject);
+      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(urlObject);
     };
 
     window.guardarReceta = async () => {
       const nombre = document.getElementById('edit-nombre').value.trim();
       const rendimiento_base = parseFloat(document.getElementById('edit-pax-base').value);
-      
-      if (!nombre || !rendimiento_base || isNaN(rendimiento_base)) {
-          return window.mostrarMensaje("Falta Nombre o Rendimiento.", "text-rose-900");
-      }
+      if (!nombre || !rendimiento_base || isNaN(rendimiento_base)) return window.mostrarMensaje("Falta Nombre o Rendimiento.", "text-rose-900");
       
       const bloques = [];
       document.querySelectorAll('.bloque-receta').forEach(b => {
@@ -876,13 +771,7 @@
         b.querySelectorAll('.fila-ingrediente').forEach(fila => {
           const ingNombre = fila.querySelector('.ing-nombre').value.trim();
           const ingCant = parseFloat(fila.querySelector('.ing-cant').value);
-          if (ingNombre && !isNaN(ingCant)) {
-              ingredientes.push({ 
-                  nombre: ingNombre, 
-                  cantidad: ingCant, 
-                  unidad: fila.querySelector('.ing-unidad').value.trim() 
-              });
-          }
+          if (ingNombre && !isNaN(ingCant)) ingredientes.push({ nombre: ingNombre, cantidad: ingCant, unidad: fila.querySelector('.ing-unidad').value.trim() });
         });
         bloques.push({ 
             nombre: b.querySelector('.b-nombre').value.trim() || "Preparación Base", 
@@ -894,29 +783,13 @@
       });
       
       let id = document.getElementById('selector-editor').value;
-      if (!id || window.perfilUsuario.rol === 'Editor') {
-          id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
-      }
+      if (!id || window.perfilUsuario.rol === 'Editor') id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
       
-      const f = new Date(); 
-      const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2, '0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2, '0')}:${f.getMinutes().toString().padStart(2, '0')}`;
+      const f = new Date(); const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2, '0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2, '0')}:${f.getMinutes().toString().padStart(2, '0')}`;
       
-      const datos = { 
-          id, 
-          nombre, 
-          rendimiento_base, 
-          unidad_base: document.getElementById('edit-unidad-base').value.trim(), 
-          sucursal: document.getElementById('edit-sucursal').value, 
-          partida: document.getElementById('edit-partida').value.trim(), 
-          tipo: document.getElementById('edit-tipo').value.trim(), 
-          alergenos: Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value), 
-          temporada: Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value), 
-          bloques, 
-          auditoria: { modificado_por: window.usuarioActual.email, fecha: fechaStr }
-      };
+      const datos = { id, nombre, rendimiento_base, unidad_base: document.getElementById('edit-unidad-base').value.trim(), sucursal: document.getElementById('edit-sucursal').value, partida: document.getElementById('edit-partida').value.trim(), tipo: document.getElementById('edit-tipo').value.trim(), alergenos: Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value), temporada: Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value), bloques, auditoria: { modificado_por: window.usuarioActual.email, fecha: fechaStr }};
       
       document.getElementById('loader-guardar').style.display = 'block';
-      
       try { 
           await setDoc(doc(db, "recetas", id), datos); 
           window.mostrarMensaje("✅ Receta guardada", "text-green-600"); 
@@ -934,288 +807,96 @@
       if (window.recetaActual) {
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
-        
-        const pillCeco = document.getElementById('visor-ceco'); 
-        pillCeco.classList.remove('hidden'); 
-        pillCeco.innerText = window.recetaActual.sucursal || 'Le Chique';
-        
-        document.getElementById('input-pax').value = window.recetaActual.rendimiento_base; 
-        document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US'); 
-        document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base; 
-        document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
-        
-        document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---"; 
-        document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
-        
-        document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-"; 
-        document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
-        
+        const pillCeco = document.getElementById('visor-ceco'); pillCeco.classList.remove('hidden'); pillCeco.innerText = window.recetaActual.sucursal || 'Le Chique';
+        document.getElementById('input-pax').value = window.recetaActual.rendimiento_base; document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US'); document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base; document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
+        document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---"; document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
+        document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-"; document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
         document.getElementById('visor-auditoria').innerText = window.recetaActual.auditoria ? `${window.recetaActual.auditoria.modificado_por} (${window.recetaActual.auditoria.fecha})` : "Sistema Antiguo";
-        
         window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
-      } else { 
-          document.getElementById('contenido-receta').classList.add('hidden'); 
-          document.getElementById('visor-ceco').classList.add('hidden'); 
-      }
+      } else { document.getElementById('contenido-receta').classList.add('hidden'); document.getElementById('visor-ceco').classList.add('hidden'); }
     };
 
-    window.recalcularPax = () => { 
-        if (!window.recetaActual) return; 
-        const pax = parseFloat(document.getElementById('input-pax').value) || 0.1; 
-        document.getElementById('display-pax').innerText = pax.toLocaleString('en-US'); 
-        window.renderizarBloquesVisor(pax); 
-    };
+    window.recalcularPax = () => { if (!window.recetaActual) return; const pax = parseFloat(document.getElementById('input-pax').value) || 0.1; document.getElementById('display-pax').innerText = pax.toLocaleString('en-US'); window.renderizarBloquesVisor(pax); };
 
     window.renderizarBloquesVisor = (paxDeseado) => {
-      const contenedor = document.getElementById('contenedor-bloques-visor'); 
-      contenedor.innerHTML = '';
+      const contenedor = document.getElementById('contenedor-bloques-visor'); contenedor.innerHTML = '';
       const factorGlobal = paxDeseado / window.recetaActual.rendimiento_base;
-      
       (window.recetaActual.bloques || []).forEach(bloque => {
         const rendFormat = window.formatearCantidadInteligente(bloque.rendimiento * factorGlobal, bloque.unidad);
-        let sumaTotal = 0; 
-        let liq = 0; 
-        let sol = 0;
-        
+        let sumaTotal = 0; let liq = 0; let sol = 0;
         let tablaIng = bloque.ingredientes.map(ing => {
-          const u = (ing.unidad || '').trim().toLowerCase(); 
-          let c = ing.cantidad * factorGlobal;
-          
-          if (u === 'kg' || u === 'l') sumaTotal += c * 1000; 
-          else sumaTotal += c;
-          
-          if (u === 'ml' || u === 'l') liq++; 
-          else if (u === 'gr' || u === 'g' || u === 'kg') sol++;
-          
+          const u = (ing.unidad || '').trim().toLowerCase(); let c = ing.cantidad * factorGlobal;
+          if (u === 'kg' || u === 'l') sumaTotal += c * 1000; else sumaTotal += c;
+          if (u === 'ml' || u === 'l') liq++; else if (u === 'gr' || u === 'g' || u === 'kg') sol++;
           const fmt = window.formatearCantidadInteligente(c, ing.unidad);
-          return `
-            <tr class="border-b border-zinc-100 break-inside-avoid">
-                <td class="py-1 text-zinc-900 tabular-nums font-semibold text-xs w-[35%] align-top">${fmt.cantidad} <span class="text-[9px] text-zinc-400 font-normal uppercase">${fmt.unidad}</span></td>
-                <td class="py-1 text-zinc-700 uppercase tracking-wide text-[10px] font-semibold w-[65%] align-top">${ing.nombre}</td>
-            </tr>`;
+          return `<tr class="border-b border-zinc-100 break-inside-avoid"><td class="py-1 text-zinc-900 tabular-nums font-semibold text-xs w-[35%] align-top">${fmt.cantidad} <span class="text-[9px] text-zinc-400 font-normal uppercase">${fmt.unidad}</span></td><td class="py-1 text-zinc-700 uppercase tracking-wide text-[10px] font-semibold w-[65%] align-top">${ing.nombre}</td></tr>`;
         }).join('');
-        
         const totFmt = window.formatearCantidadInteligente(sumaTotal, (liq > sol) ? 'ml' : 'gr');
-        tablaIng += `
-            <tr class="border-t-2 border-zinc-300 bg-zinc-50/50 break-inside-avoid">
-                <td class="py-1.5 text-rose-900 tabular-nums font-bold text-xs w-[35%] align-top">${totFmt.cantidad} <span class="text-[9px] text-rose-900/60 uppercase">${totFmt.unidad}</span></td>
-                <td class="py-1.5 text-zinc-900 uppercase tracking-widest text-[9px] font-black w-[65%] align-top">PESO ESTIMADO</td>
-            </tr>`;
-
-        contenedor.innerHTML += `
-          <div class="mb-5 break-inside-avoid border-b border-zinc-100 pb-4">
-            <h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1 uppercase tracking-widest flex justify-between items-end mb-2">
-                <span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span>
-            </h3>
-            <div class="flex flex-col md:flex-row gap-4 mt-2">
-              <div class="md:w-[48%]">
-                  <table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table>
-              </div>
-              <div class="md:w-[52%] bg-zinc-50/80 p-3 rounded-sm border border-zinc-200 text-[11px] text-zinc-700 whitespace-pre-wrap leading-relaxed">${bloque.procedimiento}</div>
-            </div>
-          </div>`;
+        tablaIng += `<tr class="border-t-2 border-zinc-300 bg-zinc-50/50 break-inside-avoid"><td class="py-1.5 text-rose-900 tabular-nums font-bold text-xs w-[35%] align-top">${totFmt.cantidad} <span class="text-[9px] text-rose-900/60 uppercase">${totFmt.unidad}</span></td><td class="py-1.5 text-zinc-900 uppercase tracking-widest text-[9px] font-black w-[65%] align-top">PESO ESTIMADO</td></tr>`;
+        contenedor.innerHTML += `<div class="mb-5 break-inside-avoid border-b border-zinc-100 pb-4"><h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1 uppercase tracking-widest flex justify-between items-end mb-2"><span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span></h3><div class="flex flex-col md:flex-row gap-4 mt-2"><div class="md:w-[48%]"><table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table></div><div class="md:w-[52%] bg-zinc-50/80 p-3 rounded-sm border border-zinc-200 text-[11px] text-zinc-700 whitespace-pre-wrap leading-relaxed">${bloque.procedimiento}</div></div></div>`;
       });
     };
 
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
-      const el = document.getElementById('zona-impresion'); 
-      const w = el.style.width; 
-      el.style.width = '750px';
-      
-      html2pdf().set({ 
-          margin: [0.3, 0.4, 0.3, 0.4], 
-          filename: `${window.recetaActual.nombre.replace(/\s+/g, '_')}.pdf`, 
-          image: { type: 'jpeg', quality: 0.98 }, 
-          html2canvas: { scale: 2, useCORS: true, windowWidth: 750 }, 
-          jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }, 
-          pagebreak: { mode: 'css', avoid: ['.break-inside-avoid', 'tr'] }
-      }).from(el).save().then(() => { 
-          el.style.width = w; 
-      });
+      const el = document.getElementById('zona-impresion'); const w = el.style.width; el.style.width = '750px';
+      html2pdf().set({ margin: [0.3, 0.4, 0.3, 0.4], filename: `${window.recetaActual.nombre.replace(/\s+/g, '_')}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true, windowWidth: 750 }, jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }, pagebreak: { mode: 'css', avoid: ['.break-inside-avoid', 'tr'] }}).from(el).save().then(() => { el.style.width = w; });
     };
 
     window.abrirModalImportarBase = () => { document.getElementById('modal-importar').classList.remove('hidden'); };
     window.cerrarModalImportar = () => { document.getElementById('modal-importar').classList.add('hidden'); document.getElementById('selector-importar-base').value = ''; };
-    
     window.confirmarImportacionBase = () => {
-      const id = document.getElementById('selector-importar-base').value; 
-      if (!id) return alert("Selecciona una receta.");
+      const id = document.getElementById('selector-importar-base').value; if (!id) return alert("Selecciona una receta.");
       const rb = window.recetasDB.find(r => r.id === id);
-      
-      if (rb && rb.bloques) { 
-          rb.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre === 'Preparación Base' ? rb.nombre : b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); 
-          window.mostrarMensaje("✅ Base importada", "text-green-600"); 
-      }
+      if (rb && rb.bloques) { rb.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre === 'Preparación Base' ? rb.nombre : b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); window.mostrarMensaje("✅ Base importada", "text-green-600"); }
       window.cerrarModalImportar();
     };
 
     window.agregarBloqueSubreceta = (nombre = '', rend = '', uni = '', proc = '', ingredientes = []) => {
-      const bId = `bloque-${blockCounter++}`; 
-      const div = document.createElement('div'); 
-      div.className = 'bloque-receta bg-white border border-zinc-200 rounded-sm p-5 relative shadow-sm'; 
-      div.id = bId;
-      
-      div.innerHTML = `
-        <button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16">
-          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div>
-          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div>
-          <div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad (Kg, L)</label><input type="text" value="${uni}" class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm uppercase"></div>
-        </div>
-        <div class="flex flex-col md:flex-row gap-6">
-          <div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6">
-            <div class="flex justify-between items-center mb-3">
-              <label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label>
-              <button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button>
-            </div>
-            <div class="c-ingredientes space-y-2"></div>
-          </div>
-          <div class="md:w-1/2">
-            <label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-3">Procedimiento Técnico</label>
-            <textarea class="b-proc w-full border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition h-28 leading-relaxed">${proc}</textarea>
-          </div>
-        </div>`;
-        
+      const bId = `bloque-${blockCounter++}`; const div = document.createElement('div'); div.className = 'bloque-receta bg-white border border-zinc-200 rounded-sm p-5 relative shadow-sm'; div.id = bId;
+      div.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16"><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad (Kg, L)</label><input type="text" value="${uni}" class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm uppercase"></div></div><div class="flex flex-col md:flex-row gap-6"><div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label><button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button></div><div class="c-ingredientes space-y-2"></div></div><div class="md:w-1/2"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-3">Procedimiento Técnico</label><textarea class="b-proc w-full border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition h-28 leading-relaxed">${proc}</textarea></div></div>`;
       document.getElementById('contenedor-bloques-editor').appendChild(div);
-      
-      if(ingredientes.length === 0) {
-          window.agregarIngrediente(bId); 
-      } else {
-          ingredientes.forEach(ing => window.agregarIngrediente(bId, ing.nombre, ing.cantidad, ing.unidad));
-      }
+      if(ingredientes.length === 0) { window.agregarIngrediente(bId); } else { ingredientes.forEach(ing => window.agregarIngrediente(bId, ing.nombre, ing.cantidad, ing.unidad)); }
     };
 
     window.agregarIngrediente = (bloqueId, nombre = '', cant = '', unidad = '') => {
-      const b = document.getElementById(bloqueId).querySelector('.c-ingredientes'); 
-      const div = document.createElement('div'); 
-      div.className = 'fila-ingrediente flex gap-2 items-center';
-      
-      div.innerHTML = `
-        <input type="text" placeholder="Ingrediente" value="${nombre}" class="ing-nombre flex-1 border border-zinc-200 p-2 text-xs outline-none rounded-sm">
-        <input type="number" placeholder="0.00" value="${cant}" step="any" class="ing-cant w-20 border border-zinc-200 p-2 text-xs outline-none rounded-sm tabular-nums text-center">
-        <input type="text" placeholder="Unid" value="${unidad}" class="ing-unidad w-14 border border-zinc-200 p-2 text-xs outline-none rounded-sm text-center uppercase">
-        <button onclick="this.parentElement.remove()" class="text-zinc-300 hover:text-rose-900 font-bold px-1 transition text-sm">✕</button>`;
-        
+      const b = document.getElementById(bloqueId).querySelector('.c-ingredientes'); const div = document.createElement('div'); div.className = 'fila-ingrediente flex gap-2 items-center';
+      div.innerHTML = `<input type="text" placeholder="Ingrediente" value="${nombre}" class="ing-nombre flex-1 border border-zinc-200 p-2 text-xs outline-none rounded-sm"><input type="number" placeholder="0.00" value="${cant}" step="any" class="ing-cant w-20 border border-zinc-200 p-2 text-xs outline-none rounded-sm tabular-nums text-center"><input type="text" placeholder="Unid" value="${unidad}" class="ing-unidad w-14 border border-zinc-200 p-2 text-xs outline-none rounded-sm text-center uppercase"><button onclick="this.parentElement.remove()" class="text-zinc-300 hover:text-rose-900 font-bold px-1 transition text-sm">✕</button>`;
       b.appendChild(div);
     };
 
     window.cambiarPestaña = (p) => {
-      ['visor', 'lista', 'editor', 'admin'].forEach(id => { 
-          document.getElementById(`vista-${id}`).classList.add('hidden'); 
-          document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden"; 
-      });
-      document.getElementById(`vista-${p}`).classList.remove('hidden'); 
-      document.getElementById('tab-visor').classList.remove('hidden'); 
-      document.getElementById('tab-lista').classList.remove('hidden');
-      
-      if(window.perfilUsuario.rol === 'SuperAdmin') { 
-          document.getElementById('tab-editor').classList.remove('hidden'); 
-          document.getElementById('tab-admin').classList.remove('hidden'); 
-      } else if (window.perfilUsuario.rol === 'Editor') { 
-          document.getElementById('tab-editor').classList.remove('hidden'); 
-      }
-      
-      document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs"; 
-      if(p === 'admin') document.getElementById(`tab-admin`).classList.add('bg-zinc-100', 'text-rose-900', 'font-black');
+      ['visor', 'lista', 'editor', 'admin'].forEach(id => { document.getElementById(`vista-${id}`).classList.add('hidden'); document.getElementById(`tab-${id}`).className = "flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden"; });
+      document.getElementById(`vista-${p}`).classList.remove('hidden'); document.getElementById('tab-visor').classList.remove('hidden'); document.getElementById('tab-lista').classList.remove('hidden');
+      if(window.perfilUsuario.rol === 'SuperAdmin') { document.getElementById('tab-editor').classList.remove('hidden'); document.getElementById('tab-admin').classList.remove('hidden'); } else if (window.perfilUsuario.rol === 'Editor') { document.getElementById('tab-editor').classList.remove('hidden'); }
+      document.getElementById(`tab-${p}`).className = "flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs"; if(p === 'admin') document.getElementById(`tab-admin`).classList.add('bg-zinc-100', 'text-rose-900', 'font-black');
     };
 
     window.renderizarListaRecetas = (textoFiltro = '') => {
-      const t = document.getElementById('tabla-todas-recetas'); 
-      const filtro = textoFiltro.toLowerCase();
-      
-      const filtradas = window.recetasDB.filter(r => 
-          (r.nombre ? String(r.nombre).toLowerCase() : '').includes(filtro) || 
-          (r.partida ? String(r.partida).toLowerCase() : '').includes(filtro) || 
-          (r.sucursal ? String(r.sucursal).toLowerCase() : '').includes(filtro)
-      );
-      
-      if(window.perfilUsuario.rol === 'SuperAdmin') {
-          document.getElementById('col-acciones').classList.remove('hidden'); 
-      } else {
-          document.getElementById('col-acciones').classList.add('hidden');
-      }
-      
+      const t = document.getElementById('tabla-todas-recetas'); const filtro = textoFiltro.toLowerCase();
+      const filtradas = window.recetasDB.filter(r => (r.nombre ? String(r.nombre).toLowerCase() : '').includes(filtro) || (r.partida ? String(r.partida).toLowerCase() : '').includes(filtro) || (r.sucursal ? String(r.sucursal).toLowerCase() : '').includes(filtro));
+      if(window.perfilUsuario.rol === 'SuperAdmin') { document.getElementById('col-acciones').classList.remove('hidden'); } else { document.getElementById('col-acciones').classList.add('hidden'); }
       t.innerHTML = filtradas.map(r => {
         let accionesHtml = window.perfilUsuario.rol === 'SuperAdmin' ? `<td class="p-4 text-center space-x-2 whitespace-nowrap"><button onclick="editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button><button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button></td>` : '';
-        return `
-            <tr class="border-b border-zinc-100 hover:bg-zinc-50 transition cursor-pointer" onclick="document.getElementById('selector-receta').value = '${r.id}'; cargarRecetaSeleccionada(); cambiarPestaña('visor');">
-                <td class="p-4 font-bold text-zinc-800">${r.nombre}</td>
-                <td class="p-4"><span class="pill pill-ceco">${r.sucursal || 'Le Chique'}</span></td>
-                <td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td>
-                <td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${r.auditoria ? `${r.auditoria.fecha.split(' ')[0]}` : '---'}</td>
-                ${accionesHtml}
-            </tr>`
+        return `<tr class="border-b border-zinc-100 hover:bg-zinc-50 transition cursor-pointer" onclick="document.getElementById('selector-receta').value = '${r.id}'; cargarRecetaSeleccionada(); cambiarPestaña('visor');"><td class="p-4 font-bold text-zinc-800">${r.nombre}</td><td class="p-4"><span class="pill pill-ceco">${r.sucursal || 'Le Chique'}</span></td><td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td><td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${r.auditoria ? `${r.auditoria.fecha.split(' ')[0]}` : '---'}</td>${accionesHtml}</tr>`
       }).join('') || `<tr><td colspan="${window.perfilUsuario.rol === 'SuperAdmin' ? 5 : 4}" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">No hay recetas</td></tr>`;
     };
 
-    window.editarReceta = (id) => { 
-        document.getElementById('selector-editor').value = id; 
-        window.cargarEnEditor(); 
-        window.cambiarPestaña('editor'); 
-    };
-    
+    window.editarReceta = (id) => { document.getElementById('selector-editor').value = id; window.cargarEnEditor(); window.cambiarPestaña('editor'); };
     window.cargarEnEditor = () => {
-      const id = document.getElementById('selector-editor').value; 
-      window.limpiarFormularioBase();
-      
+      const id = document.getElementById('selector-editor').value; window.limpiarFormularioBase();
       if (id) {
         const r = window.recetasDB.find(x => x.id === id);
-        document.getElementById('edit-nombre').value = r.nombre; 
-        document.getElementById('edit-pax-base').value = r.rendimiento_base; 
-        document.getElementById('edit-unidad-base').value = r.unidad_base || 'Kg'; 
-        document.getElementById('edit-partida').value = r.partida || ''; 
-        document.getElementById('edit-tipo').value = r.tipo || ''; 
-        document.getElementById('edit-sucursal').value = r.sucursal || 'Le Chique';
-        
-        document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value)); 
-        document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
-        
-        if(r.bloques && r.bloques.length > 0) {
-            r.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); 
-        } else { 
-            window.agregarBloqueSubreceta('Base', r.rendimiento_base, r.unidad_base, r.procedimiento, r.ingredientes); 
-        }
-      } else { 
-          window.agregarBloqueSubreceta(); 
-      }
+        document.getElementById('edit-nombre').value = r.nombre; document.getElementById('edit-pax-base').value = r.rendimiento_base; document.getElementById('edit-unidad-base').value = r.unidad_base || 'Kg'; document.getElementById('edit-partida').value = r.partida || ''; document.getElementById('edit-tipo').value = r.tipo || ''; document.getElementById('edit-sucursal').value = r.sucursal || 'Le Chique';
+        document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value)); document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
+        if(r.bloques && r.bloques.length > 0) { r.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); } else { window.agregarBloqueSubreceta('Base', r.rendimiento_base, r.unidad_base, r.procedimiento, r.ingredientes); }
+      } else { window.agregarBloqueSubreceta(); }
     };
 
-    window.limpiarFormularioBase = () => { 
-        document.getElementById('edit-nombre').value = ''; 
-        document.getElementById('edit-pax-base').value = '1'; 
-        document.getElementById('edit-unidad-base').value = 'Kg'; 
-        document.getElementById('edit-partida').value = ''; 
-        document.getElementById('edit-tipo').value = ''; 
-        document.getElementById('edit-sucursal').value = window.perfilUsuario.sucursal === 'TODAS' ? 'Global' : window.perfilUsuario.sucursal; 
-        document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false); 
-        document.getElementById('contenedor-bloques-editor').innerHTML = ''; 
-    };
-    
-    window.limpiarEditor = () => { 
-        if(document.getElementById('selector-editor')) document.getElementById('selector-editor').value = ''; 
-        window.limpiarFormularioBase(); 
-        window.agregarBloqueSubreceta(); 
-    };
-    
-    window.eliminarReceta = async (id) => { 
-        event.stopPropagation(); 
-        if (!confirm("¿Eliminar receta permanentemente?")) return; 
-        try { 
-            await deleteDoc(doc(db, "recetas", id)); 
-            await window.obtenerRecetasDeFirebase(); 
-            window.limpiarEditor(); 
-        } catch (e) { 
-            alert("Error al borrar."); 
-        } 
-    };
-    
-    window.mostrarMensaje = (texto, claseColor) => { 
-        const span = document.getElementById('mensaje-estado'); 
-        span.innerText = texto; 
-        span.className = `text-sm font-bold ${claseColor}`; 
-        setTimeout(() => span.innerText = "", 5000); 
-    };
+    window.limpiarFormularioBase = () => { document.getElementById('edit-nombre').value = ''; document.getElementById('edit-pax-base').value = '1'; document.getElementById('edit-unidad-base').value = 'Kg'; document.getElementById('edit-partida').value = ''; document.getElementById('edit-tipo').value = ''; document.getElementById('edit-sucursal').value = window.perfilUsuario.sucursal === 'TODAS' ? 'Global' : window.perfilUsuario.sucursal; document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false); document.getElementById('contenedor-bloques-editor').innerHTML = ''; };
+    window.limpiarEditor = () => { if(document.getElementById('selector-editor')) document.getElementById('selector-editor').value = ''; window.limpiarFormularioBase(); window.agregarBloqueSubreceta(); };
+    window.eliminarReceta = async (id) => { event.stopPropagation(); if (!confirm("¿Eliminar receta permanentemente?")) return; try { await deleteDoc(doc(db, "recetas", id)); await window.obtenerRecetasDeFirebase(); window.limpiarEditor(); } catch (e) { alert("Error al borrar."); } };
+    window.mostrarMensaje = (texto, claseColor) => { const span = document.getElementById('mensaje-estado'); span.innerText = texto; span.className = `text-sm font-bold ${claseColor}`; setTimeout(() => span.innerText = "", 5000); };
   </script>
 </body>
 </html>
