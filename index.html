@@ -583,7 +583,7 @@
     window.adminBorrarUsuario = async (email) => { if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
 
     // ==========================================
-    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL (CORREGIDO LATEST)
+    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL (VERSIÓN 2.5 FLASH)
     // ==========================================
     window.procesarFotoIA = async (event) => {
       const file = event.target.files[0];
@@ -636,8 +636,8 @@
         };
 
         try {
-          // AQUI ESTA LA CORRECCION: APUNTAMOS A gemini-1.5-flash-latest
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${window.apiKeyIA}`, {
+          // SE APUNTA DIRECTAMENTE AL MODELO GEMINI 2.5 FLASH REVELADO EN LA CAPTURA
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${window.apiKeyIA}`, {
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
             body: JSON.stringify(payload)
