@@ -432,13 +432,7 @@
       const p = document.getElementById('login-password').value;
       const err = document.getElementById('login-error');
       err.classList.replace('text-green-600', 'text-rose-600');
-      try { 
-        await signInWithEmailAndPassword(auth, e, p); 
-        err.classList.add('hidden'); 
-      } catch (error) { 
-        err.innerText = "Credenciales incorrectas o usuario no registrado."; 
-        err.classList.remove('hidden'); 
-      }
+      try { await signInWithEmailAndPassword(auth, e, p); err.classList.add('hidden'); } catch (error) { err.innerText = "Credenciales incorrectas o usuario no registrado."; err.classList.remove('hidden'); }
     };
 
     window.registrarCuenta = async () => {
@@ -453,11 +447,7 @@
         err.innerText = "¡Solicitud enviada! Espera la aprobación del Admin.";
         err.classList.replace('text-rose-600', 'text-green-600');
         err.classList.remove('hidden');
-      } catch (error) { 
-        err.innerText = "Error o correo ya registrado."; 
-        err.classList.replace('text-green-600', 'text-rose-600');
-        err.classList.remove('hidden'); 
-      }
+      } catch (error) { err.innerText = "Error o correo ya registrado."; err.classList.replace('text-green-600', 'text-rose-600'); err.classList.remove('hidden'); }
     };
 
     window.cerrarSesion = () => { signOut(auth); };
@@ -593,7 +583,7 @@
     window.adminBorrarUsuario = async (email) => { if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
 
     // ==========================================
-    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL MODO ESTRICTO
+    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL (CORREGIDO LATEST)
     // ==========================================
     window.procesarFotoIA = async (event) => {
       const file = event.target.files[0];
@@ -640,14 +630,14 @@
                     { inline_data: { mime_type: mimeType, data: base64String } }
                 ] 
             }],
-            // NUEVO: ESTO OBLIGA A LA IA A DEVOLVER SOLO JSON PERFECTO
             generationConfig: {
                 response_mime_type: "application/json"
             }
         };
 
         try {
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${window.apiKeyIA}`, {
+          // AQUI ESTA LA CORRECCION: APUNTAMOS A gemini-1.5-flash-latest
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${window.apiKeyIA}`, {
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
             body: JSON.stringify(payload)
@@ -707,9 +697,7 @@
           if (!data.id) data.id = doc.id;
           const recSucursal = data.sucursal || 'Le Chique';
           
-          if (window.perfilUsuario.rol === "SuperAdmin" || window.perfilUsuario.sucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.perfilUsuario.sucursal) { 
-              window.recetasDB.push(data); 
-          }
+          if (window.perfilUsuario.rol === "SuperAdmin" || window.perfilUsuario.sucursal === "TODAS" || recSucursal === "Global" || recSucursal === window.perfilUsuario.sucursal) { window.recetasDB.push(data); }
         });
         
         selectVisor.innerHTML = '<option value="">-- Selecciona una receta --</option>';
@@ -724,27 +712,18 @@
           if(selectImportar) selectImportar.innerHTML += `<option value="${receta.id}">${receta.nombre} (${receta.rendimiento_base} ${receta.unidad_base})</option>`;
         });
         window.renderizarListaRecetas();
-      } catch (error) { 
-          selectVisor.innerHTML = `<option value="">❌ Error al cargar recetas</option>`; 
-      }
+      } catch (error) { selectVisor.innerHTML = `<option value="">❌ Error al cargar recetas</option>`; }
     };
 
     function generarCheckboxes(containerId, items, namePrefix) {
       const container = document.getElementById(containerId);
       if(!container) return;
-      container.innerHTML = items.map(item => `
-        <label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition">
-          <input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900">
-          <span class="text-[11px] uppercase tracking-wide font-semibold text-zinc-600">${item}</span>
-        </label>
-      `).join('');
+      container.innerHTML = items.map(item => `<label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition"><input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900"><span class="text-[11px] uppercase tracking-wide font-semibold text-zinc-600">${item}</span></label>`).join('');
     }
 
     window.formatearCantidadInteligente = (cantidad, unidad) => {
-      let cant = parseFloat(cantidad); 
-      let uni = (unidad || '').trim().toLowerCase();
-      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } 
-      else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
+      let cant = parseFloat(cantidad); let uni = (unidad || '').trim().toLowerCase();
+      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
       return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
     };
 
@@ -752,11 +731,9 @@
 
     window.descargarBackup = () => {
       if (!window.recetasDB || window.recetasDB.length === 0) return alert("Nada que respaldar.");
-      const a = document.createElement('a'); 
-      const jsonStr = JSON.stringify(window.recetasDB, null, 2);
+      const a = document.createElement('a'); const jsonStr = JSON.stringify(window.recetasDB, null, 2);
       const urlObject = URL.createObjectURL(new Blob([jsonStr], { type: "application/json" }));
-      a.href = urlObject;
-      a.download = `Backup_LeChique_${new Date().toISOString().split('T')[0]}.json`; 
+      a.href = urlObject; a.download = `Backup_LeChique_${new Date().toISOString().split('T')[0]}.json`; 
       document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(urlObject);
     };
 
@@ -773,33 +750,17 @@
           const ingCant = parseFloat(fila.querySelector('.ing-cant').value);
           if (ingNombre && !isNaN(ingCant)) ingredientes.push({ nombre: ingNombre, cantidad: ingCant, unidad: fila.querySelector('.ing-unidad').value.trim() });
         });
-        bloques.push({ 
-            nombre: b.querySelector('.b-nombre').value.trim() || "Preparación Base", 
-            rendimiento: parseFloat(b.querySelector('.b-rend').value) || rendimiento_base, 
-            unidad: b.querySelector('.b-uni').value.trim() || document.getElementById('edit-unidad-base').value.trim(), 
-            ingredientes, 
-            procedimiento: b.querySelector('.b-proc').value.trim() 
-        });
+        bloques.push({ nombre: b.querySelector('.b-nombre').value.trim() || "Preparación Base", rendimiento: parseFloat(b.querySelector('.b-rend').value) || rendimiento_base, unidad: b.querySelector('.b-uni').value.trim() || document.getElementById('edit-unidad-base').value.trim(), ingredientes, procedimiento: b.querySelector('.b-proc').value.trim() });
       });
       
       let id = document.getElementById('selector-editor').value;
       if (!id || window.perfilUsuario.rol === 'Editor') id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
       
       const f = new Date(); const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2, '0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2, '0')}:${f.getMinutes().toString().padStart(2, '0')}`;
-      
       const datos = { id, nombre, rendimiento_base, unidad_base: document.getElementById('edit-unidad-base').value.trim(), sucursal: document.getElementById('edit-sucursal').value, partida: document.getElementById('edit-partida').value.trim(), tipo: document.getElementById('edit-tipo').value.trim(), alergenos: Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value), temporada: Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value), bloques, auditoria: { modificado_por: window.usuarioActual.email, fecha: fechaStr }};
       
       document.getElementById('loader-guardar').style.display = 'block';
-      try { 
-          await setDoc(doc(db, "recetas", id), datos); 
-          window.mostrarMensaje("✅ Receta guardada", "text-green-600"); 
-          document.getElementById('loader-guardar').style.display = 'none'; 
-          await window.obtenerRecetasDeFirebase(); 
-          window.limpiarEditor(); 
-      } catch (error) { 
-          window.mostrarMensaje("❌ Error al guardar.", "text-rose-900"); 
-          document.getElementById('loader-guardar').style.display = 'none'; 
-      }
+      try { await setDoc(doc(db, "recetas", id), datos); window.mostrarMensaje("✅ Receta guardada", "text-green-600"); document.getElementById('loader-guardar').style.display = 'none'; await window.obtenerRecetasDeFirebase(); window.limpiarEditor(); } catch (error) { window.mostrarMensaje("❌ Error al guardar.", "text-rose-900"); document.getElementById('loader-guardar').style.display = 'none'; }
     };
 
     window.cargarRecetaSeleccionada = () => {
