@@ -295,7 +295,7 @@
               <h3 class="text-[10px] font-bold text-indigo-900 uppercase tracking-widest mb-2">Configuración de Inteligencia Artificial</h3>
               <p class="text-[10px] text-zinc-500 mb-4 leading-relaxed">Pega aquí tu clave de Google Gemini API para habilitar el auto-completado por foto.</p>
               <div class="flex gap-2">
-                <input type="password" id="admin-api-key" placeholder="AIzaSyBJs0..." class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none focus:border-indigo-600">
+                <input type="password" id="admin-api-key" placeholder="AQ.Ab8..." class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none focus:border-indigo-600">
                 <button onclick="adminGuardarApiKey()" class="bg-indigo-600 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-indigo-700 transition">Guardar</button>
               </div>
             </div>
@@ -435,19 +435,55 @@
       try { await signInWithEmailAndPassword(auth, e, p); err.classList.add('hidden'); } catch (error) { err.innerText = "Credenciales incorrectas o usuario no registrado."; err.classList.remove('hidden'); }
     };
 
+    // ==========================================
+    // NUEVO REGISTRO CON NOTIFICACIÓN DE TELEGRAM
+    // ==========================================
     window.registrarCuenta = async () => {
       const e = document.getElementById('login-email').value.trim().toLowerCase();
       const p = document.getElementById('login-password').value;
       const err = document.getElementById('login-error');
-      if(p.length < 6) { err.innerText = "Contraseña min. 6 caracteres"; err.classList.replace('text-green-600', 'text-rose-600'); err.classList.remove('hidden'); return;}
+      
+      if(p.length < 6) { 
+          err.innerText = "Contraseña min. 6 caracteres"; 
+          err.classList.replace('text-green-600', 'text-rose-600'); 
+          err.classList.remove('hidden'); 
+          return;
+      }
+      
       try { 
+        // 1. Crea la cuenta en Firebase
         await createUserWithEmailAndPassword(auth, e, p); 
         await setDoc(doc(db, 'usuarios', e), { email: e, rol: 'Lector', sucursal: 'Le Chique', estado: 'Pendiente' });
         await signOut(auth);
+        
+        // 2. DISPARADOR ALERTA DE TELEGRAM
+        const botToken = "8645994711:AAF0F6GIKZXiGYa9mdkyVuMvCRPyiIvwQjA"; 
+        const miChatId = "7883349842"; 
+        
+        // El mensaje que te llegará al celular
+        const textoTelegram = `🚨 *NUEVA SOLICITUD DE ACCESO*\n\n👨‍🍳 *Usuario:* ${e}\n📲 *Acción:* Entra al Panel Admin del recetario corporativo para aprobarlo o rechazarlo.`;
+        
+        // Mandar el mensaje silenciosamente en segundo plano
+        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: miChatId,
+                text: textoTelegram,
+                parse_mode: "Markdown"
+            })
+        }).catch(error => console.log("Telegram no enviado", error)); 
+
+        // 3. Muestra el mensaje de éxito al usuario
         err.innerText = "¡Solicitud enviada! Espera la aprobación del Admin.";
         err.classList.replace('text-rose-600', 'text-green-600');
         err.classList.remove('hidden');
-      } catch (error) { err.innerText = "Error o correo ya registrado."; err.classList.replace('text-green-600', 'text-rose-600'); err.classList.remove('hidden'); }
+        
+      } catch (error) { 
+        err.innerText = "Error o correo ya registrado."; 
+        err.classList.replace('text-green-600', 'text-rose-600');
+        err.classList.remove('hidden'); 
+      }
     };
 
     window.cerrarSesion = () => { signOut(auth); };
@@ -583,7 +619,7 @@
     window.adminBorrarUsuario = async (email) => { if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
 
     // ==========================================
-    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL (VERSIÓN 2.5 FLASH)
+    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL (GEMINI 2.5 FLASH)
     // ==========================================
     window.procesarFotoIA = async (event) => {
       const file = event.target.files[0];
@@ -636,7 +672,7 @@
         };
 
         try {
-          // SE APUNTA DIRECTAMENTE AL MODELO GEMINI 2.5 FLASH REVELADO EN LA CAPTURA
+          // LLAMADA EXACTA AL MODELO 2.5 FLASH QUE TIENES HABILITADO
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${window.apiKeyIA}`, {
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
