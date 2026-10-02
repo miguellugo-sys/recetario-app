@@ -58,6 +58,15 @@
         <h2 id="login-title" class="font-serif text-2xl font-black text-zinc-900 mb-2 text-center uppercase tracking-widest">Acceso Restringido</h2>
         <p id="login-subtitle" class="text-[10px] text-center text-zinc-500 mb-6 uppercase tracking-wider font-bold">Inicia sesión con tu cuenta corporativa</p>
         
+        <!-- NUEVOS CAMPOS DE REGISTRO OCULTOS POR DEFECTO -->
+        <div id="box-campos-registro" class="hidden mb-4">
+          <input type="text" id="reg-nombre" placeholder="Nombre completo" class="w-full mb-4 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
+          <div class="flex gap-4">
+            <input type="text" id="reg-puesto" placeholder="Puesto (Ej: Cocinero A)" class="w-1/2 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
+            <input type="text" id="reg-sucursal" placeholder="Sucursal / CECO" class="w-1/2 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
+          </div>
+        </div>
+
         <input type="email" id="login-email" placeholder="Correo electrónico" class="w-full mb-4 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900">
         <input type="password" id="login-password" placeholder="Contraseña" class="w-full mb-6 p-3 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900" onkeypress="if(event.key === 'Enter') iniciarSesion()">
         
@@ -416,14 +425,16 @@
       document.getElementById('login-error').classList.add('hidden');
       if(isRegistro){
         document.getElementById('login-title').innerText = "Solicitar Acceso";
-        document.getElementById('login-subtitle').innerText = "Crea tu cuenta para revisión corporativa";
+        document.getElementById('login-subtitle').innerText = "Llena tus datos para revisión corporativa";
         document.getElementById('box-btn-iniciar').classList.add('hidden');
         document.getElementById('box-btn-registrar').classList.remove('hidden');
+        document.getElementById('box-campos-registro').classList.remove('hidden');
       }else{
         document.getElementById('login-title').innerText = "Acceso Restringido";
         document.getElementById('login-subtitle').innerText = "Inicia sesión con tu cuenta corporativa";
         document.getElementById('box-btn-iniciar').classList.remove('hidden');
         document.getElementById('box-btn-registrar').classList.add('hidden');
+        document.getElementById('box-campos-registro').classList.add('hidden');
       }
     };
 
@@ -436,12 +447,23 @@
     };
 
     // ==========================================
-    // REGISTRO BLINDADO CONTRA RACE CONDITIONS
+    // REGISTRO CON NUEVOS CAMPOS Y TELEGRAM
     // ==========================================
     window.registrarCuenta = async () => {
       const e = document.getElementById('login-email').value.trim().toLowerCase();
       const p = document.getElementById('login-password').value;
+      
+      const nombreUsuario = document.getElementById('reg-nombre').value.trim();
+      const puestoUsuario = document.getElementById('reg-puesto').value.trim();
+      const sucursalUsuario = document.getElementById('reg-sucursal').value.trim();
       const err = document.getElementById('login-error');
+
+      if(!nombreUsuario || !puestoUsuario || !sucursalUsuario) {
+          err.innerText = "Por favor, llena todos los campos."; 
+          err.classList.replace('text-green-600', 'text-rose-600'); 
+          err.classList.remove('hidden'); 
+          return;
+      }
       
       if(p.length < 6) { 
           err.innerText = "Contraseña min. 6 caracteres"; 
@@ -458,21 +480,27 @@
         // 1. Crea la cuenta en Firebase
         await createUserWithEmailAndPassword(auth, e, p); 
         
-        // 2. DISPARADOR ALERTA DE TELEGRAM (Inmediatamente después de crear la cuenta)
+        // 2. DISPARADOR ALERTA DE TELEGRAM CON DATOS NUEVOS
         const botToken = "8645994711:AAFUWxNz53DehJ9ONsQRxgQvWxgWnPf4Rkw"; 
         const miChatId = "7883349842"; 
-        const textoTelegram = `🚨 *NUEVA SOLICITUD DE ACCESO*\n\n👨‍🍳 *Usuario:* ${e}\n📲 *Acción:* Entra al Panel Admin del recetario corporativo para aprobarlo o rechazarlo.`;
+        const textoTelegram = `🚨 *NUEVA SOLICITUD DE ACCESO*\n\n👤 *Nombre:* ${nombreUsuario}\n🔪 *Puesto:* ${puestoUsuario}\n🏢 *Sucursal:* ${sucursalUsuario}\n📧 *Correo:* ${e}\n\n📲 *Acción:* Entra al Panel Admin del recetario corporativo para aprobarlo o rechazarlo.`;
         
-        // Await garantiza que el mensaje salga antes de que el "guardia" de Firebase interfiera
         await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: miChatId, text: textoTelegram, parse_mode: "Markdown" })
         }).catch(error => console.log("Telegram no enviado", error)); 
 
-        // 3. Crear el documento en la base de datos envuelto en su propio try-catch
+        // 3. Crear el documento en la base de datos guardando también los datos extras
         try {
-            await setDoc(doc(db, 'usuarios', e), { email: e, rol: 'Lector', sucursal: 'Le Chique', estado: 'Pendiente' });
+            await setDoc(doc(db, 'usuarios', e), { 
+              email: e, 
+              nombre: nombreUsuario,
+              puesto: puestoUsuario,
+              rol: 'Lector', 
+              sucursal: sucursalUsuario, 
+              estado: 'Pendiente' 
+            });
         } catch(docError) {
             console.log("El guardia cerró la sesión antes, pero el registro fue exitoso.");
         }
@@ -480,9 +508,15 @@
         // 4. Cerrar sesión manualmente para prevenir accesos no autorizados
         await signOut(auth);
         
-        // 5. Mensaje de éxito final
+        // 5. Mensaje de éxito y limpieza de formulario
         err.innerText = "¡Solicitud enviada! Espera la aprobación del Admin.";
         err.classList.replace('text-zinc-500', 'text-green-600');
+        
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
+        document.getElementById('reg-nombre').value = '';
+        document.getElementById('reg-puesto').value = '';
+        document.getElementById('reg-sucursal').value = '';
         
       } catch (error) { 
         err.innerText = "Error o correo ya registrado."; 
@@ -575,6 +609,9 @@
       await window.cargarConfiguracionBD();
     };
 
+    // ==========================================
+    // CARGAR USUARIOS AL PANEL ADMIN (MOSTRANDO DATOS NUEVOS)
+    // ==========================================
     window.cargarUsuariosBD = async () => {
       const snap = await getDocs(collection(db, 'usuarios'));
       const ulPendientes = document.getElementById('lista-pendientes-admin');
@@ -590,9 +627,10 @@
         const idSeguro = d.email.replace(/[@.]/g, '');
         
         if(d.estado === 'Pendiente') {
+          const infoExtra = d.nombre ? `<div class="text-[10px] font-normal text-zinc-500 mt-1">👤 ${d.nombre} - ${d.puesto} (De: ${d.sucursal})</div>` : '';
           htmlPendientes += `
             <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm">
-              <div class="font-bold text-zinc-800 text-xs mb-3">${d.email}</div>
+              <div class="font-bold text-zinc-800 text-xs mb-3">${d.email}${infoExtra}</div>
               <div class="flex gap-2 mb-3">
                 <select id="rol-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white"><option value="Lector">Lector (Solo PDF)</option><option value="Editor">Admin Editor (Crea)</option></select>
                 <select id="ceco-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">${opcionesSucursalAdmin}</select>
@@ -600,11 +638,15 @@
               <div class="flex gap-2"><button onclick="adminAprobarUsuario('${d.email}', '${idSeguro}')" class="flex-1 bg-green-600 hover:bg-green-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Aprobar</button><button onclick="adminRechazarUsuario('${d.email}')" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-[10px] tracking-widest font-bold uppercase py-2 rounded-sm transition">Rechazar</button></div>
             </li>`;
         } else {
+          const infoExtraAuth = d.nombre ? `<span class="block text-[9px] font-normal text-zinc-400 mt-0.5">${d.nombre} - ${d.puesto}</span>` : '';
           let opcionesCecoAuth = `<option value="TODAS" ${d.sucursal === 'TODAS' ? 'selected' : ''}>TODAS (Global)</option>`;
           window.sucursalesConfig.forEach(s => { opcionesCecoAuth += `<option value="${s}" ${d.sucursal === s ? 'selected' : ''}>${s}</option>`; });
           htmlAutorizados += `
             <li class="bg-zinc-50 p-3 border border-zinc-200 rounded-sm shadow-sm mb-2">
-              <div class="flex justify-between items-center mb-3"><strong class="text-zinc-800 text-xs">${d.email}</strong><button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 text-[10px] font-bold hover:underline">Revocar Acceso</button></div>
+              <div class="flex justify-between items-start mb-3">
+                <div><strong class="text-zinc-800 text-xs">${d.email}</strong>${infoExtraAuth}</div>
+                <button onclick="adminBorrarUsuario('${d.email}')" class="text-rose-600 text-[10px] font-bold hover:underline">Revocar Acceso</button>
+              </div>
               <div class="flex gap-2 mb-3">
                 <select id="rol-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white"><option value="Lector" ${d.rol === 'Lector' ? 'selected' : ''}>Lector (Solo PDF)</option><option value="Editor" ${d.rol === 'Editor' ? 'selected' : ''}>Admin Editor (Crea)</option></select>
                 <select id="ceco-auth-${idSeguro}" class="flex-1 p-1 border border-zinc-300 rounded-sm text-[10px] uppercase font-bold text-zinc-700 outline-none bg-white">${opcionesCecoAuth}</select>
@@ -617,13 +659,13 @@
       ulAutorizados.innerHTML = htmlAutorizados || '<li class="text-[10px] text-zinc-400 uppercase tracking-widest p-2 border border-dashed border-zinc-200 text-center rounded-sm">Ningún usuario autorizado</li>';
     };
 
-    window.adminAprobarUsuario = async (email, idSeguro) => { await setDoc(doc(db, 'usuarios', email), { email, rol: document.getElementById(`rol-${idSeguro}`).value, sucursal: document.getElementById(`ceco-${idSeguro}`).value, estado: 'Activo' }); await window.cargarUsuariosBD(); };
+    window.adminAprobarUsuario = async (email, idSeguro) => { await setDoc(doc(db, 'usuarios', email), { email, rol: document.getElementById(`rol-${idSeguro}`).value, sucursal: document.getElementById(`ceco-${idSeguro}`).value, estado: 'Activo' }, { merge: true }); await window.cargarUsuariosBD(); };
     window.adminActualizarUsuario = async (email, idSeguro) => { try { await setDoc(doc(db, 'usuarios', email), { email, rol: document.getElementById(`rol-auth-${idSeguro}`).value, sucursal: document.getElementById(`ceco-auth-${idSeguro}`).value, estado: 'Activo' }, { merge: true }); alert(`Permisos actualizados para ${email}`); await window.cargarUsuariosBD(); } catch(e) { alert("Error al actualizar"); } };
     window.adminRechazarUsuario = async (email) => { if(!confirm(`¿Rechazar solicitud de ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
     window.adminBorrarUsuario = async (email) => { if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
 
     // ==========================================
-    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL (GEMINI 2.5 FLASH)
+    // AUTO-COMPLETADO CON INTELIGENCIA ARTIFICIAL
     // ==========================================
     window.procesarFotoIA = async (event) => {
       const file = event.target.files[0];
