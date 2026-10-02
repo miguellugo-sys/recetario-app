@@ -436,7 +436,7 @@
     };
 
     // ==========================================
-    // NUEVO REGISTRO CON NOTIFICACIÓN DE TELEGRAM
+    // REGISTRO CON NOTIFICACIÓN DE TELEGRAM (ACTUALIZADO)
     // ==========================================
     window.registrarCuenta = async () => {
       const e = document.getElementById('login-email').value.trim().toLowerCase();
@@ -457,7 +457,7 @@
         await signOut(auth);
         
         // 2. DISPARADOR ALERTA DE TELEGRAM
-        const botToken = "8645994711:AAF0F6GIKZXiGYa9mdkyVuMvCRPyiIvwQjA"; 
+        const botToken = "8645994711:AAFUWxNz53DehJ9ONsQRxgQvWxgWnPf4Rkw"; 
         const miChatId = "7883349842"; 
         
         // El mensaje que te llegará al celular
@@ -672,7 +672,6 @@
         };
 
         try {
-          // LLAMADA EXACTA AL MODELO 2.5 FLASH QUE TIENES HABILITADO
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${window.apiKeyIA}`, {
             method: 'POST', 
             headers: {'Content-Type': 'application/json'}, 
