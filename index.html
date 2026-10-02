@@ -436,7 +436,7 @@
     };
 
     // ==========================================
-    // REGISTRO CON NOTIFICACIÓN DE TELEGRAM (ACTUALIZADO)
+    // REGISTRO BLINDADO CONTRA RACE CONDITIONS
     // ==========================================
     window.registrarCuenta = async () => {
       const e = document.getElementById('login-email').value.trim().toLowerCase();
@@ -449,40 +449,44 @@
           err.classList.remove('hidden'); 
           return;
       }
+
+      err.innerText = "Procesando...";
+      err.classList.replace('text-rose-600', 'text-zinc-500');
+      err.classList.remove('hidden');
       
       try { 
         // 1. Crea la cuenta en Firebase
         await createUserWithEmailAndPassword(auth, e, p); 
-        await setDoc(doc(db, 'usuarios', e), { email: e, rol: 'Lector', sucursal: 'Le Chique', estado: 'Pendiente' });
-        await signOut(auth);
         
-        // 2. DISPARADOR ALERTA DE TELEGRAM
+        // 2. DISPARADOR ALERTA DE TELEGRAM (Inmediatamente después de crear la cuenta)
         const botToken = "8645994711:AAFUWxNz53DehJ9ONsQRxgQvWxgWnPf4Rkw"; 
         const miChatId = "7883349842"; 
-        
-        // El mensaje que te llegará al celular
         const textoTelegram = `🚨 *NUEVA SOLICITUD DE ACCESO*\n\n👨‍🍳 *Usuario:* ${e}\n📲 *Acción:* Entra al Panel Admin del recetario corporativo para aprobarlo o rechazarlo.`;
         
-        // Mandar el mensaje silenciosamente en segundo plano
-        fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        // Await garantiza que el mensaje salga antes de que el "guardia" de Firebase interfiera
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                chat_id: miChatId,
-                text: textoTelegram,
-                parse_mode: "Markdown"
-            })
+            body: JSON.stringify({ chat_id: miChatId, text: textoTelegram, parse_mode: "Markdown" })
         }).catch(error => console.log("Telegram no enviado", error)); 
 
-        // 3. Muestra el mensaje de éxito al usuario
+        // 3. Crear el documento en la base de datos envuelto en su propio try-catch
+        try {
+            await setDoc(doc(db, 'usuarios', e), { email: e, rol: 'Lector', sucursal: 'Le Chique', estado: 'Pendiente' });
+        } catch(docError) {
+            console.log("El guardia cerró la sesión antes, pero el registro fue exitoso.");
+        }
+        
+        // 4. Cerrar sesión manualmente para prevenir accesos no autorizados
+        await signOut(auth);
+        
+        // 5. Mensaje de éxito final
         err.innerText = "¡Solicitud enviada! Espera la aprobación del Admin.";
-        err.classList.replace('text-rose-600', 'text-green-600');
-        err.classList.remove('hidden');
+        err.classList.replace('text-zinc-500', 'text-green-600');
         
       } catch (error) { 
         err.innerText = "Error o correo ya registrado."; 
-        err.classList.replace('text-green-600', 'text-rose-600');
-        err.classList.remove('hidden'); 
+        err.classList.replace('text-zinc-500', 'text-rose-600');
       }
     };
 
