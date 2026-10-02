@@ -160,6 +160,7 @@
             <div id="contenedor-bloques-visor" class="space-y-6"></div>
           </div>
           
+          <!-- FOOTER CON VERSIÓN V1.0 INTEGRADA -->
           <div class="mt-8 pt-4 border-t border-zinc-200 flex justify-between items-center text-[8px] text-zinc-400 uppercase tracking-widest font-semibold">
             <p>Documento técnico confidencial</p>
             <div class="flex items-center gap-3">
@@ -170,6 +171,7 @@
               </div>
             </div>
           </div>
+
         </div>
       </div>
 
@@ -624,7 +626,10 @@
         window.recetasDB.sort((a, b) => { return (a.nombre ? String(a.nombre) : '').localeCompare(b.nombre ? String(b.nombre) : ''); });
         window.recetasDB.forEach(receta => { selectVisor.innerHTML += `<option value="${receta.id}">${receta.nombre}</option>`; if(selectEditor) selectEditor.innerHTML += `<option value="${receta.id}">Editar: ${receta.nombre}</option>`; if(selectImportar) selectImportar.innerHTML += `<option value="${receta.id}">${receta.nombre} (${receta.rendimiento_base} ${receta.unidad_base})</option>`; });
         window.renderizarListaRecetas();
-      } catch (error) { selectVisor.innerHTML = `<option value="">❌ Error al cargar recetas</option>`; }
+      } catch (error) { 
+        console.error("Error BD:", error);
+        selectVisor.innerHTML = `<option value="">❌ Error al cargar recetas</option>`; 
+      }
     };
 
     function generarCheckboxes(containerId, items, namePrefix) {
@@ -638,8 +643,42 @@
       return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
     };
 
-    window.filtrarRecetas = () => { window.renderizarListaRecetas(document.getElementById('input-buscador').value); };
+    // FUNCIÓN BLINDADA CONTRA RECETAS VIEJAS SIN FECHA
+    window.renderizarListaRecetas = (textoFiltro = '') => {
+      const t = document.getElementById('tabla-todas-recetas'); const filtro = textoFiltro.toLowerCase();
+      const filtradas = window.recetasDB.filter(r => (r.nombre ? String(r.nombre).toLowerCase() : '').includes(filtro) || (r.partida ? String(r.partida).toLowerCase() : '').includes(filtro) || (r.sucursal ? String(r.sucursal).toLowerCase() : '').includes(filtro));
+      if(window.perfilUsuario && window.perfilUsuario.rol === 'SuperAdmin') { document.getElementById('col-acciones').classList.remove('hidden'); } else { document.getElementById('col-acciones').classList.add('hidden'); }
+      
+      t.innerHTML = filtradas.map(r => {
+        let accionesHtml = (window.perfilUsuario && window.perfilUsuario.rol === 'SuperAdmin') ? `<td class="p-4 text-center space-x-2 whitespace-nowrap"><button onclick="editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button><button onclick="eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button></td>` : '';
+        
+        // El blindaje: Si la receta vieja no tiene "auditoria.fecha", no crashea, pone "---"
+        let fechaStr = (r.auditoria && r.auditoria.fecha) ? String(r.auditoria.fecha).split(' ')[0] : '---';
+        
+        return `<tr class="border-b border-zinc-100 hover:bg-zinc-50 transition cursor-pointer" onclick="document.getElementById('selector-receta').value = '${r.id}'; cargarRecetaSeleccionada(); cambiarPestaña('visor');"><td class="p-4 font-bold text-zinc-800">${r.nombre}</td><td class="p-4"><span class="pill pill-ceco">${r.sucursal || 'Le Chique'}</span></td><td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td><td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${fechaStr}</td>${accionesHtml}</tr>`
+      }).join('') || `<tr><td colspan="${(window.perfilUsuario && window.perfilUsuario.rol === 'SuperAdmin') ? 5 : 4}" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">No hay recetas</td></tr>`;
+    };
 
+    window.editarReceta = (id) => { document.getElementById('selector-editor').value = id; window.cargarEnEditor(); window.cambiarPestaña('editor'); };
+    
+    window.cargarEnEditor = () => {
+      const id = document.getElementById('selector-editor').value; window.limpiarFormularioBase();
+      if (id) {
+        const r = window.recetasDB.find(x => x.id === id);
+        document.getElementById('edit-nombre').value = r.nombre; document.getElementById('edit-pax-base').value = r.rendimiento_base; document.getElementById('edit-unidad-base').value = r.unidad_base || 'Kg'; document.getElementById('edit-partida').value = r.partida || ''; document.getElementById('edit-tipo').value = r.tipo || ''; document.getElementById('edit-sucursal').value = r.sucursal || 'Le Chique';
+        document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value)); document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
+        if(r.bloques && r.bloques.length > 0) { r.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); } else { window.agregarBloqueSubreceta('Base', r.rendimiento_base, r.unidad_base, r.procedimiento, r.ingredientes); }
+      } else { window.agregarBloqueSubreceta(); }
+    };
+
+    window.limpiarFormularioBase = () => { document.getElementById('edit-nombre').value = ''; document.getElementById('edit-pax-base').value = '1'; document.getElementById('edit-unidad-base').value = 'Kg'; document.getElementById('edit-partida').value = ''; document.getElementById('edit-tipo').value = ''; document.getElementById('edit-sucursal').value = (window.perfilUsuario && window.perfilUsuario.sucursal === 'TODAS') ? 'Global' : ((window.perfilUsuario && window.perfilUsuario.sucursal) || 'Le Chique'); document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false); document.getElementById('contenedor-bloques-editor').innerHTML = ''; };
+    
+    window.limpiarEditor = () => { if(document.getElementById('selector-editor')) document.getElementById('selector-editor').value = ''; window.limpiarFormularioBase(); window.agregarBloqueSubreceta(); };
+    
+    window.eliminarReceta = async (id) => { event.stopPropagation(); if (!confirm("¿Eliminar receta permanentemente?")) return; try { await deleteDoc(doc(db, "recetas", id)); await window.obtenerRecetasDeFirebase(); window.limpiarEditor(); } catch (e) { alert("Error al borrar."); } };
+    
+    window.mostrarMensaje = (texto, claseColor) => { const span = document.getElementById('mensaje-estado'); span.innerText = texto; span.className = `text-sm font-bold ${claseColor}`; setTimeout(() => span.innerText = "", 5000); };
+    
     window.descargarBackup = () => {
       if (!window.recetasDB || window.recetasDB.length === 0) return alert("Nada que respaldar.");
       const a = document.createElement('a'); const jsonStr = JSON.stringify(window.recetasDB, null, 2);
@@ -665,10 +704,10 @@
       });
       
       let id = document.getElementById('selector-editor').value;
-      if (!id || window.perfilUsuario.rol === 'Editor') id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
+      if (!id || (window.perfilUsuario && window.perfilUsuario.rol === 'Editor')) id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
       
       const f = new Date(); const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2, '0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2, '0')}:${f.getMinutes().toString().padStart(2, '0')}`;
-      const datos = { id, nombre, rendimiento_base, unidad_base: document.getElementById('edit-unidad-base').value.trim(), sucursal: document.getElementById('edit-sucursal').value, partida: document.getElementById('edit-partida').value.trim(), tipo: document.getElementById('edit-tipo').value.trim(), alergenos: Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value), temporada: Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value), bloques, auditoria: { modificado_por: window.usuarioActual.email, fecha: fechaStr }};
+      const datos = { id, nombre, rendimiento_base, unidad_base: document.getElementById('edit-unidad-base').value.trim(), sucursal: document.getElementById('edit-sucursal').value, partida: document.getElementById('edit-partida').value.trim(), tipo: document.getElementById('edit-tipo').value.trim(), alergenos: Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value), temporada: Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value), bloques, auditoria: { modificado_por: (window.usuarioActual && window.usuarioActual.email) ? window.usuarioActual.email : "Admin", fecha: fechaStr }};
       
       document.getElementById('loader-guardar').style.display = 'block';
       try { await setDoc(doc(db, "recetas", id), datos); window.mostrarMensaje("✅ Receta guardada", "text-green-600"); document.getElementById('loader-guardar').style.display = 'none'; await window.obtenerRecetasDeFirebase(); window.limpiarEditor(); } catch (error) { window.mostrarMensaje("❌ Error al guardar.", "text-rose-900"); document.getElementById('loader-guardar').style.display = 'none'; }
@@ -683,20 +722,21 @@
         document.getElementById('input-pax').value = window.recetaActual.rendimiento_base; document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US'); document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base; document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
         document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---"; document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
         document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-"; document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
-        document.getElementById('visor-auditoria').innerText = window.recetaActual.auditoria ? `${window.recetaActual.auditoria.modificado_por} (${window.recetaActual.auditoria.fecha})` : "Sistema Antiguo";
+        document.getElementById('visor-auditoria').innerText = (window.recetaActual.auditoria && window.recetaActual.auditoria.modificado_por) ? `${window.recetaActual.auditoria.modificado_por} (${window.recetaActual.auditoria.fecha})` : "Sistema Antiguo";
         window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
       } else { document.getElementById('contenido-receta').classList.add('hidden'); document.getElementById('visor-ceco').classList.add('hidden'); }
     };
 
     window.recalcularPax = () => { if (!window.recetaActual) return; const pax = parseFloat(document.getElementById('input-pax').value) || 0.1; document.getElementById('display-pax').innerText = pax.toLocaleString('en-US'); window.renderizarBloquesVisor(pax); };
 
+    // FUNCIÓN BLINDADA CONTRA BLOQUES INCOMPLETOS
     window.renderizarBloquesVisor = (paxDeseado) => {
       const contenedor = document.getElementById('contenedor-bloques-visor'); contenedor.innerHTML = '';
       const factorGlobal = paxDeseado / window.recetaActual.rendimiento_base;
       (window.recetaActual.bloques || []).forEach(bloque => {
         const rendFormat = window.formatearCantidadInteligente(bloque.rendimiento * factorGlobal, bloque.unidad);
         let sumaTotal = 0; let liq = 0; let sol = 0;
-        let tablaIng = bloque.ingredientes.map(ing => {
+        let tablaIng = (bloque.ingredientes || []).map(ing => {
           const u = (ing.unidad || '').trim().toLowerCase(); let c = ing.cantidad * factorGlobal;
           if (u === 'kg' || u === 'l') sumaTotal += c * 1000; else sumaTotal += c;
           if (u === 'ml' || u === 'l') liq++; else if (u === 'gr' || u === 'g' || u === 'kg') sol++;
