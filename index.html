@@ -794,20 +794,28 @@
     
     window.mostrarMensaje = (texto, claseColor) => { const span = document.getElementById('mensaje-estado'); span.innerText = texto; span.className = `text-sm font-bold ${claseColor}`; setTimeout(() => span.innerText = "", 5000); };
     
-  window.renderizarBloquesVisor = (paxDeseado) => {
+ // FUNCIÓN BLINDADA CON LÓGICA DE UNIDADES (BATCH VS PAX)
+    window.renderizarBloquesVisor = (paxDeseado) => {
       const contenedor = document.getElementById('contenedor-bloques-visor'); 
       contenedor.innerHTML = '';
       
+      // Calculamos el factor principal de la receta
+      const rendGlobal = parseFloat(window.recetaActual.rendimiento_base) || 1;
+      const factorGlobal = paxDeseado / rendGlobal;
+      const unidadGlobal = (window.recetaActual.unidad_base || '').trim().toLowerCase();
+
       (window.recetaActual.bloques || []).forEach(bloque => {
-        // LA NUEVA MAGIA: Cada bloque calcula su propio factor de multiplicación
         let factorBloque = 1;
         const rendBloque = parseFloat(bloque.rendimiento);
+        const unidadBloque = (bloque.unidad || '').trim().toLowerCase();
         
-        // Si el bloque tiene su propio rendimiento numérico válido, lo respeta y escala en base a eso.
-        if (!isNaN(rendBloque) && rendBloque > 0) {
+        // LA LÓGICA MAESTRA:
+        // Si las unidades coinciden (PAX y PAX), calcula individual (Evita el error del Mezcal)
+        // Si las unidades chocan (PAX y GR), usa el multiplicador global (Evita el error del Tomate)
+        if (!isNaN(rendBloque) && rendBloque > 0 && unidadBloque === unidadGlobal) {
             factorBloque = paxDeseado / rendBloque;
         } else {
-            factorBloque = paxDeseado / window.recetaActual.rendimiento_base; // Respaldo global
+            factorBloque = factorGlobal;
         }
 
         const rendFormat = window.formatearCantidadInteligente(rendBloque * factorBloque, bloque.unidad);
@@ -828,7 +836,6 @@
         contenedor.innerHTML += `<div class="mb-5 break-inside-avoid border-b border-zinc-100 pb-4"><h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1 uppercase tracking-widest flex justify-between items-end mb-2"><span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span></h3><div class="flex flex-col md:flex-row gap-4 mt-2"><div class="md:w-[48%]"><table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table></div><div class="md:w-[52%] bg-zinc-50/80 p-3 rounded-sm border border-zinc-200 text-[11px] text-zinc-700 whitespace-pre-wrap leading-relaxed">${bloque.procedimiento}</div></div></div>`;
       });
     };
-
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const el = document.getElementById('zona-impresion'); const w = el.style.width; el.style.width = '750px';
