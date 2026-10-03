@@ -794,21 +794,37 @@
     
     window.mostrarMensaje = (texto, claseColor) => { const span = document.getElementById('mensaje-estado'); span.innerText = texto; span.className = `text-sm font-bold ${claseColor}`; setTimeout(() => span.innerText = "", 5000); };
     
-    window.renderizarBloquesVisor = (paxDeseado) => {
-      const contenedor = document.getElementById('contenedor-bloques-visor'); contenedor.innerHTML = '';
-      const factorGlobal = paxDeseado / window.recetaActual.rendimiento_base;
+  window.renderizarBloquesVisor = (paxDeseado) => {
+      const contenedor = document.getElementById('contenedor-bloques-visor'); 
+      contenedor.innerHTML = '';
+      
       (window.recetaActual.bloques || []).forEach(bloque => {
-        const rendFormat = window.formatearCantidadInteligente(bloque.rendimiento * factorGlobal, bloque.unidad);
+        // LA NUEVA MAGIA: Cada bloque calcula su propio factor de multiplicación
+        let factorBloque = 1;
+        const rendBloque = parseFloat(bloque.rendimiento);
+        
+        // Si el bloque tiene su propio rendimiento numérico válido, lo respeta y escala en base a eso.
+        if (!isNaN(rendBloque) && rendBloque > 0) {
+            factorBloque = paxDeseado / rendBloque;
+        } else {
+            factorBloque = paxDeseado / window.recetaActual.rendimiento_base; // Respaldo global
+        }
+
+        const rendFormat = window.formatearCantidadInteligente(rendBloque * factorBloque, bloque.unidad);
         let sumaTotal = 0; let liq = 0; let sol = 0;
+        
         let tablaIng = (bloque.ingredientes || []).map(ing => {
-          const u = (ing.unidad || '').trim().toLowerCase(); let c = ing.cantidad * factorGlobal;
+          const u = (ing.unidad || '').trim().toLowerCase(); 
+          let c = ing.cantidad * factorBloque;
           if (u === 'kg' || u === 'l') sumaTotal += c * 1000; else sumaTotal += c;
           if (u === 'ml' || u === 'l') liq++; else if (u === 'gr' || u === 'g' || u === 'kg') sol++;
           const fmt = window.formatearCantidadInteligente(c, ing.unidad);
           return `<tr class="border-b border-zinc-100 break-inside-avoid"><td class="py-1 text-zinc-900 tabular-nums font-semibold text-xs w-[35%] align-top">${fmt.cantidad} <span class="text-[9px] text-zinc-400 font-normal uppercase">${fmt.unidad}</span></td><td class="py-1 text-zinc-700 uppercase tracking-wide text-[10px] font-semibold w-[65%] align-top">${ing.nombre}</td></tr>`;
         }).join('');
+        
         const totFmt = window.formatearCantidadInteligente(sumaTotal, (liq > sol) ? 'ml' : 'gr');
         tablaIng += `<tr class="border-t-2 border-zinc-300 bg-zinc-50/50 break-inside-avoid"><td class="py-1.5 text-rose-900 tabular-nums font-bold text-xs w-[35%] align-top">${totFmt.cantidad} <span class="text-[9px] text-rose-900/60 uppercase">${totFmt.unidad}</span></td><td class="py-1.5 text-zinc-900 uppercase tracking-widest text-[9px] font-black w-[65%] align-top">PESO ESTIMADO</td></tr>`;
+        
         contenedor.innerHTML += `<div class="mb-5 break-inside-avoid border-b border-zinc-100 pb-4"><h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1 uppercase tracking-widest flex justify-between items-end mb-2"><span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span></h3><div class="flex flex-col md:flex-row gap-4 mt-2"><div class="md:w-[48%]"><table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table></div><div class="md:w-[52%] bg-zinc-50/80 p-3 rounded-sm border border-zinc-200 text-[11px] text-zinc-700 whitespace-pre-wrap leading-relaxed">${bloque.procedimiento}</div></div></div>`;
       });
     };
