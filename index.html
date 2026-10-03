@@ -101,8 +101,6 @@
       <!-- PESTAÑA VISOR -->
       <div id="vista-visor" class="p-6">
         <div id="controles-impresion" class="bg-zinc-50 p-5 rounded-sm mb-8 flex flex-wrap gap-4 items-end border border-zinc-200">
-          
-          <!-- NUEVOS FILTROS -->
           <div class="w-32">
             <label class="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Sucursal</label>
             <select id="filtro-sucursal-visor" onchange="aplicarFiltrosVisor()" class="w-full p-2.5 border border-zinc-300 rounded-sm focus:ring-1 focus:ring-rose-900 outline-none text-sm font-medium bg-white">
@@ -123,7 +121,6 @@
               <option value="Eventos">Eventos</option>
             </select>
           </div>
-
           <div class="flex-1 min-w-[200px]">
             <label class="block text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Seleccionar Receta</label>
             <select id="selector-receta" onchange="cargarRecetaSeleccionada()" class="w-full p-2.5 border border-zinc-300 rounded-sm focus:ring-1 focus:ring-rose-900 outline-none text-sm font-medium bg-white">
@@ -265,15 +262,24 @@
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Rend. Total</label>
               <input type="number" id="edit-pax-base" value="1" step="any" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none tabular-nums">
             </div>
+
+            <!-- UNIDAD PRINCIPAL EN LISTA -->
             <div>
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Unidad Rend.</label>
-              <input type="text" id="edit-unidad-base" placeholder="Ej: Kg, L, Pax" value="Kg" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none">
+              <select id="edit-unidad-base" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm bg-white font-semibold focus:ring-1 focus:ring-rose-900 cursor-pointer">
+                <option value="Kg">Kg</option>
+                <option value="Gr">Gr</option>
+                <option value="L">L</option>
+                <option value="Ml">Ml</option>
+                <option value="Pax">Pax</option>
+                <option value="Porción">Porción</option>
+                <option value="Pz">Pz</option>
+              </select>
             </div>
-            
-            <!-- LISTA DESPLEGABLE DE PARTIDAS -->
+
             <div class="md:col-span-2">
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Partida</label>
-              <select id="edit-partida" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm bg-white focus:ring-1 focus:ring-rose-900">
+              <select id="edit-partida" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm bg-white focus:ring-1 focus:ring-rose-900 cursor-pointer">
                 <option value="" disabled selected>Selecciona...</option>
                 <option value="Cuarto Caliente">Cuarto Caliente</option>
                 <option value="Cuarto Frío">Cuarto Frío</option>
@@ -285,7 +291,6 @@
                 <option value="Eventos">Eventos</option>
               </select>
             </div>
-
             <div class="md:col-span-3">
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Tipo</label>
               <input type="text" id="edit-tipo" placeholder="Ej: Salsas y Vinagretas" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm">
@@ -392,6 +397,24 @@
     window.apiKeyIA = ''; 
     let blockCounter = 0;
     const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
+
+    // FUNCIÓN SANITIZADORA PARA TRADUCIR ERRORES A UNIDADES ESTANDAR
+    window.sanitizarUnidad = (u) => {
+      if (!u) return 'Gr';
+      const lower = u.toLowerCase().trim();
+      if (['px', 'pax', 'pcx', 'pox', 'persona', 'personas'].includes(lower)) return 'Pax';
+      if (['porcion', 'porción', 'porciones', 'trago', 'tragos', 'plato', 'platos'].includes(lower)) return 'Porción';
+      if (['g', 'gr', 'gramo', 'gramos'].includes(lower)) return 'Gr';
+      if (['kg', 'kilo', 'kilos', 'kilogramo'].includes(lower)) return 'Kg';
+      if (['ml', 'mililitro', 'mililitros'].includes(lower)) return 'Ml';
+      if (['l', 'lt', 'litro', 'litros'].includes(lower)) return 'L';
+      if (['pz', 'pieza', 'piezas', 'unidad', 'unidades'].includes(lower)) return 'Pz';
+      if (['cda', 'cucharada', 'cucharadas'].includes(lower)) return 'Cda';
+      if (['cdta', 'cucharadita', 'cucharaditas'].includes(lower)) return 'Cdta';
+      if (['pizca', 'pizcas'].includes(lower)) return 'Pizca';
+      if (['manojo', 'manojos'].includes(lower)) return 'Manojo';
+      return 'Gr'; // Fallback por defecto si alguien escribió otra cosa rara
+    };
 
     window.onload = async () => { generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes'); };
 
@@ -629,14 +652,16 @@
       const reader = new FileReader(); reader.readAsDataURL(file);
       reader.onload = async () => {
         const base64String = reader.result.split(',')[1];
-        // ACTUALIZACIÓN DE IA PARA FORZAR PARTIDA ESTANDAR
-        const payload = { contents: [{ parts: [{ text: `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. {"nombre": "Nombre de la receta","rendimiento_base": 1,"unidad_base": "Kg","partida": "Una de estas: Cuarto Caliente, Cuarto Frío, Pastelería, Panadería, Barra, Producción, Salsería o Eventos","tipo": "Tipo si lo dice","bloques": [{"nombre": "Nombre de la preparación o Base","rendimiento": 1,"unidad": "Kg","procedimiento": "Instrucciones de preparación...","ingredientes": [{"nombre": "Ingrediente 1", "cantidad": 100, "unidad": "gr"}]}]}` }, { inline_data: { mime_type: file.type, data: base64String } } ] }], generationConfig: { response_mime_type: "application/json" } };
+        // INSTRUIMOS A LA IA SOBRE LAS NUEVAS UNIDADES DESPLEGABLES
+        const payload = { contents: [{ parts: [{ text: `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. {"nombre": "Nombre de la receta","rendimiento_base": 1,"unidad_base": "Elegir: Kg, Gr, L, Ml, Pax, Porción o Pz","partida": "Una de estas: Cuarto Caliente, Cuarto Frío, Pastelería, Panadería, Barra, Producción, Salsería o Eventos","tipo": "Tipo si lo dice","bloques": [{"nombre": "Nombre de la preparación o Base","rendimiento": 1,"unidad": "Elegir: Kg, Gr, L, Ml, Pax, Porción o Pz","procedimiento": "Instrucciones de preparación...","ingredientes": [{"nombre": "Ingrediente 1", "cantidad": 100, "unidad": "Elegir: Kg, Gr, L, Ml, Pz, Cda, Cdta, Pizca o Manojo"}]}]}` }, { inline_data: { mime_type: file.type, data: base64String } } ] }], generationConfig: { response_mime_type: "application/json" } };
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${window.apiKeyIA}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
           if (!res.ok) throw new Error("Llave rechazada o imagen pesada.");
           const data = await res.json();
           const recetaExtraida = JSON.parse(data.candidates[0].content.parts[0].text);
-          document.getElementById('edit-nombre').value = recetaExtraida.nombre || ''; document.getElementById('edit-pax-base').value = recetaExtraida.rendimiento_base || 1; document.getElementById('edit-unidad-base').value = recetaExtraida.unidad_base || 'Kg'; document.getElementById('edit-partida').value = recetaExtraida.partida || ''; document.getElementById('edit-tipo').value = recetaExtraida.tipo || '';
+          document.getElementById('edit-nombre').value = recetaExtraida.nombre || ''; document.getElementById('edit-pax-base').value = recetaExtraida.rendimiento_base || 1; 
+          document.getElementById('edit-unidad-base').value = window.sanitizarUnidad(recetaExtraida.unidad_base); 
+          document.getElementById('edit-partida').value = recetaExtraida.partida || ''; document.getElementById('edit-tipo').value = recetaExtraida.tipo || '';
           document.getElementById('contenedor-bloques-editor').innerHTML = '';
           if(recetaExtraida.bloques && recetaExtraida.bloques.length > 0) { recetaExtraida.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); } else { window.agregarBloqueSubreceta(); }
           msgEstado.innerText = "✨ ¡Receta transcrita con éxito!"; msgEstado.className = "text-green-600 font-bold text-sm"; setTimeout(() => msgEstado.innerText = "", 6000);
@@ -666,7 +691,6 @@
           if(selectImportar) selectImportar.innerHTML += `<option value="${receta.id}">${receta.nombre} (${receta.rendimiento_base} ${receta.unidad_base})</option>`; 
         });
         
-        // LLENAR EL VISOR USANDO LA FUNCIÓN DE LOS FILTROS
         window.aplicarFiltrosVisor();
         window.renderizarListaRecetas();
       } catch (error) { 
@@ -675,7 +699,6 @@
       }
     };
 
-    // FUNCIÓN NUEVA: APLICAR FILTROS EN EL VISOR
     window.aplicarFiltrosVisor = () => {
       const suc = document.getElementById('filtro-sucursal-visor').value;
       const part = document.getElementById('filtro-partida-visor').value;
@@ -748,7 +771,7 @@
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
         const pillCeco = document.getElementById('visor-ceco'); pillCeco.classList.remove('hidden'); pillCeco.innerText = window.recetaActual.sucursal || 'Le Chique';
-        document.getElementById('input-pax').value = window.recetaActual.rendimiento_base; document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US'); document.getElementById('display-unidad-input').value = window.recetaActual.unidad_base; document.getElementById('display-unidad').innerText = window.recetaActual.unidad_base;
+        document.getElementById('input-pax').value = window.recetaActual.rendimiento_base; document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US'); document.getElementById('display-unidad-input').value = window.sanitizarUnidad(window.recetaActual.unidad_base); document.getElementById('display-unidad').innerText = window.sanitizarUnidad(window.recetaActual.unidad_base);
         document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---"; document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
         document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-"; document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
         document.getElementById('visor-auditoria').innerText = (window.recetaActual.auditoria && window.recetaActual.auditoria.modificado_por) ? `${window.recetaActual.auditoria.modificado_por} (${window.recetaActual.auditoria.fecha})` : "Sistema Antiguo";
@@ -758,18 +781,14 @@
 
     window.recalcularPax = () => { if (!window.recetaActual) return; const pax = parseFloat(document.getElementById('input-pax').value) || 0.1; document.getElementById('display-pax').innerText = pax.toLocaleString('en-US'); window.renderizarBloquesVisor(pax); };
 
-    // FUNCIÓN BLINDADA CONTRA RECETAS VIEJAS SIN FECHA
     window.renderizarListaRecetas = (textoFiltro = '') => {
       const t = document.getElementById('tabla-todas-recetas'); const filtro = textoFiltro.toLowerCase();
       const filtradas = window.recetasDB.filter(r => (r.nombre ? String(r.nombre).toLowerCase() : '').includes(filtro) || (r.partida ? String(r.partida).toLowerCase() : '').includes(filtro) || (r.sucursal ? String(r.sucursal).toLowerCase() : '').includes(filtro));
       if(window.perfilUsuario && window.perfilUsuario.rol === 'SuperAdmin') { document.getElementById('col-acciones').classList.remove('hidden'); } else { document.getElementById('col-acciones').classList.add('hidden'); }
       
       t.innerHTML = filtradas.map(r => {
-        // SOLUCIÓN A BUG DE EDITAR/BORRAR: event.stopPropagation() agregado
         let accionesHtml = (window.perfilUsuario && window.perfilUsuario.rol === 'SuperAdmin') ? `<td class="p-4 text-center space-x-2 whitespace-nowrap"><button onclick="event.stopPropagation(); editarReceta('${r.id}')" class="border border-zinc-300 text-zinc-600 hover:bg-zinc-100 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Editar</button><button onclick="event.stopPropagation(); eliminarReceta('${r.id}')" class="border border-rose-200 text-rose-900 hover:bg-rose-50 font-bold px-3 py-1.5 rounded-sm text-[10px] uppercase tracking-widest transition">Borrar</button></td>` : '';
-        
         let fechaStr = (r.auditoria && r.auditoria.fecha) ? String(r.auditoria.fecha).split(' ')[0] : '---';
-        
         return `<tr class="border-b border-zinc-100 hover:bg-zinc-50 transition cursor-pointer" onclick="document.getElementById('selector-receta').value = '${r.id}'; cargarRecetaSeleccionada(); cambiarPestaña('visor');"><td class="p-4 font-bold text-zinc-800">${r.nombre}</td><td class="p-4"><span class="pill pill-ceco">${r.sucursal || 'Le Chique'}</span></td><td class="p-4 text-zinc-500 uppercase tracking-wider text-[10px] font-bold">${r.partida || '---'}</td><td class="p-4 text-zinc-600 uppercase tracking-wider text-[10px] font-semibold">${fechaStr}</td>${accionesHtml}</tr>`
       }).join('') || `<tr><td colspan="${(window.perfilUsuario && window.perfilUsuario.rol === 'SuperAdmin') ? 5 : 4}" class="p-8 text-center text-zinc-400 text-sm tracking-wide uppercase">No hay recetas</td></tr>`;
     };
@@ -780,13 +799,30 @@
       const id = document.getElementById('selector-editor').value; window.limpiarFormularioBase();
       if (id) {
         const r = window.recetasDB.find(x => x.id === id);
-        document.getElementById('edit-nombre').value = r.nombre; document.getElementById('edit-pax-base').value = r.rendimiento_base; document.getElementById('edit-unidad-base').value = r.unidad_base || 'Kg'; document.getElementById('edit-partida').value = r.partida || ''; document.getElementById('edit-tipo').value = r.tipo || ''; document.getElementById('edit-sucursal').value = r.sucursal || 'Le Chique';
-        document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value)); document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
+        document.getElementById('edit-nombre').value = r.nombre; 
+        document.getElementById('edit-pax-base').value = r.rendimiento_base; 
+        document.getElementById('edit-unidad-base').value = window.sanitizarUnidad(r.unidad_base); 
+        document.getElementById('edit-partida').value = r.partida || ''; 
+        document.getElementById('edit-tipo').value = r.tipo || ''; 
+        document.getElementById('edit-sucursal').value = r.sucursal || 'Le Chique';
+        
+        document.querySelectorAll('.chk-alergeno').forEach(cb => cb.checked = (r.alergenos || []).includes(cb.value)); 
+        document.querySelectorAll('.chk-mes').forEach(cb => cb.checked = (r.temporada || []).includes(cb.value));
+        
         if(r.bloques && r.bloques.length > 0) { r.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); } else { window.agregarBloqueSubreceta('Base', r.rendimiento_base, r.unidad_base, r.procedimiento, r.ingredientes); }
       } else { window.agregarBloqueSubreceta(); }
     };
 
-    window.limpiarFormularioBase = () => { document.getElementById('edit-nombre').value = ''; document.getElementById('edit-pax-base').value = '1'; document.getElementById('edit-unidad-base').value = 'Kg'; document.getElementById('edit-partida').value = ''; document.getElementById('edit-tipo').value = ''; document.getElementById('edit-sucursal').value = (window.perfilUsuario && window.perfilUsuario.sucursal === 'TODAS') ? 'Global' : ((window.perfilUsuario && window.perfilUsuario.sucursal) || 'Le Chique'); document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false); document.getElementById('contenedor-bloques-editor').innerHTML = ''; };
+    window.limpiarFormularioBase = () => { 
+      document.getElementById('edit-nombre').value = ''; 
+      document.getElementById('edit-pax-base').value = '1'; 
+      document.getElementById('edit-unidad-base').value = 'Kg'; 
+      document.getElementById('edit-partida').value = ''; 
+      document.getElementById('edit-tipo').value = ''; 
+      document.getElementById('edit-sucursal').value = (window.perfilUsuario && window.perfilUsuario.sucursal === 'TODAS') ? 'Global' : ((window.perfilUsuario && window.perfilUsuario.sucursal) || 'Le Chique'); 
+      document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false); 
+      document.getElementById('contenedor-bloques-editor').innerHTML = ''; 
+    };
     
     window.limpiarEditor = () => { if(document.getElementById('selector-editor')) document.getElementById('selector-editor').value = ''; window.limpiarFormularioBase(); window.agregarBloqueSubreceta(); };
     
@@ -794,41 +830,34 @@
     
     window.mostrarMensaje = (texto, claseColor) => { const span = document.getElementById('mensaje-estado'); span.innerText = texto; span.className = `text-sm font-bold ${claseColor}`; setTimeout(() => span.innerText = "", 5000); };
     
-// FUNCIÓN BLINDADA CON DICCIONARIO DE UNIDADES (BATCH VS PORCIONES)
     window.renderizarBloquesVisor = (paxDeseado) => {
       const contenedor = document.getElementById('contenedor-bloques-visor'); 
       contenedor.innerHTML = '';
       
-      // Factor Global (Para recetas en Gramos, Litros, etc.)
       const rendGlobal = parseFloat(window.recetaActual.rendimiento_base) || 1;
       const factorGlobal = paxDeseado / rendGlobal;
 
       (window.recetaActual.bloques || []).forEach(bloque => {
         let factorBloque = 1;
         const rendBloque = parseFloat(bloque.rendimiento) || 1;
-        const unidadBloque = (bloque.unidad || '').trim().toLowerCase();
+        const unidadBloque = window.sanitizarUnidad(bloque.unidad).toLowerCase();
+        const unidadesPorcion = ['pax', 'porción', 'pz'];
         
-        // EL DICCIONARIO INTELIGENTE: Palabras que significan "Emplatado/Porción"
-        const unidadesPorcion = ['pax', 'px', 'porcion', 'porciones', 'trago', 'tragos', 'plato', 'platos', 'unidad', 'unidades'];
-        
-        // LA LÓGICA MAESTRA:
         if (unidadesPorcion.includes(unidadBloque)) {
-            // Es un bloque de Emplatado (Ej. Mezcal Express 2 PX). Escala directo a lo que pide el usuario.
             factorBloque = paxDeseado / rendBloque;
         } else {
-            // Es un bloque de Producción (Ej. Base Tomate 230 GR). Crece en proporción a la receta global.
             factorBloque = factorGlobal;
         }
 
-        const rendFormat = window.formatearCantidadInteligente(rendBloque * factorBloque, bloque.unidad);
+        const rendFormat = window.formatearCantidadInteligente(rendBloque * factorBloque, window.sanitizarUnidad(bloque.unidad));
         let sumaTotal = 0; let liq = 0; let sol = 0;
         
         let tablaIng = (bloque.ingredientes || []).map(ing => {
-          const u = (ing.unidad || '').trim().toLowerCase(); 
+          const u = window.sanitizarUnidad(ing.unidad).toLowerCase(); 
           let c = ing.cantidad * factorBloque;
           if (u === 'kg' || u === 'l') sumaTotal += c * 1000; else sumaTotal += c;
-          if (u === 'ml' || u === 'l') liq++; else if (u === 'gr' || u === 'g' || u === 'kg') sol++;
-          const fmt = window.formatearCantidadInteligente(c, ing.unidad);
+          if (u === 'ml' || u === 'l') liq++; else if (u === 'gr' || u === 'kg') sol++;
+          const fmt = window.formatearCantidadInteligente(c, window.sanitizarUnidad(ing.unidad));
           return `<tr class="border-b border-zinc-100 break-inside-avoid"><td class="py-1 text-zinc-900 tabular-nums font-semibold text-xs w-[35%] align-top">${fmt.cantidad} <span class="text-[9px] text-zinc-400 font-normal uppercase">${fmt.unidad}</span></td><td class="py-1 text-zinc-700 uppercase tracking-wide text-[10px] font-semibold w-[65%] align-top">${ing.nombre}</td></tr>`;
         }).join('');
         
@@ -838,7 +867,7 @@
         contenedor.innerHTML += `<div class="mb-5 break-inside-avoid border-b border-zinc-100 pb-4"><h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1 uppercase tracking-widest flex justify-between items-end mb-2"><span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span></h3><div class="flex flex-col md:flex-row gap-4 mt-2"><div class="md:w-[48%]"><table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table></div><div class="md:w-[52%] bg-zinc-50/80 p-3 rounded-sm border border-zinc-200 text-[11px] text-zinc-700 whitespace-pre-wrap leading-relaxed">${bloque.procedimiento}</div></div></div>`;
       });
     };
-    
+
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const el = document.getElementById('zona-impresion'); const w = el.style.width; el.style.width = '750px';
@@ -851,20 +880,30 @@
     window.confirmarImportacionBase = () => {
       const id = document.getElementById('selector-importar-base').value; if (!id) return alert("Selecciona una receta.");
       const rb = window.recetasDB.find(r => r.id === id);
-      if (rb && rb.bloques) { rb.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre === 'Preparación Base' ? rb.nombre : b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); window.mostrarMensaje("✅ Base importada", "text-green-600"); }
+      if (rb && rb.bloques) { rb.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre === 'Preparación Base' ? rb.nombre : b.nombre, b.rendimiento, window.sanitizarUnidad(b.unidad), b.procedimiento, b.ingredientes)); window.mostrarMensaje("✅ Base importada", "text-green-600"); }
       window.cerrarModalImportar();
     };
 
+    // ACTUALIZADO CON SELECT PARA UNIDADES
     window.agregarBloqueSubreceta = (nombre = '', rend = '', uni = '', proc = '', ingredientes = []) => {
       const bId = `bloque-${blockCounter++}`; const div = document.createElement('div'); div.className = 'bloque-receta bg-white border border-zinc-200 rounded-sm p-5 relative shadow-sm'; div.id = bId;
-      div.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16"><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad (Kg, L)</label><input type="text" value="${uni}" class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm uppercase"></div></div><div class="flex flex-col md:flex-row gap-6"><div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label><button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button></div><div class="c-ingredientes space-y-2"></div></div><div class="md:w-1/2"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-3">Procedimiento Técnico</label><textarea class="b-proc w-full border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition h-28 leading-relaxed">${proc}</textarea></div></div>`;
+      
+      const unidadLimpia = uni ? window.sanitizarUnidad(uni) : 'Kg';
+      const opcionesUni = ['Kg', 'Gr', 'L', 'Ml', 'Pax', 'Porción', 'Pz'].map(u => `<option value="${u}" ${u === unidadLimpia ? 'selected' : ''}>${u}</option>`).join('');
+
+      div.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16"><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad</label><select class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold uppercase bg-white cursor-pointer">${opcionesUni}</select></div></div><div class="flex flex-col md:flex-row gap-6"><div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label><button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button></div><div class="c-ingredientes space-y-2"></div></div><div class="md:w-1/2"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-3">Procedimiento Técnico</label><textarea class="b-proc w-full border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition h-28 leading-relaxed">${proc}</textarea></div></div>`;
       document.getElementById('contenedor-bloques-editor').appendChild(div);
       if(ingredientes.length === 0) { window.agregarIngrediente(bId); } else { ingredientes.forEach(ing => window.agregarIngrediente(bId, ing.nombre, ing.cantidad, ing.unidad)); }
     };
 
+    // ACTUALIZADO CON SELECT PARA UNIDADES DE INGREDIENTES
     window.agregarIngrediente = (bloqueId, nombre = '', cant = '', unidad = '') => {
       const b = document.getElementById(bloqueId).querySelector('.c-ingredientes'); const div = document.createElement('div'); div.className = 'fila-ingrediente flex gap-2 items-center';
-      div.innerHTML = `<input type="text" placeholder="Ingrediente" value="${nombre}" class="ing-nombre flex-1 border border-zinc-200 p-2 text-xs outline-none rounded-sm"><input type="number" placeholder="0.00" value="${cant}" step="any" class="ing-cant w-20 border border-zinc-200 p-2 text-xs outline-none rounded-sm tabular-nums text-center"><input type="text" placeholder="Unid" value="${unidad}" class="ing-unidad w-14 border border-zinc-200 p-2 text-xs outline-none rounded-sm text-center uppercase"><button onclick="this.parentElement.remove()" class="text-zinc-300 hover:text-rose-900 font-bold px-1 transition text-sm">✕</button>`;
+      
+      const uniLimpia = unidad ? window.sanitizarUnidad(unidad) : 'Gr';
+      const opcionesIng = ['Gr', 'Kg', 'Ml', 'L', 'Pz', 'Cda', 'Cdta', 'Pizca', 'Manojo'].map(u => `<option value="${u}" ${u === uniLimpia ? 'selected' : ''}>${u}</option>`).join('');
+
+      div.innerHTML = `<input type="text" placeholder="Ingrediente" value="${nombre}" class="ing-nombre flex-1 border border-zinc-200 p-2 text-xs outline-none rounded-sm"><input type="number" placeholder="0.00" value="${cant}" step="any" class="ing-cant w-20 border border-zinc-200 p-2 text-xs outline-none rounded-sm tabular-nums text-center"><select class="ing-unidad w-16 border border-zinc-200 p-2 text-xs outline-none rounded-sm text-center uppercase bg-white cursor-pointer">${opcionesIng}</select><button onclick="this.parentElement.remove()" class="text-zinc-300 hover:text-rose-900 font-bold px-1 transition text-sm">✕</button>`;
       b.appendChild(div);
     };
 
