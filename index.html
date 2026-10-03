@@ -263,7 +263,6 @@
               <input type="number" id="edit-pax-base" value="1" step="any" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none tabular-nums">
             </div>
 
-            <!-- UNIDAD PRINCIPAL EN LISTA -->
             <div>
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Unidad Rend.</label>
               <select id="edit-unidad-base" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm bg-white font-semibold focus:ring-1 focus:ring-rose-900 cursor-pointer">
@@ -398,7 +397,6 @@
     let blockCounter = 0;
     const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
-    // FUNCIÓN SANITIZADORA PARA TRADUCIR ERRORES A UNIDADES ESTANDAR
     window.sanitizarUnidad = (u) => {
       if (!u) return 'Gr';
       const lower = u.toLowerCase().trim();
@@ -413,7 +411,7 @@
       if (['cdta', 'cucharadita', 'cucharaditas'].includes(lower)) return 'Cdta';
       if (['pizca', 'pizcas'].includes(lower)) return 'Pizca';
       if (['manojo', 'manojos'].includes(lower)) return 'Manojo';
-      return 'Gr'; // Fallback por defecto si alguien escribió otra cosa rara
+      return 'Gr'; 
     };
 
     window.onload = async () => { generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes'); };
@@ -652,7 +650,6 @@
       const reader = new FileReader(); reader.readAsDataURL(file);
       reader.onload = async () => {
         const base64String = reader.result.split(',')[1];
-        // INSTRUIMOS A LA IA SOBRE LAS NUEVAS UNIDADES DESPLEGABLES
         const payload = { contents: [{ parts: [{ text: `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. {"nombre": "Nombre de la receta","rendimiento_base": 1,"unidad_base": "Elegir: Kg, Gr, L, Ml, Pax, Porción o Pz","partida": "Una de estas: Cuarto Caliente, Cuarto Frío, Pastelería, Panadería, Barra, Producción, Salsería o Eventos","tipo": "Tipo si lo dice","bloques": [{"nombre": "Nombre de la preparación o Base","rendimiento": 1,"unidad": "Elegir: Kg, Gr, L, Ml, Pax, Porción o Pz","procedimiento": "Instrucciones de preparación...","ingredientes": [{"nombre": "Ingrediente 1", "cantidad": 100, "unidad": "Elegir: Kg, Gr, L, Ml, Pz, Cda, Cdta, Pizca o Manojo"}]}]}` }, { inline_data: { mime_type: file.type, data: base64String } } ] }], generationConfig: { response_mime_type: "application/json" } };
         try {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${window.apiKeyIA}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
@@ -718,26 +715,7 @@
       window.recetaActual = null;
     };
 
-    function generarCheckboxes(containerId, items, namePrefix) {
-      const container = document.getElementById(containerId); if(!container) return;
-      container.innerHTML = items.map(item => `<label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition"><input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900"><span class="text-[11px] uppercase tracking-wide font-semibold text-zinc-600">${item}</span></label>`).join('');
-    }
-
-    window.formatearCantidadInteligente = (cantidad, unidad) => {
-      let cant = parseFloat(cantidad); let uni = (unidad || '').trim().toLowerCase();
-      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
-      return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
-    };
-
     window.filtrarRecetas = () => { window.renderizarListaRecetas(document.getElementById('input-buscador').value); };
-
-    window.descargarBackup = () => {
-      if (!window.recetasDB || window.recetasDB.length === 0) return alert("Nada que respaldar.");
-      const a = document.createElement('a'); const jsonStr = JSON.stringify(window.recetasDB, null, 2);
-      const urlObject = URL.createObjectURL(new Blob([jsonStr], { type: "application/json" }));
-      a.href = urlObject; a.download = `Backup_LeChique_${new Date().toISOString().split('T')[0]}.json`; 
-      document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(urlObject);
-    };
 
     window.guardarReceta = async () => {
       const nombre = document.getElementById('edit-nombre').value.trim();
@@ -765,8 +743,11 @@
       try { await setDoc(doc(db, "recetas", id), datos); window.mostrarMensaje("✅ Receta guardada", "text-green-600"); document.getElementById('loader-guardar').style.display = 'none'; await window.obtenerRecetasDeFirebase(); window.limpiarEditor(); } catch (error) { window.mostrarMensaje("❌ Error al guardar.", "text-rose-900"); document.getElementById('loader-guardar').style.display = 'none'; }
     };
 
+    window.rendimientosDeseados = {};
+
     window.cargarRecetaSeleccionada = () => {
       window.recetaActual = window.recetasDB.find(r => r.id === document.getElementById('selector-receta').value);
+      window.rendimientosDeseados = {}; 
       if (window.recetaActual) {
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
@@ -779,7 +760,79 @@
       } else { document.getElementById('contenido-receta').classList.add('hidden'); document.getElementById('visor-ceco').classList.add('hidden'); }
     };
 
-    window.recalcularPax = () => { if (!window.recetaActual) return; const pax = parseFloat(document.getElementById('input-pax').value) || 0.1; document.getElementById('display-pax').innerText = pax.toLocaleString('en-US'); window.renderizarBloquesVisor(pax); };
+    window.recalcularPax = () => { 
+      if (!window.recetaActual) return; 
+      const pax = parseFloat(document.getElementById('input-pax').value) || 0.1; 
+      document.getElementById('display-pax').innerText = pax.toLocaleString('en-US'); 
+      window.rendimientosDeseados = {}; 
+      window.renderizarBloquesVisor(pax); 
+    };
+
+    window.modificarRendimientoBloque = (index, valor) => {
+      let val = parseFloat(valor);
+      if (isNaN(val) || val <= 0) val = 1;
+      window.rendimientosDeseados[index] = val; 
+      const paxGlobal = parseFloat(document.getElementById('input-pax').value) || window.recetaActual.rendimiento_base;
+      window.renderizarBloquesVisor(paxGlobal); 
+    };
+
+    window.renderizarBloquesVisor = (paxDeseado) => {
+      const contenedor = document.getElementById('contenedor-bloques-visor'); 
+      contenedor.innerHTML = '';
+      
+      const rendGlobal = parseFloat(window.recetaActual.rendimiento_base) || 1;
+      const factorGlobal = paxDeseado / rendGlobal;
+
+      (window.recetaActual.bloques || []).forEach((bloque, index) => {
+        const rendBloqueOriginal = parseFloat(bloque.rendimiento) || 1;
+        
+        let rendCalculado = rendBloqueOriginal * factorGlobal;
+
+        if (window.rendimientosDeseados[index] !== undefined) {
+            rendCalculado = window.rendimientosDeseados[index];
+        }
+
+        const factorBloque = rendCalculado / rendBloqueOriginal;
+        let rendInputVal = Number(rendCalculado.toFixed(3)); 
+
+        let sumaTotal = 0; let liq = 0; let sol = 0;
+        
+        let tablaIng = (bloque.ingredientes || []).map(ing => {
+          const ingU = window.sanitizarUnidad(ing.unidad).toLowerCase(); 
+          let c = ing.cantidad * factorBloque;
+          if (ingU === 'kg' || ingU === 'l') sumaTotal += c * 1000; else sumaTotal += c;
+          if (ingU === 'ml' || ingU === 'l') liq++; else if (ingU === 'gr' || ingU === 'kg') sol++;
+          const fmt = window.formatearCantidadInteligente(c, window.sanitizarUnidad(ing.unidad));
+          return `<tr class="border-b border-zinc-100 break-inside-avoid"><td class="py-1 text-zinc-900 tabular-nums font-semibold text-xs w-[35%] align-top">${fmt.cantidad} <span class="text-[9px] text-zinc-400 font-normal uppercase">${fmt.unidad}</span></td><td class="py-1 text-zinc-700 uppercase tracking-wide text-[10px] font-semibold w-[65%] align-top">${ing.nombre}</td></tr>`;
+        }).join('');
+        
+        const totFmt = window.formatearCantidadInteligente(sumaTotal, (liq > sol) ? 'ml' : 'gr');
+        tablaIng += `<tr class="border-t-2 border-zinc-300 bg-zinc-50/50 break-inside-avoid"><td class="py-1.5 text-rose-900 tabular-nums font-bold text-xs w-[35%] align-top">${totFmt.cantidad} <span class="text-[9px] text-rose-900/60 uppercase">${totFmt.unidad}</span></td><td class="py-1.5 text-zinc-900 uppercase tracking-widest text-[9px] font-black w-[65%] align-top">PESO ESTIMADO</td></tr>`;
+        
+        contenedor.innerHTML += `
+        <div class="mb-6 break-inside-avoid border border-zinc-200 bg-white rounded-sm shadow-sm overflow-hidden">
+            <div class="flex flex-wrap justify-between items-center bg-zinc-50 border-b border-zinc-200 px-4 py-3 gap-2">
+                <h3 class="text-zinc-900 text-xs font-black uppercase tracking-widest flex-1">${bloque.nombre}</h3>
+                
+                <div class="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-sm border border-zinc-300 shadow-sm">
+                    <label class="text-[9px] uppercase tracking-widest text-rose-900 font-bold">Preparar:</label>
+                    <input type="number" value="${rendInputVal}" step="any" onchange="modificarRendimientoBloque(${index}, this.value)" class="w-16 p-1 text-sm text-center border-b-2 border-zinc-200 font-black tabular-nums text-zinc-800 outline-none focus:border-rose-900 transition bg-transparent">
+                    <span class="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">${window.sanitizarUnidad(bloque.unidad)}</span>
+                </div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row p-4 gap-6">
+                <div class="md:w-[45%]"><table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table></div>
+                <div class="md:w-[55%] bg-zinc-50/50 p-4 rounded-sm border border-zinc-100 text-xs text-zinc-700 whitespace-pre-wrap leading-relaxed shadow-inner">${bloque.procedimiento}</div>
+            </div>
+        </div>`;
+      });
+    };
+
+    window.renderListaRecetas = () => {
+        // Wrapper para renderizarListaRecetas (solo si la necesitas llamar en consola)
+        window.renderizarListaRecetas();
+    };
 
     window.renderizarListaRecetas = (textoFiltro = '') => {
       const t = document.getElementById('tabla-todas-recetas'); const filtro = textoFiltro.toLowerCase();
@@ -829,54 +882,16 @@
     window.eliminarReceta = async (id) => { event.stopPropagation(); if (!confirm("¿Eliminar receta permanentemente?")) return; try { await deleteDoc(doc(db, "recetas", id)); await window.obtenerRecetasDeFirebase(); window.limpiarEditor(); } catch (e) { alert("Error al borrar."); } };
     
     window.mostrarMensaje = (texto, claseColor) => { const span = document.getElementById('mensaje-estado'); span.innerText = texto; span.className = `text-sm font-bold ${claseColor}`; setTimeout(() => span.innerText = "", 5000); };
-    
-   // FUNCIÓN SUPER BLINDADA CONTRA ERRORES ORTOGRÁFICOS Y CACHÉ
-    window.renderizarBloquesVisor = (paxDeseado) => {
-      const contenedor = document.getElementById('contenedor-bloques-visor'); 
-      contenedor.innerHTML = '';
-      
-      const rendGlobal = parseFloat(window.recetaActual.rendimiento_base) || 1;
-      const factorGlobal = paxDeseado / rendGlobal;
 
-      (window.recetaActual.bloques || []).forEach(bloque => {
-        let factorBloque = 1;
-        const rendBloque = parseFloat(bloque.rendimiento) || 1;
-        
-        // Blindaje extra agresivo: Convertimos a minúsculas y limpiamos espacios
-        let u = (bloque.unidad || '').trim().toLowerCase();
-        
-        // Si la unidad empieza con la letra 'P' (Pax, Px, Pcx, Plato, Porcion, Pz) 
-        // la app automáticamente sabe que es una instrucción de Emplatado.
-        const esEmplatado = u.startsWith('p');
+    function generarCheckboxes(containerId, items, namePrefix) {
+      const container = document.getElementById(containerId); if(!container) return;
+      container.innerHTML = items.map(item => `<label class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-sm border border-zinc-200 cursor-pointer hover:bg-zinc-50 transition"><input type="checkbox" value="${item}" class="chk-${namePrefix} w-3.5 h-3.5 accent-rose-900"><span class="text-[11px] uppercase tracking-wide font-semibold text-zinc-600">${item}</span></label>`).join('');
+    }
 
-        if (esEmplatado) {
-            // Se escala perfectamente según lo que pidas en la caja de Deseado
-            factorBloque = paxDeseado / rendBloque;
-        } else {
-            // Si es Batch de producción (Kg, Gr, L, Ml), usa la reducción de la receta
-            factorBloque = factorGlobal;
-        }
-
-        // Forzamos a que siempre diga PAX en pantalla si es emplatado, matando el error del "PX"
-        const unidadLimpia = esEmplatado ? 'PAX' : bloque.unidad.toUpperCase();
-        const rendFormat = window.formatearCantidadInteligente(rendBloque * factorBloque, unidadLimpia);
-        
-        let sumaTotal = 0; let liq = 0; let sol = 0;
-        
-        let tablaIng = (bloque.ingredientes || []).map(ing => {
-          const ingU = (ing.unidad || '').trim().toLowerCase(); 
-          let c = ing.cantidad * factorBloque;
-          if (ingU === 'kg' || ingU === 'l') sumaTotal += c * 1000; else sumaTotal += c;
-          if (ingU === 'ml' || ingU === 'l') liq++; else if (ingU === 'gr' || ingU === 'g' || ingU === 'kg') sol++;
-          const fmt = window.formatearCantidadInteligente(c, ing.unidad);
-          return `<tr class="border-b border-zinc-100 break-inside-avoid"><td class="py-1 text-zinc-900 tabular-nums font-semibold text-xs w-[35%] align-top">${fmt.cantidad} <span class="text-[9px] text-zinc-400 font-normal uppercase">${fmt.unidad}</span></td><td class="py-1 text-zinc-700 uppercase tracking-wide text-[10px] font-semibold w-[65%] align-top">${ing.nombre}</td></tr>`;
-        }).join('');
-        
-        const totFmt = window.formatearCantidadInteligente(sumaTotal, (liq > sol) ? 'ml' : 'gr');
-        tablaIng += `<tr class="border-t-2 border-zinc-300 bg-zinc-50/50 break-inside-avoid"><td class="py-1.5 text-rose-900 tabular-nums font-bold text-xs w-[35%] align-top">${totFmt.cantidad} <span class="text-[9px] text-rose-900/60 uppercase">${totFmt.unidad}</span></td><td class="py-1.5 text-zinc-900 uppercase tracking-widest text-[9px] font-black w-[65%] align-top">PESO ESTIMADO</td></tr>`;
-        
-        contenedor.innerHTML += `<div class="mb-5 break-inside-avoid border-b border-zinc-100 pb-4"><h3 class="border-b border-zinc-300 text-zinc-800 text-[10px] font-bold py-1 uppercase tracking-widest flex justify-between items-end mb-2"><span>Para ${rendFormat.cantidad} ${rendFormat.unidad} de ${bloque.nombre}</span></h3><div class="flex flex-col md:flex-row gap-4 mt-2"><div class="md:w-[48%]"><table class="w-full text-left table-fixed"><tbody>${tablaIng}</tbody></table></div><div class="md:w-[52%] bg-zinc-50/80 p-3 rounded-sm border border-zinc-200 text-[11px] text-zinc-700 whitespace-pre-wrap leading-relaxed">${bloque.procedimiento}</div></div></div>`;
-      });
+    window.formatearCantidadInteligente = (cantidad, unidad) => {
+      let cant = parseFloat(cantidad); let uni = (unidad || '').trim().toLowerCase();
+      if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
+      return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
     };
 
     window.descargarPDF = () => {
@@ -895,7 +910,6 @@
       window.cerrarModalImportar();
     };
 
-    // ACTUALIZADO CON SELECT PARA UNIDADES
     window.agregarBloqueSubreceta = (nombre = '', rend = '', uni = '', proc = '', ingredientes = []) => {
       const bId = `bloque-${blockCounter++}`; const div = document.createElement('div'); div.className = 'bloque-receta bg-white border border-zinc-200 rounded-sm p-5 relative shadow-sm'; div.id = bId;
       
@@ -907,7 +921,6 @@
       if(ingredientes.length === 0) { window.agregarIngrediente(bId); } else { ingredientes.forEach(ing => window.agregarIngrediente(bId, ing.nombre, ing.cantidad, ing.unidad)); }
     };
 
-    // ACTUALIZADO CON SELECT PARA UNIDADES DE INGREDIENTES
     window.agregarIngrediente = (bloqueId, nombre = '', cant = '', unidad = '') => {
       const b = document.getElementById(bloqueId).querySelector('.c-ingredientes'); const div = document.createElement('div'); div.className = 'fila-ingrediente flex gap-2 items-center';
       
