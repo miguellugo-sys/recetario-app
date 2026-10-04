@@ -776,7 +776,7 @@
       window.renderizarBloquesVisor(paxGlobal); 
     };
 
-    window.renderizarBloquesVisor = (paxDeseado) => {
+   window.renderizarBloquesVisor = (paxDeseado) => {
       const contenedor = document.getElementById('contenedor-bloques-visor'); 
       contenedor.innerHTML = '';
       
@@ -785,7 +785,6 @@
 
       (window.recetaActual.bloques || []).forEach((bloque, index) => {
         const rendBloqueOriginal = parseFloat(bloque.rendimiento) || 1;
-        
         let rendCalculado = rendBloqueOriginal * factorGlobal;
 
         if (window.rendimientosDeseados[index] !== undefined) {
@@ -814,10 +813,16 @@
             <div class="flex flex-wrap justify-between items-center bg-zinc-50 border-b border-zinc-200 px-4 py-3 gap-2">
                 <h3 class="text-zinc-900 text-xs font-black uppercase tracking-widest flex-1">${bloque.nombre}</h3>
                 
-                <div class="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-sm border border-zinc-300 shadow-sm">
+                <!-- ESTO SE OCULTA EN EL PDF (data-html2canvas-ignore) -->
+                <div data-html2canvas-ignore="true" class="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-sm border border-zinc-300 shadow-sm">
                     <label class="text-[9px] uppercase tracking-widest text-rose-900 font-bold">Preparar:</label>
                     <input type="number" value="${rendInputVal}" step="any" onchange="modificarRendimientoBloque(${index}, this.value)" class="w-16 p-1 text-sm text-center border-b-2 border-zinc-200 font-black tabular-nums text-zinc-800 outline-none focus:border-rose-900 transition bg-transparent">
                     <span class="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">${window.sanitizarUnidad(bloque.unidad)}</span>
+                </div>
+
+                <!-- ESTE TEXTO LIMPIO REEMPLAZA EL CUADRO EN EL PDF -->
+                <div class="solo-pdf text-[10px] font-black text-rose-900 uppercase tracking-widest" style="display: none;">
+                    Rendimiento: ${rendInputVal} ${window.sanitizarUnidad(bloque.unidad)}
                 </div>
             </div>
             
@@ -894,42 +899,36 @@
       return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
     };
 
-   window.descargarPDF = (event) => {
+ window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
-      
-      const el = document.getElementById('zona-impresion');
-      const btn = event ? event.currentTarget : null;
-      let textoOriginal = "";
-      
-      // Cambiamos el texto del botón para que sepas que está trabajando
-      if (btn) {
-        textoOriginal = btn.innerHTML;
-        btn.innerHTML = "⏳ Generando PDF...";
-      }
+      const el = document.getElementById('zona-impresion'); 
+      const w = el.style.width; 
+      el.style.width = '750px';
       
       html2pdf().set({ 
-        margin: [0.4, 0.4, 0.4, 0.4], 
+        margin: [0.3, 0.4, 0.3, 0.4], 
         filename: `${window.recetaActual.nombre.replace(/\s+/g, '_')}.pdf`, 
         image: { type: 'jpeg', quality: 0.98 }, 
         html2canvas: { 
           scale: 2, 
-          useCORS: true,
-          // Aquí está la magia: creamos un clon invisible para la foto
+          useCORS: true, 
+          windowWidth: 750,
           onclone: (documentoClonado) => {
-            const clon = documentoClonado.getElementById('zona-impresion');
-            clon.style.position = 'absolute'; // Lo saca de los márgenes de la pantalla
-            clon.style.top = '0';
-            clon.style.left = '0';
-            clon.style.width = '800px'; // Ancho perfecto para tamaño Carta
-            clon.style.maxWidth = '800px';
-            clon.style.margin = '0'; // Evita el corte izquierdo
-            clon.classList.remove('shadow-sm', 'border', 'border-zinc-200'); // Quitamos bordes feos para impresión
+            // 1. Mostrar texto limpio de sub-recetas
+            const textosPdf = documentoClonado.querySelectorAll('.solo-pdf');
+            textosPdf.forEach(t => t.style.display = 'block');
+            
+            // 2. Ocultar la línea del rendimiento principal de la receta
+            const rendGlobal = documentoClonado.querySelector('#display-pax');
+            if (rendGlobal && rendGlobal.parentElement) {
+                rendGlobal.parentElement.style.display = 'none';
+            }
           }
         }, 
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }, 
         pagebreak: { mode: 'css', avoid: ['.break-inside-avoid', 'tr'] }
-      }).from(el).save().then(() => {
-        if (btn) btn.innerHTML = textoOriginal; // Restauramos el botón
+      }).from(el).save().then(() => { 
+        el.style.width = w; 
       });
     };
 
