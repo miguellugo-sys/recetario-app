@@ -1,3 +1,17 @@
+window.iniciarSesion = async () => {
+  const e = document.getElementById('login-email').value;
+  const p = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+  err.classList.replace('text-green-600', 'text-rose-600');
+  try { 
+    await signInWithEmailAndPassword(auth, e, p); 
+    err.classList.add('hidden'); 
+  } catch (error) { 
+    err.innerText = "Credenciales incorrectas."; 
+    err.classList.remove('hidden'); 
+  }
+};
+
 window.registrarCuenta = async () => {
   const e = document.getElementById('login-email').value.trim().toLowerCase();
   const p = document.getElementById('login-password').value;
@@ -24,10 +38,8 @@ window.registrarCuenta = async () => {
   err.classList.remove('hidden');
   
   try { 
-    // 1. Crear el usuario en Firebase Authentication
     const userCredential = await createUserWithEmailAndPassword(auth, e, p); 
     
-    // 2. Crear inmediatamente el registro pendiente en Firestore con los datos del formulario
     await setDoc(doc(db, 'usuarios', e), { 
       email: e, 
       nombre: nombreUsuario, 
@@ -37,7 +49,6 @@ window.registrarCuenta = async () => {
       estado: 'Pendiente' 
     });
     
-    // 3. Notificar a Telegram
     const notificarTelegramBackend = httpsCallable(functions, 'notificarTelegram');
     await notificarTelegramBackend({ 
       nombre: nombreUsuario, 
@@ -46,13 +57,11 @@ window.registrarCuenta = async () => {
       email: e 
     }).catch(err => console.log("Notificación ignorada:", err));
 
-    // 4. Cerrar la sesión del nuevo usuario para que no entre a la app hasta ser aprobado
     await signOut(auth);
 
     err.innerText = "¡Solicitud enviada! Espera aprobación del Admin."; 
     err.classList.replace('text-zinc-500', 'text-green-600');
     
-    // Limpiar campos
     document.getElementById('login-email').value = ''; 
     document.getElementById('login-password').value = ''; 
     document.getElementById('reg-nombre').value = ''; 
