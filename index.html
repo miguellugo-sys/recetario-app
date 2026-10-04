@@ -682,6 +682,46 @@
       };
     };
 
+    // NUEVA FUNCIÓN: Sous Chef de IA para mejorar la redacción
+    window.mejorarRedaccionIA = async (bloqueId) => {
+      const bloque = document.getElementById(bloqueId);
+      const textarea = bloque.querySelector('.b-proc');
+      const textoOriginal = textarea.value.trim();
+      const btn = bloque.querySelector('.btn-ia-redaccion');
+      
+      if (!textoOriginal) return alert("Escribe un borrador primero.");
+      if (!window.apiKeyIA) return alert("Falta configurar llave API en el panel Admin.");
+
+      const textoBotonOriginal = btn.innerHTML;
+      btn.innerHTML = "⏳ Procesando...";
+      btn.disabled = true;
+
+      const prompt = `Eres un Chef Ejecutivo de un restaurante Estrella Michelin. Mejora la redacción, gramática y ortografía del siguiente procedimiento usando lenguaje técnico culinario profesional. TIENES ESTRICTAMENTE PROHIBIDO alterar, omitir o inventar temperaturas, tiempos, cantidades o herramientas. Mantenlo conciso y directo.\n\nProcedimiento original:\n"${textoOriginal}"`;
+
+      const payload = { 
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.2 } 
+      };
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${window.apiKeyIA}`, { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(payload) 
+        });
+        if (!res.ok) throw new Error("Error en la API");
+        const data = await res.json();
+        const textoMejorado = data.candidates[0].content.parts[0].text.trim();
+        textarea.value = textoMejorado;
+        btn.innerHTML = "✅ Listo";
+        setTimeout(() => { btn.innerHTML = textoBotonOriginal; btn.disabled = false; }, 3000);
+      } catch(e) { 
+        alert("Fallo la conexión con la IA."); 
+        btn.innerHTML = textoBotonOriginal; 
+        btn.disabled = false; 
+      }
+    };
+
     window.obtenerRecetasDeFirebase = async () => {
       if(!window.perfilUsuario) return;
       const selectEditor = document.getElementById('selector-editor');
@@ -767,7 +807,7 @@
       if (window.recetaActual) {
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
-        document.title = window.recetaActual.nombre; // <-- AQUI ESTA LA MAGIA
+        document.title = window.recetaActual.nombre; 
         const pillCeco = document.getElementById('visor-ceco'); pillCeco.classList.remove('hidden'); pillCeco.innerText = window.recetaActual.sucursal || 'Le Chique';
         document.getElementById('input-pax').value = window.recetaActual.rendimiento_base; document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US'); document.getElementById('display-unidad-input').value = window.sanitizarUnidad(window.recetaActual.unidad_base); document.getElementById('display-unidad').innerText = window.sanitizarUnidad(window.recetaActual.unidad_base);
         document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---"; document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
@@ -776,7 +816,7 @@
         window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
       } else { 
         document.getElementById('contenido-receta').classList.add('hidden'); document.getElementById('visor-ceco').classList.add('hidden'); 
-        document.title = "Recetario Corporate - Le Chique"; // Regresamos el título al original si deselecciona
+        document.title = "Recetario Corporate - Le Chique"; 
       }
     };
 
@@ -934,7 +974,7 @@
       const unidadLimpia = uni ? window.sanitizarUnidad(uni) : 'Kg';
       const opcionesUni = ['Kg', 'Gr', 'L', 'Ml', 'Pax', 'Porción', 'Pz'].map(u => `<option value="${u}" ${u === unidadLimpia ? 'selected' : ''}>${u}</option>`).join('');
 
-      div.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16"><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad</label><select class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold uppercase bg-white cursor-pointer">${opcionesUni}</select></div></div><div class="flex flex-col md:flex-row gap-6"><div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label><button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button></div><div class="c-ingredientes space-y-2"></div></div><div class="md:w-1/2"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase block mb-3">Procedimiento Técnico</label><textarea class="b-proc w-full border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition h-28 leading-relaxed">${proc}</textarea></div></div>`;
+      div.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16"><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad</label><select class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold uppercase bg-white cursor-pointer">${opcionesUni}</select></div></div><div class="flex flex-col md:flex-row gap-6"><div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label><button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button></div><div class="c-ingredientes space-y-2"></div></div><div class="md:w-1/2 flex flex-col"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Procedimiento Técnico</label><button onclick="mejorarRedaccionIA('${bId}')" class="btn-ia-redaccion text-[9px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm transition flex items-center gap-1">✨ Mejorar Texto</button></div><textarea class="b-proc w-full flex-1 border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition min-h-[7rem] leading-relaxed">${proc}</textarea></div></div>`;
       document.getElementById('contenedor-bloques-editor').appendChild(div);
       if(ingredientes.length === 0) { window.agregarIngrediente(bId); } else { ingredientes.forEach(ing => window.agregarIngrediente(bId, ing.nombre, ing.cantidad, ing.unidad)); }
     };
