@@ -896,33 +896,50 @@
       return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
     };
 
-    window.descargarPDF = () => {
+   window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const el = document.getElementById('zona-impresion'); 
-      const w = el.style.width; 
-      el.style.width = '750px';
       
       html2pdf().set({ 
-        margin: [0.3, 0.4, 0.3, 0.4], 
+        margin: [0.4, 0.4, 0.4, 0.4], 
         filename: `${window.recetaActual.nombre.replace(/\s+/g, '_')}.pdf`, 
         image: { type: 'jpeg', quality: 0.98 }, 
         html2canvas: { 
           scale: 2, 
           useCORS: true, 
-          windowWidth: 750,
+          windowWidth: 800, // Forzamos visión de computadora de escritorio
           onclone: (documentoClonado) => {
-            const textosPdf = documentoClonado.querySelectorAll('.solo-pdf');
+            const clon = documentoClonado.getElementById('zona-impresion');
+            
+            // LA MAGIA ANTI-CORTE: 
+            // Limpiamos el cuerpo virtual y pegamos solo la receta, sin los márgenes de la app
+            documentoClonado.body.innerHTML = '';
+            documentoClonado.body.appendChild(clon);
+            documentoClonado.body.style.margin = '0';
+            documentoClonado.body.style.padding = '0';
+            
+            // Forzamos la receta a tamaño carta
+            clon.style.width = '800px';
+            clon.style.margin = '0';
+            clon.classList.remove('shadow-sm', 'border', 'border-zinc-200');
+
+            // Mostrar texto limpio de sub-recetas
+            const textosPdf = clon.querySelectorAll('.solo-pdf');
             textosPdf.forEach(t => {
                 t.style.display = 'block';
                 t.classList.remove('hidden');
             });
+            
+            // Ocultar rendimiento global
+            const rendGlobal = clon.querySelector('#display-pax');
+            if (rendGlobal && rendGlobal.parentElement) {
+                rendGlobal.parentElement.style.display = 'none';
+            }
           }
         }, 
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }, 
         pagebreak: { mode: 'css', avoid: ['.break-inside-avoid', 'tr'] }
-      }).from(el).save().then(() => { 
-        el.style.width = w; 
-      });
+      }).from(el).save();
     };
 
     window.abrirModalImportarBase = () => { document.getElementById('modal-importar').classList.remove('hidden'); };
