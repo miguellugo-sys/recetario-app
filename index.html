@@ -25,23 +25,22 @@
     .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
     tr { page-break-inside: avoid; break-inside: avoid; }
 
-    /* MOTOR NATIVO DE PDF (Limpia todo para la impresión) */
+    /* MOTOR NATIVO DE PDF - CORREGIDO PARA MULTIPLES PÁGINAS Y SIN ENCABEZADOS */
     @media print {
-      body, html { background-color: white !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+      @page { margin: 1cm; size: letter portrait; } /* Esto elimina el texto del navegador (Link, Fecha) */
+      body, html { background-color: white !important; margin: 0 !important; padding: 0 !important; width: 100% !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body > *:not(.max-w-5xl) { display: none !important; }
+      
       .max-w-5xl { max-width: 100% !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
       
-      /* Ocultamos las barras, menús y botones */
-      #topbar, #tabs-navegacion, #controles-impresion { display: none !important; }
-      
-      /* Ocultamos correo y rendimiento de auditoría */
+      #topbar, #tabs-navegacion, #controles-impresion, #vista-login { display: none !important; }
       #rendimiento-global-box, #auditoria-box { display: none !important; }
       
-      /* Ajustamos la zona del PDF para que sea perfecta */
       #vista-visor { padding: 0 !important; }
-      #zona-impresion { width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; position: absolute; top: 0; left: 0; }
       
-      /* Intercambiamos los cuadros interactivos por texto limpio */
+      /* Removida la posición absoluta para permitir que fluya a 2 o más páginas */
+      #zona-impresion { width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
+      
       .ocultar-en-pdf { display: none !important; }
       .solo-pdf { display: block !important; }
     }
@@ -167,7 +166,6 @@
               <div class="mb-1"><span id="visor-ceco" class="pill pill-ceco hidden">---</span></div>
               <h1 id="titulo-receta" class="font-serif text-2xl font-black text-zinc-900 uppercase tracking-widest leading-tight">SELECCIONA UNA RECETA</h1>
               
-              <!-- ESTE ID OCULTA EL RENDIMIENTO GLOBAL EN EL PDF -->
               <p id="rendimiento-global-box" class="text-[10px] font-bold mt-2 text-zinc-500 tracking-widest uppercase">
                 Rendimiento: <span id="display-pax" class="text-rose-900 text-xs">0</span> <span id="display-unidad" class="text-rose-900 text-xs">Kg</span>
               </p>
@@ -176,7 +174,6 @@
           </div>
 
           <div id="contenido-receta" class="hidden">
-            <!-- ESTE ID OCULTA EL CORREO DE AUDITORÍA EN EL PDF -->
             <div id="auditoria-box" class="bg-zinc-50 border border-zinc-200 text-[8px] uppercase tracking-widest font-semibold text-zinc-400 p-1.5 mb-4 text-right rounded-sm">
               Última modificación: <span id="visor-auditoria" class="text-zinc-600 font-bold">---</span>
             </div>
@@ -856,7 +853,6 @@
 
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
-      // ¡AQUÍ ESTÁ LA MAGIA! Disparamos el motor nativo del celular/computadora.
       window.print();
     };
 
