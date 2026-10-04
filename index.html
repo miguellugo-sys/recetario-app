@@ -148,7 +148,7 @@
             <input type="text" id="display-unidad-input" readonly class="w-full p-2.5 border border-zinc-200 bg-zinc-100 rounded-sm outline-none text-zinc-400 text-center text-sm uppercase font-bold">
           </div>
           <div>
-            <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] uppercase tracking-widest font-bold py-3.5 px-6 rounded-sm shadow transition flex items-center gap-2">🖨️️ Crear PDF</button>
+            <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] uppercase tracking-widest font-bold py-3.5 px-6 rounded-sm shadow transition flex items-center gap-2">🖨 Crear PDF</button>
           </div>
         </div>
 
@@ -214,7 +214,6 @@
             <h2 class="font-serif text-2xl font-black text-zinc-900">Base de Datos de Recetas</h2>
             <div class="flex w-full md:w-auto items-center gap-3">
               <input type="text" id="input-buscador" onkeyup="filtrarRecetas()" placeholder="🔍 Buscar receta..." class="w-full md:w-72 p-2.5 border border-zinc-300 rounded-sm outline-none text-sm focus:border-rose-900 bg-zinc-50">
-              <button id="btn-backup" onclick="descargarBackup()" class="hidden bg-zinc-800 hover:bg-black text-white px-4 py-2.5 rounded-sm text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition shadow-sm">💾 Backup</button>
             </div>
           </div>
           <div class="overflow-x-auto">
@@ -244,19 +243,6 @@
           <select id="selector-editor" onchange="cargarEnEditor()" class="p-2 border border-zinc-300 rounded-sm font-bold outline-none bg-white text-[10px] uppercase tracking-widest">
             <option value="">+ Crear Nueva Receta</option>
           </select>
-        </div>
-
-        <div class="bg-indigo-50 border border-indigo-100 p-4 rounded-sm mb-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
-          <div>
-            <h3 class="text-indigo-900 font-bold text-sm">✨ Asistente IA (Auto-Completado)</h3>
-            <p class="text-[10px] text-indigo-700 uppercase tracking-widest">Sube la foto de una receta física y la IA la transcribirá por ti.</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <input type="file" id="input-foto-ia" accept="image/*" class="hidden" onchange="procesarFotoIA(event)">
-            <button onclick="document.getElementById('input-foto-ia').click()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[10px] uppercase tracking-widest font-bold py-2.5 px-6 rounded-sm transition shadow-sm flex items-center gap-2">
-              📸 Escanear Receta
-            </button>
-          </div>
         </div>
 
         <div class="bg-white p-6 rounded-sm shadow-sm border border-zinc-200 mb-6 relative">
@@ -349,7 +335,6 @@
               <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
               <ul id="lista-usuarios-admin" class="space-y-2"></ul>
             </div>
-            <!-- SE ELIMINÓ EL CAMPO DE LA API KEY YA QUE AHORA VIVE EN EL BACKEND -->
           </div>
           <div class="space-y-8">
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
@@ -425,8 +410,10 @@
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         let perfil = { rol: 'No Autorizado', sucursal: 'Ninguna', estado: 'Pendiente' };
+        
         if (user.email.toLowerCase() === 'miguellugo@mlcocina.com') {
           perfil = { rol: 'SuperAdmin', sucursal: 'TODAS', estado: 'Activo' };
+          try { await setDoc(doc(db, 'usuarios', user.email.toLowerCase()), perfil, {merge: true}); } catch(e){}
         } else {
           try {
             const docRef = doc(db, 'usuarios', user.email.toLowerCase());
@@ -437,6 +424,7 @@
             } else { await signOut(auth); return; }
           } catch(e) { console.error(e); await signOut(auth); return; }
         }
+        
         window.usuarioActual = user; window.perfilUsuario = perfil;
         
         document.getElementById('vista-login').classList.add('hidden');
@@ -514,12 +502,11 @@
       try { 
         await createUserWithEmailAndPassword(auth, e, p); 
         
-        // LLAMADA AL BACKEND: Oculta de los curiosos
+        try { await setDoc(doc(db, 'usuarios', e), { email: e, nombre: nombreUsuario, puesto: puestoUsuario, rol: 'Lector', sucursal: sucursalUsuario, estado: 'Pendiente' }); } catch(docError) { console.log(docError); }
+        
         const notificarTelegramBackend = httpsCallable(functions, 'notificarTelegram');
         await notificarTelegramBackend({ nombre: nombreUsuario, puesto: puestoUsuario, sucursal: sucursalUsuario, email: e }).catch(e => console.log("Notificación ignorada", e));
 
-        try { await setDoc(doc(db, 'usuarios', e), { email: e, nombre: nombreUsuario, puesto: puestoUsuario, rol: 'Lector', sucursal: sucursalUsuario, estado: 'Pendiente' }); } catch(docError) { console.log(docError); }
-        
         await signOut(auth);
         err.innerText = "¡Solicitud enviada! Espera aprobación."; err.classList.replace('text-zinc-500', 'text-green-600');
         document.getElementById('login-email').value = ''; document.getElementById('login-password').value = ''; document.getElementById('reg-nombre').value = ''; document.getElementById('reg-puesto').value = ''; document.getElementById('reg-sucursal').value = '';
@@ -633,69 +620,6 @@
     window.adminActualizarUsuario = async (email, idSeguro) => { try { await setDoc(doc(db, 'usuarios', email), { email, rol: document.getElementById(`rol-auth-${idSeguro}`).value, sucursal: document.getElementById(`ceco-auth-${idSeguro}`).value, estado: 'Activo' }, { merge: true }); alert(`Permisos actualizados para ${email}`); await window.cargarUsuariosBD(); } catch(e) { alert("Error al actualizar"); } };
     window.adminRechazarUsuario = async (email) => { if(!confirm(`¿Rechazar solicitud de ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
     window.adminBorrarUsuario = async (email) => { if(!confirm(`¿Revocar acceso definitivo a ${email}?`)) return; await deleteDoc(doc(db, 'usuarios', email)); await window.cargarUsuariosBD(); };
-
-    window.procesarFotoIA = async (event) => {
-      const file = event.target.files[0];
-      if(!file) return;
-      const msgEstado = document.getElementById('mensaje-estado'); const loader = document.getElementById('loader-guardar');
-      msgEstado.innerText = "🤖 Analizando imagen..."; msgEstado.className = "text-indigo-600 font-bold text-sm"; loader.style.display = 'block';
-
-      const reader = new FileReader(); reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const base64String = reader.result.split(',')[1];
-        
-        // LLAMADA AL BACKEND: Protegida
-        const payload = { contents: [{ parts: [{ text: `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. {"nombre": "Nombre de la receta","rendimiento_base": 1,"unidad_base": "Elegir: Kg, Gr, L, Ml, Pax, Porción o Pz","partida": "Una de estas: Cuarto Caliente, Cuarto Frío, Pastelería, Panadería, Barra, Producción, Salsería o Eventos","tipo": "Tipo si lo dice","bloques": [{"nombre": "Nombre de la preparación o Base","rendimiento": 1,"unidad": "Elegir: Kg, Gr, L, Ml, Pax, Porción o Pz","procedimiento": "Instrucciones de preparación...","ingredientes": [{"nombre": "Ingrediente 1", "cantidad": 100, "unidad": "Elegir: Kg, Gr, L, Ml, Pz, Cda, Cdta, Pizca o Manojo"}]}]}` }, { inline_data: { mime_type: file.type, data: base64String } } ] }], generationConfig: { response_mime_type: "application/json" } };
-        
-        try {
-          const consultarGeminiBackend = httpsCallable(functions, 'consultarGemini');
-          const res = await consultarGeminiBackend({ payload });
-          
-          if (!res.data || !res.data.candidates) throw new Error("Fallo en Gemini");
-          
-          const recetaExtraida = JSON.parse(res.data.candidates[0].content.parts[0].text);
-          document.getElementById('edit-nombre').value = recetaExtraida.nombre || ''; document.getElementById('edit-pax-base').value = recetaExtraida.rendimiento_base || 1; 
-          document.getElementById('edit-unidad-base').value = window.sanitizarUnidad(recetaExtraida.unidad_base); 
-          document.getElementById('edit-partida').value = recetaExtraida.partida || ''; document.getElementById('edit-tipo').value = recetaExtraida.tipo || '';
-          document.getElementById('contenedor-bloques-editor').innerHTML = '';
-          if(recetaExtraida.bloques && recetaExtraida.bloques.length > 0) { recetaExtraida.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); } else { window.agregarBloqueSubreceta(); }
-          msgEstado.innerText = "✨ ¡Receta transcrita con éxito!"; msgEstado.className = "text-green-600 font-bold text-sm"; setTimeout(() => msgEstado.innerText = "", 6000);
-        } catch(e) { console.log(e); msgEstado.innerText = `❌ Falló la IA`; msgEstado.className = "text-rose-900 font-bold text-[10px]"; } finally { loader.style.display = 'none'; document.getElementById('input-foto-ia').value = ''; }
-      };
-    };
-
-    window.mejorarRedaccionIA = async (bloqueId) => {
-      const bloque = document.getElementById(bloqueId);
-      const textarea = bloque.querySelector('.b-proc');
-      const textoOriginal = textarea.value.trim();
-      const btn = bloque.querySelector('.btn-ia-redaccion');
-      
-      if (!textoOriginal) return alert("Escribe un borrador primero.");
-
-      const textoBotonOriginal = btn.innerHTML;
-      btn.innerHTML = "⏳ Procesando...";
-      btn.disabled = true;
-
-      // LLAMADA AL BACKEND: Protegida
-      const prompt = `Eres un Chef Ejecutivo de un restaurante Estrella Michelin. Mejora la redacción, gramática y ortografía del siguiente procedimiento usando lenguaje técnico culinario profesional. TIENES ESTRICTAMENTE PROHIBIDO alterar, omitir o inventar temperaturas, tiempos, cantidades o herramientas. Mantenlo conciso y directo.\n\nProcedimiento original:\n"${textoOriginal}"`;
-      const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2 } };
-
-      try {
-        const consultarGeminiBackend = httpsCallable(functions, 'consultarGemini');
-        const res = await consultarGeminiBackend({ payload });
-        
-        if (!res.data || !res.data.candidates) throw new Error("Fallo en Gemini");
-
-        const textoMejorado = res.data.candidates[0].content.parts[0].text.trim();
-        textarea.value = textoMejorado;
-        btn.innerHTML = "✅ Listo";
-        setTimeout(() => { btn.innerHTML = textoBotonOriginal; btn.disabled = false; }, 3000);
-      } catch(e) { 
-        alert("Fallo la conexión con la IA."); 
-        btn.innerHTML = textoBotonOriginal; 
-        btn.disabled = false; 
-      }
-    };
 
     window.obtenerRecetasDeFirebase = async () => {
       if(!window.perfilUsuario) return;
@@ -952,7 +876,7 @@
       const unidadLimpia = uni ? window.sanitizarUnidad(uni) : 'Kg';
       const opcionesUni = ['Kg', 'Gr', 'L', 'Ml', 'Pax', 'Porción', 'Pz'].map(u => `<option value="${u}" ${u === unidadLimpia ? 'selected' : ''}>${u}</option>`).join('');
 
-      div.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16"><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad</label><select class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold uppercase bg-white cursor-pointer">${opcionesUni}</select></div></div><div class="flex flex-col md:flex-row gap-6"><div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label><button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button></div><div class="c-ingredientes space-y-2"></div></div><div class="md:w-1/2 flex flex-col"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Procedimiento Técnico</label><button onclick="mejorarRedaccionIA('${bId}')" class="btn-ia-redaccion text-[9px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm transition flex items-center gap-1">✨ Mejorar Texto</button></div><textarea class="b-proc w-full flex-1 border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition min-h-[7rem] leading-relaxed">${proc}</textarea></div></div>`;
+      div.innerHTML = `<button onclick="this.parentElement.remove()" class="absolute top-3 right-3 text-zinc-400 hover:text-rose-900 text-xs font-bold tracking-widest uppercase transition">✕ Quitar</button><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 pr-16"><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Nombre Sub-receta</label><input type="text" value="${nombre}" class="b-nombre w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold text-zinc-800"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Rendimiento Base</label><input type="number" step="any" value="${rend}" class="b-rend w-full border-b border-zinc-300 p-1.5 outline-none text-sm tabular-nums"></div><div><label class="text-[9px] uppercase tracking-widest font-bold text-zinc-400 block mb-1">Unidad</label><select class="b-uni w-full border-b border-zinc-300 p-1.5 outline-none text-sm font-semibold uppercase bg-white cursor-pointer">${opcionesUni}</select></div></div><div class="flex flex-col md:flex-row gap-6"><div class="md:w-1/2 md:border-r border-zinc-200 md:pr-6"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Ingredientes</label><button onclick="agregarIngrediente('${bId}')" class="text-[9px] bg-zinc-100 hover:bg-zinc-200 border border-zinc-200 px-2 py-1 uppercase tracking-widest font-bold rounded-sm text-zinc-600 transition">+ Fila</button></div><div class="c-ingredientes space-y-2"></div></div><div class="md:w-1/2 flex flex-col"><div class="flex justify-between items-center mb-3"><label class="text-[10px] font-bold text-zinc-500 tracking-wider uppercase">Procedimiento Técnico</label></div><textarea class="b-proc w-full flex-1 border border-zinc-200 rounded-sm p-3 text-xs outline-none bg-zinc-50 focus:bg-white transition min-h-[7rem] leading-relaxed">${proc}</textarea></div></div>`;
       document.getElementById('contenedor-bloques-editor').appendChild(div);
       if(ingredientes.length === 0) { window.agregarIngrediente(bId); } else { ingredientes.forEach(ing => window.agregarIngrediente(bId, ing.nombre, ing.cantidad, ing.unidad)); }
     };
