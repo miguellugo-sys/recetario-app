@@ -25,9 +25,8 @@
     .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
     tr { page-break-inside: avoid; break-inside: avoid; }
 
-    /* MOTOR NATIVO DE PDF - CORREGIDO PARA MULTIPLES PÁGINAS Y SIN ENCABEZADOS */
     @media print {
-      @page { margin: 1cm; size: letter portrait; } /* Esto elimina el texto del navegador (Link, Fecha) */
+      @page { margin: 1cm; size: letter portrait; }
       body, html { background-color: white !important; margin: 0 !important; padding: 0 !important; width: 100% !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body > *:not(.max-w-5xl) { display: none !important; }
       
@@ -38,7 +37,6 @@
       
       #vista-visor { padding: 0 !important; }
       
-      /* Removida la posición absoluta para permitir que fluya a 2 o más páginas */
       #zona-impresion { width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
       
       .ocultar-en-pdf { display: none !important; }
@@ -769,13 +767,17 @@
       if (window.recetaActual) {
         document.getElementById('contenido-receta').classList.remove('hidden');
         document.getElementById('titulo-receta').innerText = window.recetaActual.nombre;
+        document.title = window.recetaActual.nombre; // <-- AQUI ESTA LA MAGIA
         const pillCeco = document.getElementById('visor-ceco'); pillCeco.classList.remove('hidden'); pillCeco.innerText = window.recetaActual.sucursal || 'Le Chique';
         document.getElementById('input-pax').value = window.recetaActual.rendimiento_base; document.getElementById('display-pax').innerText = window.recetaActual.rendimiento_base.toLocaleString('en-US'); document.getElementById('display-unidad-input').value = window.sanitizarUnidad(window.recetaActual.unidad_base); document.getElementById('display-unidad').innerText = window.sanitizarUnidad(window.recetaActual.unidad_base);
         document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---"; document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
         document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-"; document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
         document.getElementById('visor-auditoria').innerText = (window.recetaActual.auditoria && window.recetaActual.auditoria.modificado_por) ? `${window.recetaActual.auditoria.modificado_por} (${window.recetaActual.auditoria.fecha})` : "Sistema Antiguo";
         window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
-      } else { document.getElementById('contenido-receta').classList.add('hidden'); document.getElementById('visor-ceco').classList.add('hidden'); }
+      } else { 
+        document.getElementById('contenido-receta').classList.add('hidden'); document.getElementById('visor-ceco').classList.add('hidden'); 
+        document.title = "Recetario Corporate - Le Chique"; // Regresamos el título al original si deselecciona
+      }
     };
 
     window.recalcularPax = () => { 
