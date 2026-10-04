@@ -2,8 +2,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebas
 import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-functions.js";
-// 👇 AGREGAMOS ESTA LÍNEA DE NUBE DE FOTOS:
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-storage.js";
+
 const firebaseConfig = {
   apiKey: "AIzaSyBJs05is5zZ25rteHveq0ubaXtX1Xw1K_8",
   authDomain: "recetario-le-chique.firebaseapp.com",
@@ -17,7 +17,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const functions = getFunctions(app);
-// 👇 ACTIVAMOS EL ALMACENAMIENTO DE FOTOS:
 const storage = getStorage(app);
 
 window.recetasDB = []; 
@@ -47,15 +46,9 @@ window.sanitizarUnidad = (u) => {
 };
 
 window.subirFotoReceta = async (archivoFoto, idReceta) => {
-  if (!archivoFoto) return null; // Si no seleccionaron foto, no hace nada
-  
-  // Crea la ruta de la foto dentro de Firebase Storage
+  if (!archivoFoto) return null;
   const referenciaFoto = ref(storage, `recetas/${idReceta}_${archivoFoto.name}`);
-  
-  // Subimos el archivo a la nube
   const snapshot = await uploadBytes(referenciaFoto, archivoFoto);
-  
-  // Obtenemos la URL pública de la foto guardada
   const urlFoto = await getDownloadURL(snapshot.ref);
   return urlFoto;
 };
@@ -379,23 +372,31 @@ window.guardarReceta = async () => {
   const nombre = document.getElementById('edit-nombre').value.trim();
   const rendimiento_base = parseFloat(document.getElementById('edit-pax-base').value);
   if (!nombre || !rendimiento_base || isNaN(rendimiento_base)) return window.mostrarMensaje("Falta Nombre o Rendimiento.", "text-rose-900");
-  // Dentro de window.guardarReceta:
-const inputFoto = document.getElementById('edit-foto-input'); // El input del HTML
-const archivoSeleccionado = inputFoto ? inputFoto.files[0] : null;
 
-let urlImagen = null;
-if (archivoSeleccionado) {
-  // Subimos la foto a Firebase y guardamos la URL
-  urlImagen = await window.subirFotoReceta(archivoSeleccionado, id);
-}
+  let id = document.getElementById('selector-editor').value;
+  if (!id || (window.perfilUsuario && window.perfilUsuario.rol === 'Editor')) {
+    id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
+  }
 
-// Y dentro del objeto de la receta agregamos la imagen:
-const datos = {
-  id,
-  nombre,
-  fotoUrl: urlImagen || recetaActualFoto, // Guarda la foto nueva o conserva la anterior
-  // ... resto de los datos (bloques, ingredientes, etc.)
-};
+  // Buscar foto previa si estamos editando
+  const recetaExistente = window.recetasDB.find(r => r.id === id);
+  const fotoPrevia = recetaExistente ? recetaExistente.fotoUrl : null;
+
+  // Procesar nueva foto elegida en el HTML
+  const inputFoto = document.getElementById('edit-foto-input');
+  const archivoSeleccionado = inputFoto ? inputFoto.files[0] : null;
+
+  document.getElementById('loader-guardar').style.display = 'block';
+
+  let urlImagen = fotoPrevia;
+  if (archivoSeleccionado) {
+    try {
+      urlImagen = await window.subirFotoReceta(archivoSeleccionado, id);
+    } catch(e) {
+      console.error("Error subiendo foto:", e);
+    }
+  }
+
   const bloques = [];
   document.querySelectorAll('.bloque-receta').forEach(b => {
     const ingredientes = [];
@@ -406,15 +407,38 @@ const datos = {
     });
     bloques.push({ nombre: b.querySelector('.b-nombre').value.trim() || "Preparación Base", rendimiento: parseFloat(b.querySelector('.b-rend').value) || rendimiento_base, unidad: b.querySelector('.b-uni').value.trim() || document.getElementById('edit-unidad-base').value.trim(), ingredientes, procedimiento: b.querySelector('.b-proc').value.trim() });
   });
+
+  const f = new Date(); 
+  const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2, '0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2, '0')}:${f.getMinutes().toString().padStart(2, '0')}`;
   
-  let id = document.getElementById('selector-editor').value;
-  if (!id || (window.perfilUsuario && window.perfilUsuario.rol === 'Editor')) id = nombre.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') + '-' + Date.now().toString().slice(-4);
-  
-  const f = new Date(); const fechaStr = `${f.getDate().toString().padStart(2, '0')}/${(f.getMonth()+1).toString().padStart(2, '0')}/${f.getFullYear()} ${f.getHours().toString().padStart(2, '0')}:${f.getMinutes().toString().padStart(2, '0')}`;
-  const datos = { id, nombre, rendimiento_base, unidad_base: document.getElementById('edit-unidad-base').value.trim(), sucursal: document.getElementById('edit-sucursal').value, partida: document.getElementById('edit-partida').value.trim(), tipo: document.getElementById('edit-tipo').value.trim(), alergenos: Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value), temporada: Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value), bloques, auditoria: { modificado_por: (window.usuarioActual && window.usuarioActual.email) ? window.usuarioActual.email : "Admin", fecha: fechaStr }};
-  
-  document.getElementById('loader-guardar').style.display = 'block';
-  try { await setDoc(doc(db, "recetas", id), datos); window.mostrarMensaje("✅ Receta guardada", "text-green-600"); document.getElementById('loader-guardar').style.display = 'none'; await window.obtenerRecetasDeFirebase(); window.limpiarEditor(); } catch (error) { window.mostrarMensaje("❌ Error al guardar.", "text-rose-900"); document.getElementById('loader-guardar').style.display = 'none'; }
+  const datos = { 
+    id, 
+    nombre, 
+    fotoUrl: urlImagen || null,
+    rendimiento_base, 
+    unidad_base: document.getElementById('edit-unidad-base').value.trim(), 
+    sucursal: document.getElementById('edit-sucursal').value, 
+    partida: document.getElementById('edit-partida').value.trim(), 
+    tipo: document.getElementById('edit-tipo').value.trim(), 
+    alergenos: Array.from(document.querySelectorAll('.chk-alergeno:checked')).map(cb => cb.value), 
+    temporada: Array.from(document.querySelectorAll('.chk-mes:checked')).map(cb => cb.value), 
+    bloques, 
+    auditoria: { 
+      modificado_por: (window.usuarioActual && window.usuarioActual.email) ? window.usuarioActual.email : "Admin", 
+      fecha: fechaStr 
+    }
+  };
+
+  try { 
+    await setDoc(doc(db, "recetas", id), datos); 
+    window.mostrarMensaje("✅ Receta guardada", "text-green-600"); 
+    document.getElementById('loader-guardar').style.display = 'none'; 
+    await window.obtenerRecetasDeFirebase(); 
+    window.limpiarEditor(); 
+  } catch (error) { 
+    window.mostrarMensaje("❌ Error al guardar.", "text-rose-900"); 
+    document.getElementById('loader-guardar').style.display = 'none'; 
+  }
 };
 
 window.rendimientosDeseados = {};
@@ -431,6 +455,19 @@ window.cargarRecetaSeleccionada = () => {
     document.getElementById('visor-partida').innerText = window.recetaActual.partida || "---"; document.getElementById('visor-tipo').innerText = window.recetaActual.tipo || "---";
     document.getElementById('visor-alergenos').innerHTML = (window.recetaActual.alergenos || []).map(a => `<span class="pill pill-alergeno">${a}</span>`).join('') || "-"; document.getElementById('visor-temporada').innerHTML = (window.recetaActual.temporada || []).map(t => `<span class="pill">${t}</span>`).join('') || "TODO EL AÑO";
     document.getElementById('visor-auditoria').innerText = (window.recetaActual.auditoria && window.recetaActual.auditoria.modificado_por) ? `${window.recetaActual.auditoria.modificado_por} (${window.recetaActual.auditoria.fecha})` : "Sistema Antiguo";
+    
+    // Mostrar foto en el visor si existe
+    const imgContenedor = document.getElementById('visor-foto-contenedor');
+    if (imgContenedor) {
+      if (window.recetaActual.fotoUrl) {
+        imgContenedor.innerHTML = `<img src="${window.recetaActual.fotoUrl}" class="w-full max-h-80 object-cover rounded-sm mb-4 border border-zinc-200" alt="${window.recetaActual.nombre}" />`;
+        imgContenedor.classList.remove('hidden');
+      } else {
+        imgContenedor.innerHTML = '';
+        imgContenedor.classList.add('hidden');
+      }
+    }
+
     window.renderizarBloquesVisor(window.recetaActual.rendimiento_base);
   } else { 
     document.getElementById('contenido-receta').classList.add('hidden'); document.getElementById('visor-ceco').classList.add('hidden'); 
@@ -558,6 +595,8 @@ window.limpiarFormularioBase = () => {
   document.getElementById('edit-partida').value = ''; 
   document.getElementById('edit-tipo').value = ''; 
   document.getElementById('edit-sucursal').value = (window.perfilUsuario && window.perfilUsuario.sucursal === 'TODAS') ? 'Global' : ((window.perfilUsuario && window.perfilUsuario.sucursal) || 'Le Chique'); 
+  const inputFoto = document.getElementById('edit-foto-input');
+  if (inputFoto) inputFoto.value = '';
   document.querySelectorAll('.chk-alergeno, .chk-mes').forEach(cb => cb.checked = false); 
   document.getElementById('contenedor-bloques-editor').innerHTML = ''; 
 };
