@@ -46,6 +46,20 @@ window.sanitizarUnidad = (u) => {
   return 'Gr'; 
 };
 
+window.subirFotoReceta = async (archivoFoto, idReceta) => {
+  if (!archivoFoto) return null; // Si no seleccionaron foto, no hace nada
+  
+  // Crea la ruta de la foto dentro de Firebase Storage
+  const referenciaFoto = ref(storage, `recetas/${idReceta}_${archivoFoto.name}`);
+  
+  // Subimos el archivo a la nube
+  const snapshot = await uploadBytes(referenciaFoto, archivoFoto);
+  
+  // Obtenemos la URL pública de la foto guardada
+  const urlFoto = await getDownloadURL(snapshot.ref);
+  return urlFoto;
+};
+
 window.onload = async () => { generarCheckboxes('contenedor-temporada', MESES_LISTA, 'mes'); };
 
 onAuthStateChanged(auth, async (user) => {
