@@ -146,7 +146,9 @@
             <div class="text-center flex-1 px-4">
               <div class="mb-1"><span id="visor-ceco" class="pill pill-ceco hidden">---</span></div>
               <h1 id="titulo-receta" class="font-serif text-2xl font-black text-zinc-900 uppercase tracking-widest leading-tight">SELECCIONA UNA RECETA</h1>
-              <p class="text-[10px] font-bold mt-2 text-zinc-500 tracking-widest uppercase">
+              
+              <!-- ETIQUETA data-html2canvas-ignore PARA OCULTAR EL RENDIMIENTO GLOBAL -->
+              <p data-html2canvas-ignore="true" class="text-[10px] font-bold mt-2 text-zinc-500 tracking-widest uppercase">
                 Rendimiento: <span id="display-pax" class="text-rose-900 text-xs">0</span> <span id="display-unidad" class="text-rose-900 text-xs">Kg</span>
               </p>
             </div>
@@ -154,7 +156,8 @@
           </div>
 
           <div id="contenido-receta" class="hidden">
-            <div class="bg-zinc-50 border border-zinc-200 text-[8px] uppercase tracking-widest font-semibold text-zinc-400 p-1.5 mb-4 text-right rounded-sm">
+            <!-- ETIQUETA data-html2canvas-ignore PARA OCULTAR EL CORREO DE AUDITORÍA -->
+            <div data-html2canvas-ignore="true" class="bg-zinc-50 border border-zinc-200 text-[8px] uppercase tracking-widest font-semibold text-zinc-400 p-1.5 mb-4 text-right rounded-sm">
               Última modificación: <span id="visor-auditoria" class="text-zinc-600 font-bold">---</span>
             </div>
 
@@ -776,7 +779,7 @@
       window.renderizarBloquesVisor(paxGlobal); 
     };
 
- window.renderizarBloquesVisor = (paxDeseado) => {
+    window.renderizarBloquesVisor = (paxDeseado) => {
       const contenedor = document.getElementById('contenedor-bloques-visor'); 
       contenedor.innerHTML = '';
       
@@ -785,6 +788,7 @@
 
       (window.recetaActual.bloques || []).forEach((bloque, index) => {
         const rendBloqueOriginal = parseFloat(bloque.rendimiento) || 1;
+        
         let rendCalculado = rendBloqueOriginal * factorGlobal;
 
         if (window.rendimientosDeseados[index] !== undefined) {
@@ -813,14 +817,12 @@
             <div class="flex flex-wrap justify-between items-center bg-zinc-50 border-b border-zinc-200 px-4 py-3 gap-2">
                 <h3 class="text-zinc-900 text-xs font-black uppercase tracking-widest flex-1">${bloque.nombre}</h3>
                 
-                <!-- ESTO SE OCULTA EN EL PDF (data-html2canvas-ignore) -->
-                <div data-html2canvas-ignore="true" class="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-sm border border-zinc-300 shadow-sm ocultar-en-pdf">
+                <div data-html2canvas-ignore="true" class="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-sm border border-zinc-300 shadow-sm">
                     <label class="text-[9px] uppercase tracking-widest text-rose-900 font-bold">Preparar:</label>
                     <input type="number" value="${rendInputVal}" step="any" onchange="modificarRendimientoBloque(${index}, this.value)" class="w-16 p-1 text-sm text-center border-b-2 border-zinc-200 font-black tabular-nums text-zinc-800 outline-none focus:border-rose-900 transition bg-transparent">
                     <span class="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">${window.sanitizarUnidad(bloque.unidad)}</span>
                 </div>
 
-                <!-- ESTE TEXTO LIMPIO REEMPLAZA EL CUADRO EN EL PDF -->
                 <div class="solo-pdf text-[10px] font-black text-rose-900 uppercase tracking-widest hidden">
                     Rendimiento: ${rendInputVal} ${window.sanitizarUnidad(bloque.unidad)}
                 </div>
@@ -832,11 +834,6 @@
             </div>
         </div>`;
       });
-    };
-
-    window.renderListaRecetas = () => {
-        // Wrapper para renderizarListaRecetas (solo si la necesitas llamar en consola)
-        window.renderizarListaRecetas();
     };
 
     window.renderizarListaRecetas = (textoFiltro = '') => {
@@ -899,7 +896,7 @@
       return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
     };
 
-window.descargarPDF = () => {
+    window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
       const el = document.getElementById('zona-impresion'); 
       const w = el.style.width; 
@@ -914,28 +911,11 @@ window.descargarPDF = () => {
           useCORS: true, 
           windowWidth: 750,
           onclone: (documentoClonado) => {
-            // 1. Mostrar texto limpio de sub-recetas
             const textosPdf = documentoClonado.querySelectorAll('.solo-pdf');
             textosPdf.forEach(t => {
                 t.style.display = 'block';
                 t.classList.remove('hidden');
             });
-            
-            // 2. Ocultar los botones de "PREPARAR:" a la fuerza
-            const cajasInteractivos = documentoClonado.querySelectorAll('.ocultar-en-pdf');
-            cajasInteractivos.forEach(c => c.style.display = 'none');
-
-            // 3. Ocultar la línea del rendimiento principal de la receta (debajo del titulo)
-            const rendGlobal = documentoClonado.querySelector('#display-pax');
-            if (rendGlobal && rendGlobal.parentElement) {
-                rendGlobal.parentElement.style.display = 'none';
-            }
-            
-            // 4. Asegurar que el email de modificación tampoco salga
-            const modEmail = documentoClonado.querySelector('.bg-zinc-50.border.text-right.rounded-sm');
-            if(modEmail){
-                 modEmail.style.display = 'none';
-            }
           }
         }, 
         jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }, 
@@ -944,6 +924,7 @@ window.descargarPDF = () => {
         el.style.width = w; 
       });
     };
+
     window.abrirModalImportarBase = () => { document.getElementById('modal-importar').classList.remove('hidden'); };
     window.cerrarModalImportar = () => { document.getElementById('modal-importar').classList.add('hidden'); document.getElementById('selector-importar-base').value = ''; };
     
