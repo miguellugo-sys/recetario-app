@@ -17,6 +17,8 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const functions = getFunctions(app);
+// 👇 ACTIVAMOS EL ALMACENAMIENTO DE FOTOS:
+const storage = getStorage(app);
 
 window.recetasDB = []; 
 window.recetaActual = null;
