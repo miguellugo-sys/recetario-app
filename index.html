@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Recetario Corporate - Le Chique</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,6 +24,27 @@
     .pill-ceco { background-color: #18181b; color: #ffffff; border-color: #18181b; padding: 3px 12px; font-size: 0.70rem; }
     .break-inside-avoid { page-break-inside: avoid; break-inside: avoid; }
     tr { page-break-inside: avoid; break-inside: avoid; }
+
+    /* MOTOR NATIVO DE PDF (Limpia todo para la impresión) */
+    @media print {
+      body, html { background-color: white !important; margin: 0 !important; padding: 0 !important; width: 100% !important; }
+      body > *:not(.max-w-5xl) { display: none !important; }
+      .max-w-5xl { max-width: 100% !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
+      
+      /* Ocultamos las barras, menús y botones */
+      #topbar, #tabs-navegacion, #controles-impresion { display: none !important; }
+      
+      /* Ocultamos correo y rendimiento de auditoría */
+      #rendimiento-global-box, #auditoria-box { display: none !important; }
+      
+      /* Ajustamos la zona del PDF para que sea perfecta */
+      #vista-visor { padding: 0 !important; }
+      #zona-impresion { width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; position: absolute; top: 0; left: 0; }
+      
+      /* Intercambiamos los cuadros interactivos por texto limpio */
+      .ocultar-en-pdf { display: none !important; }
+      .solo-pdf { display: block !important; }
+    }
   </style>
 </head>
 <body class="p-2 md:p-6 text-zinc-800">
@@ -81,7 +101,7 @@
     <div id="app-principal" class="hidden">
       
       <!-- TOPBAR -->
-      <div class="bg-zinc-900 text-white px-6 py-2 flex justify-between items-center text-[10px] tracking-widest uppercase font-semibold">
+      <div id="topbar" class="bg-zinc-900 text-white px-6 py-2 flex justify-between items-center text-[10px] tracking-widest uppercase font-semibold">
         <div class="flex items-center gap-4">
           <span id="user-email-display" class="text-rose-300"></span>
           <span class="border-l border-zinc-700 pl-4 text-zinc-400">CECO: <span id="user-ceco-display" class="text-white font-bold"></span></span>
@@ -91,7 +111,7 @@
       </div>
 
       <!-- TABS -->
-      <div class="flex border-b border-zinc-200 text-sm">
+      <div id="tabs-navegacion" class="flex border-b border-zinc-200 text-sm">
         <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs">📖 Visor y PDF</button>
         <button id="tab-lista" onclick="cambiarPestaña('lista')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs">📋 Mis Recetas</button>
         <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden">✏️ Editor</button>
@@ -136,7 +156,7 @@
             <input type="text" id="display-unidad-input" readonly class="w-full p-2.5 border border-zinc-200 bg-zinc-100 rounded-sm outline-none text-zinc-400 text-center text-sm uppercase font-bold">
           </div>
           <div>
-            <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] uppercase tracking-widest font-bold py-3.5 px-6 rounded-sm shadow transition flex items-center gap-2">📄 Generar PDF</button>
+            <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] uppercase tracking-widest font-bold py-3.5 px-6 rounded-sm shadow transition flex items-center gap-2">🖨️ Crear PDF</button>
           </div>
         </div>
 
@@ -147,8 +167,8 @@
               <div class="mb-1"><span id="visor-ceco" class="pill pill-ceco hidden">---</span></div>
               <h1 id="titulo-receta" class="font-serif text-2xl font-black text-zinc-900 uppercase tracking-widest leading-tight">SELECCIONA UNA RECETA</h1>
               
-              <!-- ETIQUETA data-html2canvas-ignore PARA OCULTAR EL RENDIMIENTO GLOBAL -->
-              <p data-html2canvas-ignore="true" class="text-[10px] font-bold mt-2 text-zinc-500 tracking-widest uppercase">
+              <!-- ESTE ID OCULTA EL RENDIMIENTO GLOBAL EN EL PDF -->
+              <p id="rendimiento-global-box" class="text-[10px] font-bold mt-2 text-zinc-500 tracking-widest uppercase">
                 Rendimiento: <span id="display-pax" class="text-rose-900 text-xs">0</span> <span id="display-unidad" class="text-rose-900 text-xs">Kg</span>
               </p>
             </div>
@@ -156,8 +176,8 @@
           </div>
 
           <div id="contenido-receta" class="hidden">
-            <!-- ETIQUETA data-html2canvas-ignore PARA OCULTAR EL CORREO DE AUDITORÍA -->
-            <div data-html2canvas-ignore="true" class="bg-zinc-50 border border-zinc-200 text-[8px] uppercase tracking-widest font-semibold text-zinc-400 p-1.5 mb-4 text-right rounded-sm">
+            <!-- ESTE ID OCULTA EL CORREO DE AUDITORÍA EN EL PDF -->
+            <div id="auditoria-box" class="bg-zinc-50 border border-zinc-200 text-[8px] uppercase tracking-widest font-semibold text-zinc-400 p-1.5 mb-4 text-right rounded-sm">
               Última modificación: <span id="visor-auditoria" class="text-zinc-600 font-bold">---</span>
             </div>
 
@@ -183,7 +203,7 @@
             <div id="contenedor-bloques-visor" class="space-y-6"></div>
           </div>
           
-          <div class="mt-8 pt-4 border-t border-zinc-200 flex justify-between items-center text-[8px] text-zinc-400 uppercase tracking-widest font-semibold">
+          <div class="mt-8 pt-4 border-t border-zinc-200 flex justify-between items-center text-[8px] text-zinc-400 uppercase tracking-widest font-semibold break-inside-avoid">
             <p>Documento técnico confidencial</p>
             <div class="flex items-center gap-3">
               <span class="bg-zinc-100 text-zinc-500 px-1.5 py-0.5 rounded-sm border border-zinc-200 font-bold shadow-sm">v1.0</span>
@@ -265,7 +285,6 @@
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Rend. Total</label>
               <input type="number" id="edit-pax-base" value="1" step="any" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none tabular-nums">
             </div>
-
             <div>
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Unidad Rend.</label>
               <select id="edit-unidad-base" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm bg-white font-semibold focus:ring-1 focus:ring-rose-900 cursor-pointer">
@@ -278,7 +297,6 @@
                 <option value="Pz">Pz</option>
               </select>
             </div>
-
             <div class="md:col-span-2">
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Partida</label>
               <select id="edit-partida" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm bg-white focus:ring-1 focus:ring-rose-900 cursor-pointer">
@@ -817,7 +835,7 @@
             <div class="flex flex-wrap justify-between items-center bg-zinc-50 border-b border-zinc-200 px-4 py-3 gap-2">
                 <h3 class="text-zinc-900 text-xs font-black uppercase tracking-widest flex-1">${bloque.nombre}</h3>
                 
-                <div data-html2canvas-ignore="true" class="flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-sm border border-zinc-300 shadow-sm">
+                <div class="ocultar-en-pdf flex items-center gap-2 bg-white px-2.5 py-1.5 rounded-sm border border-zinc-300 shadow-sm">
                     <label class="text-[9px] uppercase tracking-widest text-rose-900 font-bold">Preparar:</label>
                     <input type="number" value="${rendInputVal}" step="any" onchange="modificarRendimientoBloque(${index}, this.value)" class="w-16 p-1 text-sm text-center border-b-2 border-zinc-200 font-black tabular-nums text-zinc-800 outline-none focus:border-rose-900 transition bg-transparent">
                     <span class="text-[9px] uppercase tracking-widest text-zinc-500 font-bold">${window.sanitizarUnidad(bloque.unidad)}</span>
@@ -834,6 +852,12 @@
             </div>
         </div>`;
       });
+    };
+
+    window.descargarPDF = () => {
+      if (!window.recetaActual) return alert("Selecciona una receta.");
+      // ¡AQUÍ ESTÁ LA MAGIA! Disparamos el motor nativo del celular/computadora.
+      window.print();
     };
 
     window.renderizarListaRecetas = (textoFiltro = '') => {
@@ -894,52 +918,6 @@
       let cant = parseFloat(cantidad); let uni = (unidad || '').trim().toLowerCase();
       if ((uni === 'gr' || uni === 'g') && cant >= 1000) { cant = cant / 1000; uni = 'kg'; } else if (uni === 'ml' && cant >= 1000) { cant = cant / 1000; uni = 'l'; }
       return { cantidad: cant.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 3 }), unidad: uni.toUpperCase() };
-    };
-
-   window.descargarPDF = () => {
-      if (!window.recetaActual) return alert("Selecciona una receta.");
-      const el = document.getElementById('zona-impresion'); 
-      
-      html2pdf().set({ 
-        margin: [0.4, 0.4, 0.4, 0.4], 
-        filename: `${window.recetaActual.nombre.replace(/\s+/g, '_')}.pdf`, 
-        image: { type: 'jpeg', quality: 0.98 }, 
-        html2canvas: { 
-          scale: 2, 
-          useCORS: true, 
-          windowWidth: 800, // Forzamos visión de computadora de escritorio
-          onclone: (documentoClonado) => {
-            const clon = documentoClonado.getElementById('zona-impresion');
-            
-            // LA MAGIA ANTI-CORTE: 
-            // Limpiamos el cuerpo virtual y pegamos solo la receta, sin los márgenes de la app
-            documentoClonado.body.innerHTML = '';
-            documentoClonado.body.appendChild(clon);
-            documentoClonado.body.style.margin = '0';
-            documentoClonado.body.style.padding = '0';
-            
-            // Forzamos la receta a tamaño carta
-            clon.style.width = '800px';
-            clon.style.margin = '0';
-            clon.classList.remove('shadow-sm', 'border', 'border-zinc-200');
-
-            // Mostrar texto limpio de sub-recetas
-            const textosPdf = clon.querySelectorAll('.solo-pdf');
-            textosPdf.forEach(t => {
-                t.style.display = 'block';
-                t.classList.remove('hidden');
-            });
-            
-            // Ocultar rendimiento global
-            const rendGlobal = clon.querySelector('#display-pax');
-            if (rendGlobal && rendGlobal.parentElement) {
-                rendGlobal.parentElement.style.display = 'none';
-            }
-          }
-        }, 
-        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }, 
-        pagebreak: { mode: 'css', avoid: ['.break-inside-avoid', 'tr'] }
-      }).from(el).save();
     };
 
     window.abrirModalImportarBase = () => { document.getElementById('modal-importar').classList.remove('hidden'); };
