@@ -379,7 +379,23 @@ window.guardarReceta = async () => {
   const nombre = document.getElementById('edit-nombre').value.trim();
   const rendimiento_base = parseFloat(document.getElementById('edit-pax-base').value);
   if (!nombre || !rendimiento_base || isNaN(rendimiento_base)) return window.mostrarMensaje("Falta Nombre o Rendimiento.", "text-rose-900");
-  
+  // Dentro de window.guardarReceta:
+const inputFoto = document.getElementById('edit-foto-input'); // El input del HTML
+const archivoSeleccionado = inputFoto ? inputFoto.files[0] : null;
+
+let urlImagen = null;
+if (archivoSeleccionado) {
+  // Subimos la foto a Firebase y guardamos la URL
+  urlImagen = await window.subirFotoReceta(archivoSeleccionado, id);
+}
+
+// Y dentro del objeto de la receta agregamos la imagen:
+const datos = {
+  id,
+  nombre,
+  fotoUrl: urlImagen || recetaActualFoto, // Guarda la foto nueva o conserva la anterior
+  // ... resto de los datos (bloques, ingredientes, etc.)
+};
   const bloques = [];
   document.querySelectorAll('.bloque-receta').forEach(b => {
     const ingredientes = [];
