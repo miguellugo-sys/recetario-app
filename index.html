@@ -26,19 +26,14 @@
     tr { page-break-inside: avoid; break-inside: avoid; }
 
     @media print {
-      @page { margin: 1cm; size: letter portrait; }
-      body, html { background-color: white !important; margin: 0 !important; padding: 0 !important; width: 100% !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      @page { margin: 0; size: letter portrait; }
+      body { margin: 1cm !important; background-color: white !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body > *:not(.max-w-5xl) { display: none !important; }
-      
       .max-w-5xl { max-width: 100% !important; border: none !important; box-shadow: none !important; margin: 0 !important; }
-      
       #topbar, #tabs-navegacion, #controles-impresion, #vista-login { display: none !important; }
       #rendimiento-global-box, #auditoria-box { display: none !important; }
-      
       #vista-visor { padding: 0 !important; }
-      
       #zona-impresion { width: 100% !important; border: none !important; box-shadow: none !important; padding: 0 !important; margin: 0 !important; }
-      
       .ocultar-en-pdf { display: none !important; }
       .solo-pdf { display: block !important; }
     }
@@ -153,7 +148,7 @@
             <input type="text" id="display-unidad-input" readonly class="w-full p-2.5 border border-zinc-200 bg-zinc-100 rounded-sm outline-none text-zinc-400 text-center text-sm uppercase font-bold">
           </div>
           <div>
-            <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] uppercase tracking-widest font-bold py-3.5 px-6 rounded-sm shadow transition flex items-center gap-2">🖨️ Crear PDF</button>
+            <button onclick="descargarPDF()" class="bg-zinc-900 hover:bg-zinc-800 text-white text-[10px] uppercase tracking-widest font-bold py-3.5 px-6 rounded-sm shadow transition flex items-center gap-2">🖨️️ Crear PDF</button>
           </div>
         </div>
 
@@ -354,13 +349,7 @@
               <h4 class="text-[9px] font-bold text-zinc-400 uppercase tracking-widest mb-2 border-b pb-1">Usuarios Autorizados</h4>
               <ul id="lista-usuarios-admin" class="space-y-2"></ul>
             </div>
-            <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm border-l-4 border-l-indigo-600">
-              <h3 class="text-[10px] font-bold text-indigo-900 uppercase tracking-widest mb-2">Configuración de IA</h3>
-              <div class="flex gap-2">
-                <input type="password" id="admin-api-key" placeholder="AQ.Ab8..." class="flex-1 p-2 border border-zinc-300 rounded-sm text-sm outline-none focus:border-indigo-600">
-                <button onclick="adminGuardarApiKey()" class="bg-indigo-600 text-white px-4 text-xs font-bold uppercase rounded-sm hover:bg-indigo-700 transition">Guardar</button>
-              </div>
-            </div>
+            <!-- SE ELIMINÓ EL CAMPO DE LA API KEY YA QUE AHORA VIVE EN EL BACKEND -->
           </div>
           <div class="space-y-8">
             <div class="bg-white p-6 rounded-sm border border-zinc-200 shadow-sm">
@@ -389,6 +378,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, setDoc, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-firestore.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.4.0/firebase-functions.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyBJs05is5zZ25rteHveq0ubaXtX1Xw1K_8",
@@ -402,6 +392,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
+    const functions = getFunctions(app);
 
     window.recetasDB = []; 
     window.recetaActual = null;
@@ -409,7 +400,6 @@
     window.perfilUsuario = null; 
     window.sucursalesConfig = [];
     window.alergenosConfig = [];
-    window.apiKeyIA = ''; 
     let blockCounter = 0;
     const MESES_LISTA = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN", "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"];
 
@@ -523,11 +513,10 @@
       
       try { 
         await createUserWithEmailAndPassword(auth, e, p); 
-        const botToken = "8645994711:AAFUWxNz53DehJ9ONsQRxgQvWxgWnPf4Rkw"; 
-        const miChatId = "7883349842"; 
-        const textoTelegram = `🚨 *NUEVA SOLICITUD DE ACCESO*\n\n👤 *Nombre:* ${nombreUsuario}\n🔪 *Puesto:* ${puestoUsuario}\n🏢 *Sucursal:* ${sucursalUsuario}\n📧 *Correo:* ${e}\n\n📲 *Acción:* Entra al Panel Admin del recetario corporativo para aprobarlo o rechazarlo.`;
         
-        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, { method: "POST", headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chat_id: miChatId, text: textoTelegram, parse_mode: "Markdown" }) }).catch(e => console.log(e)); 
+        // LLAMADA AL BACKEND: Oculta de los curiosos
+        const notificarTelegramBackend = httpsCallable(functions, 'notificarTelegram');
+        await notificarTelegramBackend({ nombre: nombreUsuario, puesto: puestoUsuario, sucursal: sucursalUsuario, email: e }).catch(e => console.log("Notificación ignorada", e));
 
         try { await setDoc(doc(db, 'usuarios', e), { email: e, nombre: nombreUsuario, puesto: puestoUsuario, rol: 'Lector', sucursal: sucursalUsuario, estado: 'Pendiente' }); } catch(docError) { console.log(docError); }
         
@@ -559,17 +548,6 @@
       if(snapAler.exists()) { window.alergenosConfig = snapAler.data().lista || []; } else { window.alergenosConfig = ["Gluten", "Crustáceos", "Huevos", "Pescado", "Cacahuetes", "Soja", "Lácteos", "Frutos de cáscara", "Apio", "Mostaza", "Sésamo", "Sulfitos", "Altramuces", "Moluscos"]; await setDoc(docRefAlergenos, { lista: window.alergenosConfig }); }
       generarCheckboxes('contenedor-alergenos', window.alergenosConfig, 'alergeno');
       window.renderizarListaAlergenosAdmin();
-
-      const docRefApi = doc(db, 'configuracion', 'api');
-      const snapApi = await getDoc(docRefApi);
-      if(snapApi.exists() && snapApi.data().gemini) { window.apiKeyIA = snapApi.data().gemini; document.getElementById('admin-api-key').value = window.apiKeyIA; }
-    };
-
-    window.adminGuardarApiKey = async () => {
-      const key = document.getElementById('admin-api-key').value.trim();
-      if(!key) return;
-      await setDoc(doc(db, 'configuracion', 'api'), { gemini: key }, {merge: true});
-      window.apiKeyIA = key; alert("Llave guardada.");
     };
 
     window.renderizarListaSucursalesAdmin = () => {
@@ -659,30 +637,33 @@
     window.procesarFotoIA = async (event) => {
       const file = event.target.files[0];
       if(!file) return;
-      if(!window.apiKeyIA) return alert("Falta configurar llave API.");
       const msgEstado = document.getElementById('mensaje-estado'); const loader = document.getElementById('loader-guardar');
       msgEstado.innerText = "🤖 Analizando imagen..."; msgEstado.className = "text-indigo-600 font-bold text-sm"; loader.style.display = 'block';
 
       const reader = new FileReader(); reader.readAsDataURL(file);
       reader.onload = async () => {
         const base64String = reader.result.split(',')[1];
+        
+        // LLAMADA AL BACKEND: Protegida
         const payload = { contents: [{ parts: [{ text: `Eres un asistente culinario experto. Analiza la imagen de esta receta. Extrae los datos y devuélvelos ESTRICTAMENTE en el siguiente formato JSON. {"nombre": "Nombre de la receta","rendimiento_base": 1,"unidad_base": "Elegir: Kg, Gr, L, Ml, Pax, Porción o Pz","partida": "Una de estas: Cuarto Caliente, Cuarto Frío, Pastelería, Panadería, Barra, Producción, Salsería o Eventos","tipo": "Tipo si lo dice","bloques": [{"nombre": "Nombre de la preparación o Base","rendimiento": 1,"unidad": "Elegir: Kg, Gr, L, Ml, Pax, Porción o Pz","procedimiento": "Instrucciones de preparación...","ingredientes": [{"nombre": "Ingrediente 1", "cantidad": 100, "unidad": "Elegir: Kg, Gr, L, Ml, Pz, Cda, Cdta, Pizca o Manojo"}]}]}` }, { inline_data: { mime_type: file.type, data: base64String } } ] }], generationConfig: { response_mime_type: "application/json" } };
+        
         try {
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${window.apiKeyIA}`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
-          if (!res.ok) throw new Error("Llave rechazada o imagen pesada.");
-          const data = await res.json();
-          const recetaExtraida = JSON.parse(data.candidates[0].content.parts[0].text);
+          const consultarGeminiBackend = httpsCallable(functions, 'consultarGemini');
+          const res = await consultarGeminiBackend({ payload });
+          
+          if (!res.data || !res.data.candidates) throw new Error("Fallo en Gemini");
+          
+          const recetaExtraida = JSON.parse(res.data.candidates[0].content.parts[0].text);
           document.getElementById('edit-nombre').value = recetaExtraida.nombre || ''; document.getElementById('edit-pax-base').value = recetaExtraida.rendimiento_base || 1; 
           document.getElementById('edit-unidad-base').value = window.sanitizarUnidad(recetaExtraida.unidad_base); 
           document.getElementById('edit-partida').value = recetaExtraida.partida || ''; document.getElementById('edit-tipo').value = recetaExtraida.tipo || '';
           document.getElementById('contenedor-bloques-editor').innerHTML = '';
           if(recetaExtraida.bloques && recetaExtraida.bloques.length > 0) { recetaExtraida.bloques.forEach(b => window.agregarBloqueSubreceta(b.nombre, b.rendimiento, b.unidad, b.procedimiento, b.ingredientes)); } else { window.agregarBloqueSubreceta(); }
           msgEstado.innerText = "✨ ¡Receta transcrita con éxito!"; msgEstado.className = "text-green-600 font-bold text-sm"; setTimeout(() => msgEstado.innerText = "", 6000);
-        } catch(e) { msgEstado.innerText = `❌ Falló la IA`; msgEstado.className = "text-rose-900 font-bold text-[10px]"; } finally { loader.style.display = 'none'; document.getElementById('input-foto-ia').value = ''; }
+        } catch(e) { console.log(e); msgEstado.innerText = `❌ Falló la IA`; msgEstado.className = "text-rose-900 font-bold text-[10px]"; } finally { loader.style.display = 'none'; document.getElementById('input-foto-ia').value = ''; }
       };
     };
 
-    // NUEVA FUNCIÓN: Sous Chef de IA para mejorar la redacción
     window.mejorarRedaccionIA = async (bloqueId) => {
       const bloque = document.getElementById(bloqueId);
       const textarea = bloque.querySelector('.b-proc');
@@ -690,28 +671,22 @@
       const btn = bloque.querySelector('.btn-ia-redaccion');
       
       if (!textoOriginal) return alert("Escribe un borrador primero.");
-      if (!window.apiKeyIA) return alert("Falta configurar llave API en el panel Admin.");
 
       const textoBotonOriginal = btn.innerHTML;
       btn.innerHTML = "⏳ Procesando...";
       btn.disabled = true;
 
+      // LLAMADA AL BACKEND: Protegida
       const prompt = `Eres un Chef Ejecutivo de un restaurante Estrella Michelin. Mejora la redacción, gramática y ortografía del siguiente procedimiento usando lenguaje técnico culinario profesional. TIENES ESTRICTAMENTE PROHIBIDO alterar, omitir o inventar temperaturas, tiempos, cantidades o herramientas. Mantenlo conciso y directo.\n\nProcedimiento original:\n"${textoOriginal}"`;
-
-      const payload = { 
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.2 } 
-      };
+      const payload = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.2 } };
 
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${window.apiKeyIA}`, { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify(payload) 
-        });
-        if (!res.ok) throw new Error("Error en la API");
-        const data = await res.json();
-        const textoMejorado = data.candidates[0].content.parts[0].text.trim();
+        const consultarGeminiBackend = httpsCallable(functions, 'consultarGemini');
+        const res = await consultarGeminiBackend({ payload });
+        
+        if (!res.data || !res.data.candidates) throw new Error("Fallo en Gemini");
+
+        const textoMejorado = res.data.candidates[0].content.parts[0].text.trim();
         textarea.value = textoMejorado;
         btn.innerHTML = "✅ Listo";
         setTimeout(() => { btn.innerHTML = textoBotonOriginal; btn.disabled = false; }, 3000);
@@ -895,7 +870,10 @@
 
     window.descargarPDF = () => {
       if (!window.recetaActual) return alert("Selecciona una receta.");
+      const tituloOriginal = document.title;
+      document.title = window.recetaActual.nombre.replace(/\s+/g, '_');
       window.print();
+      setTimeout(() => { document.title = tituloOriginal; }, 1000);
     };
 
     window.renderizarListaRecetas = (textoFiltro = '') => {
