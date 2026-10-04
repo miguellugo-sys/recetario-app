@@ -81,7 +81,7 @@
         <button id="tab-visor" onclick="cambiarPestaña('visor')" class="flex-1 py-4 text-center tab-active transition uppercase tracking-wide text-xs">📖 Visor y PDF</button>
         <button id="tab-lista" onclick="cambiarPestaña('lista')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs">📋 Mis Recetas</button>
         <button id="tab-editor" onclick="cambiarPestaña('editor')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden">✏️ Editor</button>
-        <button id="tab-admin" onclick="cambiarPestaña('admin')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden bg-zinc-100 text-rose-900 font-black">⚙️ Panel Admin</button>
+        <button id="tab-admin" onclick="cambiarPestaña('admin')" class="flex-1 py-4 text-center tab-inactive transition uppercase tracking-wide text-xs hidden bg-zinc-100 text-rose-900 font-black">⚙️️ Panel Admin</button>
       </div>
 
       <!-- PESTAÑA VISOR -->
@@ -144,6 +144,9 @@
             <div id="auditoria-box" class="bg-zinc-50 border border-zinc-200 text-[8px] uppercase tracking-widest font-semibold text-zinc-400 p-1.5 mb-4 text-right rounded-sm">
               Última modificación: <span id="visor-auditoria" class="text-zinc-600 font-bold">---</span>
             </div>
+
+            <!-- CONTENEDOR DE FOTO DEL EMPLATADO EN VISOR -->
+            <div id="visor-foto-contenedor" class="hidden mb-6 flex justify-center"></div>
 
             <div class="grid grid-cols-4 gap-4 text-xs mb-6 border-b border-zinc-200 pb-4">
               <div class="col-span-1 border-r border-zinc-200 pr-2">
@@ -264,6 +267,12 @@
             <div class="md:col-span-3">
               <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Tipo</label>
               <input type="text" id="edit-tipo" placeholder="Ej: Salsas y Vinagretas" class="w-full p-2.5 border border-zinc-300 rounded-sm outline-none text-sm">
+            </div>
+
+            <!-- CAMPO AGREGADO PARA SUBIR FOTO DEL EMPLATADO -->
+            <div class="md:col-span-5">
+              <label class="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">Foto del Emplatado</label>
+              <input type="file" id="edit-foto-input" accept="image/*" class="w-full p-2 border border-zinc-300 rounded-sm outline-none text-xs text-zinc-600 bg-zinc-50 cursor-pointer">
             </div>
           </div>
         </div>
